@@ -26,19 +26,18 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   String? statusMessage;
   bool statusError = false;
 
-  static const Color surface = Color(0xFFF8F9FF);
-  static const Color surfaceContainer = Color(0xFFE5EEFF);
-  static const Color surfaceContainerLow = Color(0xFFEFF4FF);
-  static const Color surfaceContainerLowest = Colors.white;
+  static const Color surface = Color(0xFFF8FAFC);
+  static const Color surfaceContainer = Color(0xFFFFE5CC);
+  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
+  static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
 
-  static const Color primary = Color(0xFF785600);
-  static const Color primaryContainer = Color(0xFF986D00);
-  static const Color primaryFixed = Color(0xFFFFDEA6);
+  static const Color primary = Color(0xFFF58220);
+  static const Color primaryContainer = Color(0xFFD96812);
+  static const Color primaryFixed = Color(0xFFFFC58A);
 
-  static const Color onSurface = Color(0xFF0B1C30);
-  static const Color onSurfaceVariant = Color(0xFF4F4535);
-  static const Color secondary = Color(0xFF565E74);
-
+  static const Color onSurface = Color(0xFF1F2937);
+  static const Color onSurfaceVariant = Color(0xFF475569);
+  static const Color secondary = Color(0xFF64748B);
 
   @override
   void dispose() {
@@ -55,23 +54,15 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.plusJakartaSans(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
+    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
   }
 
   TextStyle mono({
-    double size = 13,
-    FontWeight weight = FontWeight.w500,
+    double size = 12,
+    FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.jetBrainsMono(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-    );
+    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
   }
 
   InputDecoration inputDecoration({
@@ -81,11 +72,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: mono(
-        size: 12,
-        weight: FontWeight.w400,
-        color: secondary,
-      ),
+      hintStyle: jakarta(size: 12, weight: FontWeight.w400, color: secondary),
       prefixIcon: Icon(icon, color: secondary, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
@@ -100,23 +87,14 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(
-          color: primary,
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: primary, width: 1.2),
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 
   Widget fieldLabel(String text) {
-    return Text(
-      text,
-      style: jakarta(size: 13, weight: FontWeight.w600),
-    );
+    return Text(text, style: jakarta(size: 11, weight: FontWeight.w500));
   }
 
   Widget buildTextField({
@@ -138,7 +116,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText ?? false,
-          style: mono(size: 13),
+          style: jakarta(size: 12),
           decoration: inputDecoration(
             hint: hint,
             icon: icon,
@@ -169,7 +147,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     });
   }
 
-
   Future<void> handleDaftar() async {
     if (isLoading) return;
 
@@ -184,10 +161,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         unitKantor.isEmpty ||
         password.isEmpty ||
         konfirmasi.isEmpty) {
-      showStatus(
-        'Harap lengkapi seluruh data pendaftaran.',
-        error: true,
-      );
+      showStatus('Harap lengkapi seluruh data pendaftaran.', error: true);
       return;
     }
 
@@ -197,26 +171,17 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     ).hasMatch(email);
 
     if (!emailValid) {
-      showStatus(
-        'Gunakan email dengan domain @gmail.com',
-        error: true,
-      );
+      showStatus('Gunakan email dengan domain @gmail.com', error: true);
       return;
     }
 
     if (password.length < 8) {
-      showStatus(
-        'Kata sandi minimal terdiri dari 8 karakter.',
-        error: true,
-      );
+      showStatus('Kata sandi minimal terdiri dari 8 karakter.', error: true);
       return;
     }
 
     if (password != konfirmasi) {
-      showStatus(
-        'Konfirmasi kata sandi tidak sesuai.',
-        error: true,
-      );
+      showStatus('Konfirmasi kata sandi tidak sesuai.', error: true);
       return;
     }
 
@@ -235,106 +200,124 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
     try {
       // Alamat API untuk emulator Android.
-const baseUrl = 'http://10.0.2.2:8000/api';
+      const baseUrl = 'http://10.0.2.2:8000/api';
 
-final response = await http.post(
-  Uri.parse('$baseUrl/register'),
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  },
-  body: jsonEncode({
-    'name': namaController.text.trim(),
-    'email': emailController.text.trim(),
-    'work_location': unitKantorController.text.trim(),
-    'password': passwordController.text,
-    'password_confirmation': konfirmasiController.text,
-  }),
-);
+      final response = await http.post(
+        Uri.parse('$baseUrl/register'),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': namaController.text.trim(),
+          'email': emailController.text.trim(),
+          'work_location': unitKantorController.text.trim(),
+          'password': passwordController.text,
+          'password_confirmation': konfirmasiController.text,
+        }),
+      );
 
-debugPrint('URL REGISTER: ${response.request?.url}');
-debugPrint('STATUS REGISTER: ${response.statusCode}');
-debugPrint('BODY REGISTER: ${response.body}');
+      debugPrint('URL REGISTER: ${response.request?.url}');
+      debugPrint('STATUS REGISTER: ${response.statusCode}');
+      debugPrint('BODY REGISTER: ${response.body}');
 
-final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data = jsonDecode(response.body);
 
-if (response.statusCode == 201 || response.statusCode == 200) {
-  showStatus(
-    data['message'] ??
-        'Pendaftaran berhasil. Silakan cek email untuk verifikasi akun.',
-  );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        showStatus(
+          data['message'] ??
+              'Pendaftaran berhasil. Silakan cek email untuk verifikasi akun.',
+        );
 
-  // Kosongkan form setelah pendaftaran berhasil.
-  namaController.clear();
-  emailController.clear();
-  unitKantorController.clear();
-  passwordController.clear();
-  konfirmasiController.clear();
+        // Kosongkan form setelah pendaftaran berhasil.
+        namaController.clear();
+        emailController.clear();
+        unitKantorController.clear();
+        passwordController.clear();
+        konfirmasiController.clear();
 
-  setState(() {
-    setuju = false;
-  });
-} else {
-  String message =
-      data['message'] ?? 'Pendaftaran gagal. Silakan coba kembali.';
+        setState(() {
+          setuju = false;
+        });
+      } else {
+        String message =
+            data['message'] ?? 'Pendaftaran gagal. Silakan coba kembali.';
 
-  // Tampilkan detail validasi dari Laravel jika tersedia.
-  if (data['errors'] is Map) {
-    final errors = data['errors'] as Map;
-    if (errors.isNotEmpty) {
-      final firstError = errors.values.first;
-      if (firstError is List && firstError.isNotEmpty) {
-        message = firstError.first.toString();
+        // Tampilkan detail validasi dari Laravel jika tersedia.
+        if (data['errors'] is Map) {
+          final errors = data['errors'] as Map;
+          if (errors.isNotEmpty) {
+            final firstError = errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              message = firstError.first.toString();
+            }
+          }
+        }
+
+        showStatus(message, error: true);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('ERROR DAFTAR AKUN: $e');
+      debugPrint('DETAIL ERROR: $stackTrace');
+
+      showStatus('Terjadi error: $e', error: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
       }
     }
   }
 
-  showStatus(message, error: true);
-}
-    
-} catch (e, stackTrace) {
-  debugPrint('ERROR DAFTAR AKUN: $e');
-  debugPrint('DETAIL ERROR: $stackTrace');
-
-  showStatus(
-    'Terjadi error: $e',
-    error: true,
-  );
-} finally {
-  if (mounted) {
-    setState(() {
-      isLoading = false;
-    });
-  }
-}
-
-  }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: surface,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
+    final baseTheme = Theme.of(context);
+
+    return Theme(
+      data: baseTheme.copyWith(
+        textTheme: GoogleFonts.robotoTextTheme(baseTheme.textTheme),
+      ),
+      child: Scaffold(
+        backgroundColor: surface,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background trading
+            Image.asset(
+              'assets/images/trading_background.png',
+              fit: BoxFit.cover,
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Column(
-                children: [
-                  _buildBranding(),
-                  const SizedBox(height: 16),
-                  _buildRegisterCard(),
-                  const SizedBox(height: 16),
-                  _buildSupportCard(),
-                  const SizedBox(height: 32),
-                  _buildFooter(),
-                ],
+
+            // Lapisan putih transparan
+            Container(color: Colors.white.withValues(alpha: 0.40)),
+
+            // Konten pendaftaran
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      children: [
+                        _buildBranding(),
+                        const SizedBox(height: 8),
+                        _buildRegisterCard(),
+                        const SizedBox(height: 16),
+                        _buildSupportCard(),
+                        const SizedBox(height: 32),
+                        _buildFooter(),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -344,29 +327,36 @@ if (response.statusCode == 201 || response.statusCode == 200) {
     return Column(
       children: [
         const SizedBox(height: 4),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
+            // Logo perusahaan
+            SizedBox(
               width: 48,
               height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: surfaceContainer,
-              ),
-              child: const Icon(
-                Icons.trending_up,
-                color: primary,
-                size: 28,
+              child: Image.asset(
+                'assets/images/logo_perusahaan.png',
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Icon(Icons.business, color: primary, size: 28);
+                },
               ),
             ),
-            const SizedBox(width: 8),
+
+            const SizedBox(width: 24),
+
+            // Nama perusahaan
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 RichText(
                   text: TextSpan(
-                    style: jakarta(size: 20, weight: FontWeight.w700),
+                    style: GoogleFonts.roboto(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: onSurface,
+                    ),
                     children: const [
                       TextSpan(text: 'EQUITY '),
                       TextSpan(
@@ -379,53 +369,14 @@ if (response.statusCode == 201 || response.statusCode == 200) {
                 Text(
                   'PT EQUITYWORLD FUTURES',
                   style: jakarta(
-                    size: 10,
-                    weight: FontWeight.w600,
+                    size: 14,
+                    weight: FontWeight.w500,
                     color: secondary,
                   ),
                 ),
               ],
             ),
           ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 5,
-          ),
-          decoration: BoxDecoration(
-            color: surfaceContainer,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'INTERNAL OPERATIONS TERMINAL',
-                style: jakarta(
-                  size: 10,
-                  weight: FontWeight.w600,
-                  color: onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'FUTURES MARKET INTELLIGENCE',
-          textAlign: TextAlign.center,
-          style: jakarta(size: 13, color: secondary),
         ),
       ],
     );
@@ -452,11 +403,7 @@ if (response.statusCode == 201 || response.statusCode == 200) {
             height: 6,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  primaryContainer,
-                  primary,
-                  primaryFixed,
-                ],
+                colors: [primaryContainer, primary, primaryFixed],
               ),
             ),
           ),
@@ -513,16 +460,16 @@ if (response.statusCode == 201 || response.statusCode == 200) {
                 ),
                 const SizedBox(height: 16),
 
-const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-buildTextField(
-  label: 'Lokasi Kerja / Kantor',
-  hint: 'Contoh: Surabaya - Trilium Office Lt. 2',
-  icon: Icons.business_outlined,
-  controller: unitKantorController,
-),
+                buildTextField(
+                  label: 'Lokasi Kerja / Kantor',
+                  hint: 'Contoh: Surabaya - Trilium Office Lt. 2',
+                  icon: Icons.business_outlined,
+                  controller: unitKantorController,
+                ),
 
-const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 buildTextField(
                   label: 'Kata Sandi',
@@ -592,18 +539,12 @@ const SizedBox(height: 16),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [
-                          primaryContainer,
-                          primary,
-                          primaryContainer,
-                        ],
+                        colors: [primaryContainer, primary, primaryContainer],
                       ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: ElevatedButton(
-                      onPressed: isLoading
-                          ? null
-                          : handleDaftar,
+                      onPressed: isLoading ? null : handleDaftar,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         foregroundColor: Colors.white,
@@ -619,8 +560,7 @@ const SizedBox(height: 16),
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(
+                                valueColor: AlwaysStoppedAnimation<Color>(
                                   Colors.white,
                                 ),
                               ),
@@ -628,10 +568,7 @@ const SizedBox(height: 16),
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(
-                                  Icons.person_add_alt_1,
-                                  size: 20,
-                                ),
+                                const Icon(Icons.person_add_alt_1, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Ajukan Pendaftaran',
@@ -709,8 +646,7 @@ const SizedBox(height: 16),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(0, 0),
-                          tapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
                           'Masuk di sini',
@@ -754,7 +690,8 @@ const SizedBox(height: 16),
                           ),
                         ),
                         TextSpan(
-                          text: ' • Pendaftaran akan diperiksa '
+                          text:
+                              ' • Pendaftaran akan diperiksa '
                               'sebelum akses platform diberikan.',
                         ),
                       ],
@@ -786,13 +723,16 @@ const SizedBox(height: 16),
               color: surfaceContainer,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.headset_mic_outlined,
-              size: 18,
-              color: onSurface,
+            child: Image.asset(
+              'assets/images/logo_perusahaan.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.business, color: primary, size: 28);
+              },
             ),
           ),
           const SizedBox(width: 8),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -803,11 +743,12 @@ const SizedBox(height: 16),
                 ),
                 Text(
                   'Ext. 4410 (Equity Tower LT. 22)',
-                  style: jakarta(size: 13, color: secondary),
+                  style: jakarta(size: 11, color: secondary),
                 ),
               ],
             ),
           ),
+
           TextButton(
             onPressed: () {
               showStatus(
@@ -816,12 +757,9 @@ const SizedBox(height: 16),
               );
             },
             style: TextButton.styleFrom(
-              backgroundColor: const Color(0xFFD3E4FE),
-              foregroundColor: onSurface,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
+              backgroundColor: surfaceContainer,
+              foregroundColor: primary,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -842,11 +780,7 @@ const SizedBox(height: 16),
         Text(
           'Terdaftar & Diawasi oleh Bappebti • Anggota ICDX & ICH',
           textAlign: TextAlign.center,
-          style: jakarta(
-            size: 10,
-            weight: FontWeight.w600,
-            color: secondary,
-          ),
+          style: jakarta(size: 10, weight: FontWeight.w600, color: onSurface),
         ),
         const SizedBox(height: 4),
         Text(

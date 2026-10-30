@@ -43,16 +43,9 @@ class GoldPrice {
   }
 
   static DateTime? _parseDateOnly(String value) {
-    final parsed = DateTime.tryParse(value);
+    if (value.length < 10) return null;
 
-    if (parsed == null) {
-      return null;
-    }
-
-    return DateTime(
-      parsed.year,
-      parsed.month,
-      parsed.day,
-    );
+    // Pertahankan tanggal pencatatan dari database.
+    return DateTime.tryParse(value.substring(0, 10));
   }
 }
