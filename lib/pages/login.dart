@@ -81,7 +81,7 @@ class _LoginPageState extends State<LoginPage> {
       // Khusus Android Emulator yang mengakses server di laptop.
      
       // URL API untuk HP Android fisik.
-      const baseUrl = 'http://10.0.2.2/api';
+      const baseUrl = 'http://10.0.2.2:8000/api';
 
       final response = await http
           .post(
@@ -304,7 +304,12 @@ class _LoginPageState extends State<LoginPage> {
     FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.roboto(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      height: 1.25,
+    );
   }
 
   TextStyle mono({
@@ -312,7 +317,12 @@ class _LoginPageState extends State<LoginPage> {
     FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.roboto(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+      height: 1.25,
+    );
   }
 
   InputDecoration inputDecoration({
@@ -322,7 +332,7 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: jakarta(size: 12, weight: FontWeight.w400, color: secondary),
+      hintStyle: jakarta(size: 14, weight: FontWeight.w400, color: secondary),
       prefixIcon: Icon(icon, color: secondary, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
@@ -440,7 +450,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 Text(
-                  'PT EQUITYWORLD FUTURES',
+                  'MARKET INTELLIGENCE',
                   style: jakarta(
                     size: 14,
                     weight: FontWeight.w500,
@@ -492,7 +502,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Text(
                         'Masuk ke Platform',
-                        style: jakarta(size: 16, weight: FontWeight.w700),
+                        style: jakarta(size: 20, weight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -502,7 +512,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 Text(
                   'Internal Portal PT Equityworld Futures',
-                  style: jakarta(size: 13, color: onSurfaceVariant),
+                  style: jakarta(size: 14, color: onSurfaceVariant),
                 ),
 
                 const SizedBox(height: 20),
@@ -510,7 +520,7 @@ class _LoginPageState extends State<LoginPage> {
                 // Email
                 Text(
                   'Email Anda',
-                  style: jakarta(size: 11, weight: FontWeight.w500),
+                  style: jakarta(size: 14, weight: FontWeight.w500),
                 ),
 
                 const SizedBox(height: 4),
@@ -519,7 +529,7 @@ class _LoginPageState extends State<LoginPage> {
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
                   style: GoogleFonts.roboto(
-                    fontSize: 12,
+                    fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: onSurface,
                   ),
@@ -537,7 +547,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Text(
                         'Kata Sandi Akses',
-                        style: jakarta(size: 11, weight: FontWeight.w500),
+                        style: jakarta(size: 14, weight: FontWeight.w500),
                       ),
                     ),
                     TextButton(
@@ -550,7 +560,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Text(
                         'Lupa Password?',
                         style: jakarta(
-                          size: 10,
+                          size: 12,
                           weight: FontWeight.w600,
                           color: primary,
                         ),
@@ -564,7 +574,7 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: passwordController,
                   obscureText: obscurePassword,
-                  style: mono(size: 12),
+                  style: mono(size: 16),
                   decoration: inputDecoration(
                     hint: '••••••••••••',
                     icon: Icons.key_outlined,
@@ -602,7 +612,7 @@ class _LoginPageState extends State<LoginPage> {
                     Expanded(
                       child: Text(
                         'Ingat sesi di perangkat aman ini',
-                        style: jakarta(size: 12, color: onSurface),
+                        style: jakarta(size: 14, color: onSurface),
                       ),
                     ),
                   ],
@@ -650,7 +660,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Text(
                                   'Memverifikasi Otorisasi...',
                                   style: jakarta(
-                                    size: 12,
+                                    size: 14,
                                     weight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
@@ -668,7 +678,7 @@ class _LoginPageState extends State<LoginPage> {
                                 Text(
                                   'Masuk ke Equity Pulse',
                                   style: jakarta(
-                                    size: 13,
+                                    size: 16,
                                     weight: FontWeight.w600,
                                     color: Colors.white,
                                   ),
@@ -708,7 +718,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             statusMessage!,
                             style: jakarta(
-                              size: 12,
+                              size: 14,
                               color: statusError
                                   ? const Color(0xFF93000A)
                                   : onSurfaceVariant,
@@ -730,7 +740,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Text(
                         'Belum memiliki akun? ',
-                        style: jakarta(size: 12, color: secondary),
+                        style: jakarta(size: 14, color: secondary),
                       ),
                       TextButton(
                         onPressed: () {
@@ -749,7 +759,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Text(
                           'Daftar di sini',
                           style: jakarta(
-                            size: 12,
+                            size: 14,
                             weight: FontWeight.w700,
                             color: primary,
                           ),
@@ -779,7 +789,7 @@ class _LoginPageState extends State<LoginPage> {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: jakarta(size: 10, color: onSurfaceVariant),
+                      style: jakarta(size: 12, color: onSurfaceVariant),
                       children: const [
                         TextSpan(
                           text: 'Sistem Informasi Internal Terproteksi',
@@ -836,11 +846,11 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 Text(
                   'IT Desk Support',
-                  style: jakarta(size: 10, weight: FontWeight.w600),
+                  style: jakarta(size: 12, weight: FontWeight.w600),
                 ),
                 Text(
                   'Ext. 4410 (Equity Tower LT. 22)',
-                  style: jakarta(size: 11, color: secondary),
+                  style: jakarta(size: 14, color: secondary),
                 ),
               ],
             ),
@@ -857,7 +867,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             child: Text(
               'Bantuan',
-              style: jakarta(size: 10, weight: FontWeight.w600),
+              style: jakarta(size: 12, weight: FontWeight.w600),
             ),
           ),
         ],
@@ -872,7 +882,7 @@ class _LoginPageState extends State<LoginPage> {
           'Terdaftar & Diawasi oleh Bappebti • Anggota ICDX & ICH',
           textAlign: TextAlign.center,
           style: jakarta(
-            size: 10,
+            size: 12,
             weight: FontWeight.w600,
             color: const Color.fromARGB(255, 18, 19, 21),
           ),
@@ -882,7 +892,7 @@ class _LoginPageState extends State<LoginPage> {
           '© 2025 PT Equityworld Futures. Hak Cipta Dilindungi Undang-Undang.',
           textAlign: TextAlign.center,
           style: jakarta(
-            size: 10,
+            size: 12,
             color: const Color.fromARGB(255, 18, 19, 21),
           ),
         ),

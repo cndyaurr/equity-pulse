@@ -40,17 +40,21 @@ class _PivotPointPageState extends State<PivotPointPage> {
 
   String _currentAsset = 'LGD';
 
-  final TextEditingController _openController =
-      TextEditingController(text: '0.00');
+  final TextEditingController _openController = TextEditingController(
+    text: '0.00',
+  );
 
-  final TextEditingController _highController =
-      TextEditingController(text: '0.00');
+  final TextEditingController _highController = TextEditingController(
+    text: '0.00',
+  );
 
-  final TextEditingController _lowController =
-      TextEditingController(text: '0.00');
+  final TextEditingController _lowController = TextEditingController(
+    text: '0.00',
+  );
 
-  final TextEditingController _closeController =
-      TextEditingController(text: '0.00');
+  final TextEditingController _closeController = TextEditingController(
+    text: '0.00',
+  );
 
   double _range = 0.00;
   double _pp = 0.00;
@@ -145,25 +149,21 @@ class _PivotPointPageState extends State<PivotPointPage> {
         if (open < pp) {
           signal = 'BUY';
           signalLogic = 'Open (${_format(open)}) < PP (${_format(pp)})';
-          ruleExplanation =
-              'Open berada di bawah Pivot Point.';
+          ruleExplanation = 'Open berada di bawah Pivot Point.';
         } else {
           signal = 'SELL';
           signalLogic = 'Open (${_format(open)}) > PP (${_format(pp)})';
-          ruleExplanation =
-              'Open berada di atas Pivot Point.';
+          ruleExplanation = 'Open berada di atas Pivot Point.';
         }
       } else {
         if (open > pp) {
           signal = 'BUY';
           signalLogic = 'Open (${_format(open)}) > PP (${_format(pp)})';
-          ruleExplanation =
-              'Open indeks berada di atas Pivot Point.';
+          ruleExplanation = 'Open indeks berada di atas Pivot Point.';
         } else {
           signal = 'SELL';
           signalLogic = 'Open (${_format(open)}) < PP (${_format(pp)})';
-          ruleExplanation =
-              'Open indeks berada di bawah Pivot Point.';
+          ruleExplanation = 'Open indeks berada di bawah Pivot Point.';
         }
       }
 
@@ -306,9 +306,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
   }
 
   void _copyPivot() {
-    Clipboard.setData(
-      ClipboardData(text: 'PP: ${_formatPivot(_pp)}'),
-    );
+    Clipboard.setData(ClipboardData(text: 'PP: ${_formatPivot(_pp)}'));
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -318,63 +316,66 @@ class _PivotPointPageState extends State<PivotPointPage> {
     );
   }
 
-  
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-  backgroundColor: _background,
-
-  appBar: _buildHeader(),
-
-  body: SafeArea(
-    child: Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            child: Column(
-              children: [
-                _buildAssetBar(),
-                const SizedBox(height: 16),
-
-                if (_isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: _primary,
+    return DefaultTextStyle.merge(
+      style: GoogleFonts.roboto(),
+      child: Scaffold(
+        backgroundColor: _background,
+        appBar: _buildHeader(),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pivot Point',
+                        style: GoogleFonts.roboto(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: _textPrimary,
+                        ),
                       ),
-                    ),
-                  )
-                else if (_errorMessage != null)
-                  _buildErrorState(_errorMessage!)
-                else if (_pivotData != null)
-                  _buildWorkspace()
-                else
-                  _buildErrorState(
-                    'Data pivot point belum tersedia.',
+                      const SizedBox(height: 20),
+
+                      _buildAssetBar(),
+                      const SizedBox(height: 16),
+
+                      if (_isLoading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: CircularProgressIndicator(color: _primary),
+                          ),
+                        )
+                      else if (_errorMessage != null)
+                        _buildErrorState(_errorMessage!)
+                      else if (_pivotData != null)
+                        _buildWorkspace()
+                      else
+                        _buildErrorState('Data pivot point belum tersedia.'),
+                    ],
                   ),
-              ],
-            ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
-  ),
-
-  bottomNavigationBar: _buildBottomNavigation(),
-);
+        bottomNavigationBar: _buildBottomNavigation(),
+      ),
+    );
   }
 
-
-
-PreferredSizeWidget _buildHeader() {
+  PreferredSizeWidget _buildHeader() {
   return AppBar(
     backgroundColor: _white,
     elevation: 0,
+    scrolledUnderElevation: 0,
     titleSpacing: 16,
-
-    // Logo dan nama brand sama seperti Dashboard
     title: Row(
       children: [
         ClipRRect(
@@ -387,16 +388,31 @@ PreferredSizeWidget _buildHeader() {
           ),
         ),
         const SizedBox(width: 10),
+
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'EQUITY PULSE',
-              style: GoogleFonts.roboto(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: _textPrimary,
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'EQUITY ',
+                    style: GoogleFonts.roboto(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _textPrimary,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'PULSE',
+                    style: GoogleFonts.roboto(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _primary,
+                    ),
+                  ),
+                ],
               ),
             ),
             Text(
@@ -411,15 +427,13 @@ PreferredSizeWidget _buildHeader() {
         ),
       ],
     ),
-
-    // Notifikasi dan profil sama seperti Dashboard
     actions: [
       IconButton(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const NotificationsScreen(),
+              builder: (_) => const NotificationsScreen(),
             ),
           );
         },
@@ -436,7 +450,7 @@ PreferredSizeWidget _buildHeader() {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const ProfileScreen(),
+                builder: (_) => const ProfileScreen(),
               ),
             );
           },
@@ -463,92 +477,68 @@ PreferredSizeWidget _buildHeader() {
       child: Row(
         children: [
           Expanded(
-            child: _assetButton(
-              label: 'LGD (Loco London Gold)',
-              asset: 'LGD',
-            ),
+            child: _assetButton(label: 'LGD (Loco London Gold)', asset: 'LGD'),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: _assetButton(
-              label: 'HSI (Hang Seng Index)',
-              asset: 'HSI',
-            ),
+            child: _assetButton(label: 'HSI (Hang Seng Index)', asset: 'HSI'),
           ),
         ],
       ),
     );
   }
 
+  Widget _assetButton({required String label, required String asset}) {
+    final active = _currentAsset == asset;
 
-
-Widget _assetButton({
-  required String label,
-  required String asset,
-}) {
-  final active = _currentAsset == asset;
-
-  return GestureDetector(
-    onTap: () => _switchAsset(asset),
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 9,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: active
-            ? const Color(0xFFF58220)
-            : const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(9),
-        border: Border.all(
-          color: active
-              ? const Color(0xFFF58220)
-              : const Color(0xFFE2E8F0),
-        ),
-        boxShadow: active
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFF58220)
-                      .withValues(alpha: 0.18),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: active
-                  ? Colors.white
-                  : const Color(0xFFCBD5E1),
-              shape: BoxShape.circle,
-            ),
+    return GestureDetector(
+      onTap: () => _switchAsset(asset),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 12),
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFFF58220) : const Color(0xFFFFFFFF),
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: active ? const Color(0xFFF58220) : const Color(0xFFE2E8F0),
           ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: active
-                    ? Colors.white
-                    : const Color(0xFF64748B),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFF58220).withValues(alpha: 0.18),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: active ? Colors.white : const Color(0xFFCBD5E1),
+                shape: BoxShape.circle,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: active ? Colors.white : const Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildWorkspace() {
     return Column(
@@ -569,11 +559,7 @@ Widget _assetButton({
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.tune_rounded,
-                color: Color(0xFFF58220),
-                size: 20,
-              ),
+              Icon(Icons.tune_rounded, color: Color(0xFFF58220), size: 20),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -591,17 +577,11 @@ Widget _assetButton({
           Row(
             children: [
               Expanded(
-                child: _inputField(
-                  label: 'OPEN',
-                  controller: _openController,
-                ),
+                child: _inputField(label: 'OPEN', controller: _openController),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _inputField(
-                  label: 'HIGH',
-                  controller: _highController,
-                ),
+                child: _inputField(label: 'HIGH', controller: _highController),
               ),
             ],
           ),
@@ -609,10 +589,7 @@ Widget _assetButton({
           Row(
             children: [
               Expanded(
-                child: _inputField(
-                  label: 'LOW',
-                  controller: _lowController,
-                ),
+                child: _inputField(label: 'LOW', controller: _lowController),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -629,10 +606,7 @@ Widget _assetButton({
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: _calculatePivot,
-                  icon: const Icon(
-                    Icons.calculate_outlined,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.calculate_outlined, size: 18),
                   label: const Text('Hitung Pivot'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF58220),
@@ -653,16 +627,11 @@ Widget _assetButton({
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: _resetValues,
-                  icon: const Icon(
-                    Icons.restart_alt,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.restart_alt, size: 18),
                   label: const Text('Reset Form'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF64748B),
-                    side: const BorderSide(
-                      color: Color(0xFFE2E8F0),
-                    ),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -704,18 +673,13 @@ Widget _assetButton({
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: const Color(0xFFE2E8F0),
-            ),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Row(
             children: [
               Text(
                 _currentAsset == 'HSI' ? 'INDEX' : 'USD',
-                style: const TextStyle(
-                  fontSize: 9,
-                  color: Color(0xFF64748B),
-                ),
+                style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -746,7 +710,6 @@ Widget _assetButton({
     );
   }
 
-  
   Widget _buildSignalCard() {
     final isBuy = _signal == 'BUY';
     final signalColor = isBuy
@@ -776,10 +739,7 @@ Widget _assetButton({
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF3E8),
                   borderRadius: BorderRadius.circular(20),
@@ -801,9 +761,7 @@ Widget _assetButton({
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-              ),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
             child: Row(
               children: [
@@ -896,11 +854,7 @@ Widget _assetButton({
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.bar_chart_rounded,
-                color: Color(0xFFF58220),
-                size: 21,
-              ),
+              Icon(Icons.bar_chart_rounded, color: Color(0xFFF58220), size: 21),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -915,64 +869,29 @@ Widget _assetButton({
             ],
           ),
           const SizedBox(height: 14),
-          _ladderRow(
-            label: 'R4',
-            value: _r4,
-            isResistance: true,
-          ),
+          _ladderRow(label: 'R4', value: _r4, isResistance: true),
           _midRow(value: _m7),
-          _ladderRow(
-            label: 'R3',
-            value: _r3,
-            isResistance: true,
-          ),
+          _ladderRow(label: 'R3', value: _r3, isResistance: true),
           _midRow(value: _m6),
-          _ladderRow(
-            label: 'R2',
-            value: _r2,
-            isResistance: true,
-          ),
+          _ladderRow(label: 'R2', value: _r2, isResistance: true),
           _midRow(value: _m5),
-          _ladderRow(
-            label: 'R1',
-            value: _r1,
-            isResistance: true,
-          ),
+          _ladderRow(label: 'R1', value: _r1, isResistance: true),
           _midRow(value: _m4),
           _pivotRow(),
           _midRow(value: _m3),
-          _ladderRow(
-            label: 'S1',
-            value: _s1,
-            isResistance: false,
-          ),
+          _ladderRow(label: 'S1', value: _s1, isResistance: false),
           _midRow(value: _m2),
-          _ladderRow(
-            label: 'S2',
-            value: _s2,
-            isResistance: false,
-          ),
+          _ladderRow(label: 'S2', value: _s2, isResistance: false),
           _midRow(value: _m1),
-          _ladderRow(
-            label: 'S3',
-            value: _s3,
-            isResistance: false,
-          ),
+          _ladderRow(label: 'S3', value: _s3, isResistance: false),
           _midRow(value: _m0),
-          _ladderRow(
-            label: 'S4',
-            value: _s4,
-            isResistance: false,
-          ),
+          _ladderRow(label: 'S4', value: _s4, isResistance: false),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: _copyPivot,
-              icon: const Icon(
-                Icons.content_copy_rounded,
-                size: 15,
-              ),
+              icon: const Icon(Icons.content_copy_rounded, size: 15),
               label: const Text('Salin Nilai PP'),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFD96812),
@@ -1003,10 +922,7 @@ Widget _assetButton({
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
       decoration: BoxDecoration(
         color: rowColor,
         borderRadius: BorderRadius.circular(7),
@@ -1027,10 +943,7 @@ Widget _assetButton({
           const Expanded(
             child: Text(
               'Pivot Level',
-              style: TextStyle(
-                fontSize: 9,
-                color: Color(0xFF64748B),
-              ),
+              style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
             ),
           ),
           Text(
@@ -1049,16 +962,11 @@ Widget _assetButton({
   Widget _midRow({required double value}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(
-          color: const Color(0xFFE2E8F0),
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         children: [
@@ -1076,10 +984,7 @@ Widget _assetButton({
           const Expanded(
             child: Text(
               'Level Tengah',
-              style: TextStyle(
-                fontSize: 9,
-                color: Color(0xFF64748B),
-              ),
+              style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
             ),
           ),
           Text(
@@ -1098,10 +1003,7 @@ Widget _assetButton({
   Widget _pivotRow() {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 13,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 13),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3E8),
         borderRadius: BorderRadius.circular(8),
@@ -1145,30 +1047,25 @@ Widget _assetButton({
     );
   }
 
-
-Widget _card({required Widget child}) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFFFFF),
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: const Color(0xFFE2E8F0),
-        width: 1,
+  Widget _card({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1F2937).withValues(alpha: 0.035),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      boxShadow: [
-        BoxShadow(
-          color: const Color(0xFF1F2937).withValues(alpha: 0.035),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: child,
-  );
-}
-
+      child: child,
+    );
+  }
 
   Widget _buildErrorState(String message) {
     return _card(
@@ -1192,10 +1089,7 @@ Widget _card({required Widget child}) {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF64748B),
-            ),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
           ),
           const SizedBox(height: 14),
           ElevatedButton(
@@ -1217,7 +1111,6 @@ Widget _card({required Widget child}) {
     );
   }
 
-  
   Widget _buildBottomNavigation() {
     final items = [
       const _BottomItem(
@@ -1245,27 +1138,13 @@ Widget _card({required Widget child}) {
         activeIcon: Icons.calculate_rounded,
         label: 'Kalkulator',
       ),
-      const _BottomItem(
-        icon: Icons.history_rounded,
-        activeIcon: Icons.history_rounded,
-        label: 'Histori',
-      ),
-      const _BottomItem(
-        icon: Icons.apartment_outlined,
-        activeIcon: Icons.apartment_rounded,
-        label: 'Profil PT',
-      ),
     ];
 
     return Container(
-      height: 70,
+      height: 72,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: const Border(
-          top: BorderSide(
-            color: Color(0xFFE2E8F0),
-          ),
-        ),
+        border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -1299,9 +1178,7 @@ Widget _card({required Widget child}) {
                       case 1:
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const BeritaPage(),
-                          ),
+                          MaterialPageRoute(builder: (_) => const BeritaPage()),
                         );
                         break;
 
@@ -1325,34 +1202,14 @@ Widget _card({required Widget child}) {
                           ),
                         );
                         break;
-
-                      case 5:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HistoriPage(),
-                          ),
-                        );
-                        break;
-
-                      case 6:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const InformasiPtPage(),
-                          ),
-                        );
-                        break;
                     }
                   },
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        active
-                            ? items[index].activeIcon
-                            : items[index].icon,
-                        size: 20,
+                        active ? items[index].activeIcon : items[index].icon,
+                        size: 27,
                         color: active
                             ? const Color(0xFFF58220)
                             : const Color(0xFF64748B),
@@ -1361,7 +1218,7 @@ Widget _card({required Widget child}) {
                       Text(
                         items[index].label,
                         style: TextStyle(
-                          fontSize: 8,
+                          fontSize: 11,
                           fontWeight: active
                               ? FontWeight.w700
                               : FontWeight.w500,

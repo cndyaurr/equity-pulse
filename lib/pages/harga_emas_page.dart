@@ -13,8 +13,7 @@ import 'dashboard_page.dart';
 import 'berita_page.dart';
 import 'pivot_point_page.dart';
 import 'kalkulator_page.dart';
-import 'histori_page.dart';
-import 'informasi_pt_page.dart';
+
 
 class HargaEmasPage extends StatefulWidget {
   const HargaEmasPage({super.key});
@@ -448,92 +447,106 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       style: GoogleFonts.roboto(),
       child: Scaffold(
       backgroundColor: background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+  
+appBar: AppBar(
+  backgroundColor: Colors.white,
+  elevation: 0,
+  surfaceTintColor: Colors.transparent,
+  titleSpacing: 16,
+  title: Row(
+    children: [
+      Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.asset(
+          'assets/images/logo_perusahaan.png',
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(
+              Icons.trending_up,
+              color: Color(0xFFD96812),
+            );
+          },
+        ),
+      ),
+      const SizedBox(width: 10),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(
+                fontFamily: 'Roboto',
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.asset(
-                'assets/images/logo_perusahaan.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.trending_up,
-                    color: Color(0xFFD96812),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'EQUITY PULSE',
+                TextSpan(text: 'EQUITY '),
+                TextSpan(
+                  text: 'PULSE',
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                Text(
-                  'MARKET INTELLIGENCE',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: Color(0xFFFF9800),
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none,
-              color: Color(0xFF1F2937),
-            ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: Color(0xFFFFF3E8),
-              child: Text(
-                'A',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFFD96812),
-                ),
-              ),
+          const Text(
+            'MARKET INTELLIGENCE',
+            style: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
             ),
           ),
         ],
       ),
+    ],
+  ),
+  actions: [
+    IconButton(
+      onPressed: () {},
+      icon: const Icon(
+        Icons.notifications_none,
+        color: Color(0xFF1F2937),
+      ),
+    ),
+    const Padding(
+      padding: EdgeInsets.only(right: 12),
+      child: CircleAvatar(
+        radius: 18,
+        backgroundColor: Color(0xFFFFF3E8),
+        child: Text(
+          'A',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFD96812),
+          ),
+        ),
+      ),
+    ),
+  ],
+),
+
       body: SafeArea(
         child: Column(
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPageTitle(),
-                    const SizedBox(height: 20),
+  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildPageTitle(),
+      const SizedBox(height: 20),
                     _buildAssetTabs(),
                     const SizedBox(height: 18),
                     _buildSettlementCard(),
@@ -561,17 +574,19 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   // PAGE TITLE
   // ============================================================
 
-  Widget _buildPageTitle() {
-    return const Text(
-      'Data Harga Emas',
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        color: textPrimary,
-        height: 1.15,
-      ),
-    );
-  }
+  
+Widget _buildPageTitle() {
+  return Text(
+    'Data Harga Emas',
+    style: GoogleFonts.roboto(
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      color: const Color(0xFF1F2937),
+      height: 1.2,
+    ),
+  );
+}
+
 
   // ============================================================
   // ASSET TABS
@@ -1592,16 +1607,6 @@ Widget _buildSettlementCard() {
         activeIcon: Icons.calculate,
         label: 'Kalkulator',
       ),
-      _BottomNavItem(
-        icon: Icons.history_outlined,
-        activeIcon: Icons.history,
-        label: 'Histori',
-      ),
-      _BottomNavItem(
-        icon: Icons.apartment_outlined,
-        activeIcon: Icons.apartment,
-        label: 'Profil PT',
-      ),
     ];
 
     return Container(
@@ -1669,23 +1674,6 @@ Widget _buildSettlementCard() {
                         );
                         break;
 
-                      case 5:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HistoriPage(),
-                          ),
-                        );
-                        break;
-
-                      case 6:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const InformasiPtPage(),
-                          ),
-                        );
-                        break;
                     }
                   },
                   child: Column(
@@ -1693,7 +1681,7 @@ Widget _buildSettlementCard() {
                     children: [
                       Icon(
                         active ? items[index].activeIcon : items[index].icon,
-                        size: 21,
+                        size: 27,
                         color: active
                             ? primary
                             : textSecondary,
@@ -1702,7 +1690,7 @@ Widget _buildSettlementCard() {
                       Text(
                         items[index].label,
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: active
                               ? FontWeight.w800
                               : FontWeight.w600,

@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'berita_page.dart';
+import 'harga_emas_page.dart';
+import 'pivot_point_page.dart';
+import 'notifications_screen.dart';
+import 'profile_screen.dart';
+import 'dashboard_page.dart';
 
 class KalkulatorPage extends StatefulWidget {
   const KalkulatorPage({super.key});
@@ -10,34 +16,26 @@ class KalkulatorPage extends StatefulWidget {
 }
 
 class _KalkulatorPageState extends State<KalkulatorPage> {
-  // ============================================================
-  // CONSTANT
-  // ============================================================
-
+  static const Color _white = Colors.white;
+  static const Color _textPrimary = Color(0xFF1F2937);
+  static const Color _primary = Color(0xFFF58220);
+  static const Color _textSecondary = Color(0xFF64748B);
+  static const Color _surfaceContainer = Color(0xFFFFE5CC);
   static const double tozFixed = 31.10;
 
-  // ============================================================
-  // TAB
-  // ============================================================
-
   int selectedTab = 0;
-
-  // Histori sementara di sisi frontend (selama halaman masih aktif).
   bool _showHistory = false;
   final List<Map<String, dynamic>> _calculationHistory = [];
 
-  // ============================================================
-  // DIGITAL
-  // ============================================================
-
-  final TextEditingController digitalBeliController =
-      TextEditingController(text: '1450000');
-
-  final TextEditingController digitalJualController =
-      TextEditingController(text: '1465000');
-
-  final TextEditingController digitalLotController =
-      TextEditingController(text: '5');
+  final TextEditingController digitalBeliController = TextEditingController(
+    text: '1450000',
+  );
+  final TextEditingController digitalJualController = TextEditingController(
+    text: '1465000',
+  );
+  final TextEditingController digitalLotController = TextEditingController(
+    text: '5',
+  );
 
   double digitalSelisih = 0;
   double digitalKotor = 0;
@@ -46,21 +44,18 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   double digitalNet = 0;
   double digitalNetPercentage = 0;
 
-  // ============================================================
-  // FISIK
-  // ============================================================
-
-  final TextEditingController fisikKursController =
-      TextEditingController(text: '16250');
-
-  final TextEditingController fisikModalController =
-      TextEditingController(text: '100000000');
-
-  final TextEditingController fisikBeliController =
-      TextEditingController(text: '2380');
-
-  final TextEditingController fisikJualController =
-      TextEditingController(text: '2410');
+  final TextEditingController fisikKursController = TextEditingController(
+    text: '16250',
+  );
+  final TextEditingController fisikModalController = TextEditingController(
+    text: '100000000',
+  );
+  final TextEditingController fisikBeliController = TextEditingController(
+    text: '2380',
+  );
+  final TextEditingController fisikJualController = TextEditingController(
+    text: '2410',
+  );
 
   double fisikBeliPerGram = 0;
   double fisikJualPerGram = 0;
@@ -74,9 +69,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   void initState() {
     super.initState();
 
-    calculateDigital();
-    calculateFisik();
-
     digitalBeliController.addListener(calculateDigital);
     digitalJualController.addListener(calculateDigital);
     digitalLotController.addListener(calculateDigital);
@@ -85,6 +77,9 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     fisikModalController.addListener(calculateFisik);
     fisikBeliController.addListener(calculateFisik);
     fisikJualController.addListener(calculateFisik);
+
+    calculateDigital();
+    calculateFisik();
   }
 
   @override
@@ -92,39 +87,27 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     digitalBeliController.dispose();
     digitalJualController.dispose();
     digitalLotController.dispose();
-
     fisikKursController.dispose();
     fisikModalController.dispose();
     fisikBeliController.dispose();
     fisikJualController.dispose();
-
     super.dispose();
   }
-
-  // ============================================================
-  // PARSE NUMBER
-  // ============================================================
 
   double parseNumber(String value) {
     return double.tryParse(value.replaceAll('.', '').replaceAll(',', '')) ?? 0;
   }
 
-  // ============================================================
-  // FORMAT RUPIAH
-  // ============================================================
-
   String formatRupiah(double value) {
     final rounded = value.round();
     final negative = rounded < 0;
     final number = rounded.abs().toString();
-
     final buffer = StringBuffer();
 
     for (int i = 0; i < number.length; i++) {
       if (i > 0 && (number.length - i) % 3 == 0) {
         buffer.write('.');
       }
-
       buffer.write(number[i]);
     }
 
@@ -132,25 +115,18 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   }
 
   String formatNumber(double value) {
-    final rounded = value.round();
-    final number = rounded.toString();
-
+    final number = value.round().toString();
     final buffer = StringBuffer();
 
     for (int i = 0; i < number.length; i++) {
       if (i > 0 && (number.length - i) % 3 == 0) {
         buffer.write('.');
       }
-
       buffer.write(number[i]);
     }
 
     return buffer.toString();
   }
-
-  // ============================================================
-  // DIGITAL CALCULATION
-  // ============================================================
 
   void calculateDigital() {
     final beli = parseNumber(digitalBeliController.text);
@@ -158,21 +134,12 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     final lot = parseNumber(digitalLotController.text);
 
     final selisih = jual - beli;
-
-    // Sesuai formula Stitch:
-    // Lot × Selisih × Rp 1.000.000
     final kotor = lot * selisih * 1000000;
-
-    // Rp 300.000 / Lot
     final fee = 300000 * lot;
-
-    // PPN 11% × Fee
     final pajak = 0.11 * fee;
-
     final net = kotor - fee - pajak;
 
     double percentage = 0;
-
     if (kotor > 0) {
       percentage = (net / kotor) * 100;
     }
@@ -189,34 +156,25 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     });
   }
 
-  // ============================================================
-  // FISIK CALCULATION
-  // ============================================================
-
   void calculateFisik() {
     final kurs = parseNumber(fisikKursController.text);
     final modal = parseNumber(fisikModalController.text);
     final beliUsd = parseNumber(fisikBeliController.text);
     final jualUsd = parseNumber(fisikJualController.text);
 
-    // (USD × Kurs) / 31.10
     final beliPerGram = (beliUsd * kurs) / tozFixed;
     final jualPerGram = (jualUsd * kurs) / tozFixed;
-
     final selisihGram = jualPerGram - beliPerGram;
 
     double jumlahGram = 0;
-
     if (beliPerGram > 0) {
       jumlahGram = modal / beliPerGram;
     }
 
     final cuan = selisihGram * jumlahGram;
-
     final totalNilaiJual = modal + cuan;
 
     double roi = 0;
-
     if (modal > 0) {
       roi = (cuan / modal) * 100;
     }
@@ -234,10 +192,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     });
   }
 
-  // ============================================================
-  // RESET
-  // ============================================================
-
   void resetCalculator() {
     digitalBeliController.text = '1450000';
     digitalJualController.text = '1465000';
@@ -252,392 +206,293 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     calculateFisik();
   }
 
-  // ============================================================
-  // SET LOT
-  // ============================================================
-
   void setDigitalLot(int value) {
     digitalLotController.text = value.toString();
   }
 
-  // ============================================================
-  // MAIN BUILD
-  // ============================================================
+  Widget _buildBottomNavigation(BuildContext context) {
+    final items = [
+      (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
+      (
+        icon: Icons.newspaper_outlined,
+        activeIcon: Icons.newspaper,
+        label: 'Berita',
+      ),
+      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Data'),
+      (
+        icon: Icons.table_chart_outlined,
+        activeIcon: Icons.table_chart,
+        label: 'Pivot',
+      ),
+      (
+        icon: Icons.calculate_outlined,
+        activeIcon: Icons.calculate,
+        label: 'Kalkulator',
+      ),
+    ];
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                child: Column(
-                  children: [
-                    _buildTopUtility(),
-                    const SizedBox(height: 12),
-                    _buildTabs(),
-                    const SizedBox(height: 12),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      child: selectedTab == 0
-                          ? _buildDigitalSection()
-                          : _buildFisikSection(),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildHistorySection(),
-                  ],
+    return Container(
+      height: 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -3),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(items.length, (index) {
+              final active = index == 4;
+
+              return SizedBox(
+                width: 82,
+                child: InkWell(
+                  onTap: () {
+                    switch (index) {
+                      case 0:
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                        break;
+
+                      case 1:
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BeritaPage()),
+                        );
+                        break;
+
+                      case 2:
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HargaEmasPage(),
+                          ),
+                        );
+                        break;
+
+                      case 3:
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const PivotPointPage(),
+                          ),
+                        );
+                        break;
+
+                      case 4:
+                        // Sudah berada di halaman Kalkulator.
+                        break;
+                    }
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        active ? items[index].activeIcon : items[index].icon,
+                        size: 27,
+                        color: active
+                            ? const Color(0xFFF58220)
+                            : const Color(0xFF9CA3AF),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        items[index].label,
+                        style: GoogleFonts.roboto(
+                          fontSize: 11,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: active
+                              ? const Color(0xFFF58220)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
+              );
+            }),
+          ),
         ),
       ),
     );
   }
 
-  // ============================================================
-  // FRONTEND CALCULATION HISTORY
-  // ============================================================
+  @override
+  Widget build(BuildContext context) {
+    final baseTheme = Theme.of(context);
 
-  void _saveCalculationToHistory() {
-    final now = DateTime.now();
-    final Map<String, dynamic> item;
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
 
-    if (selectedTab == 0) {
-      item = {
-        'type': 'Emas Digital',
-        'date': now,
-        'details': 'Beli ${formatRupiah(parseNumber(digitalBeliController.text))} • '
-            'Jual ${formatRupiah(parseNumber(digitalJualController.text))} • '
-            'Lot ${digitalLotController.text}',
-        'result': formatRupiah(digitalNet),
-        'positive': digitalNet >= 0,
-      };
-    } else {
-      item = {
-        'type': 'Emas Fisik',
-        'date': now,
-        'details': 'Modal ${formatRupiah(parseNumber(fisikModalController.text))} • '
-            'Kurs ${formatNumber(parseNumber(fisikKursController.text))} • '
-            'ROI ${fisikRoi.toStringAsFixed(2)}%',
-        'result': formatRupiah(fisikCuan),
-        'positive': fisikCuan >= 0,
-      };
-    }
-
-    setState(() {
-      _calculationHistory.insert(0, item);
-      _showHistory = true;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Perhitungan ditambahkan ke histori sesi ini.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  Widget _buildHistorySection() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5EAF2)),
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: () => setState(() => _showHistory = !_showHistory),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF7BD48).withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.history_rounded,
-                        color: Color(0xFF785600)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const PivotPointPage()),
+        );
+      },
+      child: Theme(
+        data: baseTheme.copyWith(
+          textTheme: GoogleFonts.robotoTextTheme(baseTheme.textTheme),
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Histori Perhitungan',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0B1C30),
-                            )),
-                        const SizedBox(height: 3),
-                        Text('${_calculationHistory.length} perhitungan di sesi ini',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: const Color(0xFF718096),
-                            )),
+                        Text(
+                          'Kalkulator',
+                          style: GoogleFonts.roboto(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        _buildTopUtility(),
+                        const SizedBox(height: 16),
+                        _buildTabs(),
+                        const SizedBox(height: 12),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: selectedTab == 0
+                              ? _buildDigitalSection()
+                              : _buildFisikSection(),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildHistorySection(),
                       ],
                     ),
-                  ),
-                  Icon(_showHistory ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: const Color(0xFF64748B)),
-                ],
-              ),
-            ),
-          ),
-          if (_showHistory) ...[
-            const Divider(height: 1, color: Color(0xFFE5EAF2)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _saveCalculationToHistory,
-                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-                      label: const Text('Simpan Perhitungan Saat Ini'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF213145),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (_calculationHistory.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 22),
-                      child: Column(
-                        children: [
-                          Icon(Icons.receipt_long_outlined,
-                              size: 34, color: Colors.blueGrey.shade200),
-                          const SizedBox(height: 8),
-                          Text('Belum ada histori perhitungan',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                color: const Color(0xFF718096),
-                              )),
-                          const SizedBox(height: 4),
-                          Text('Tekan tombol di atas untuk menyimpan hasil.',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 11,
-                                color: const Color(0xFF94A3B8),
-                              )),
-                        ],
-                      ),
-                    )
-                  else
-                    ..._calculationHistory.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final item = entry.value;
-                      final date = item['date'] as DateTime;
-                      final dateText = '${date.day.toString().padLeft(2, '0')}/'
-                          '${date.month.toString().padLeft(2, '0')}/${date.year} '
-                          '${date.hour.toString().padLeft(2, '0')}:'
-                          '${date.minute.toString().padLeft(2, '0')}';
-                      final isPositive = item['positive'] as bool;
-                      return Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FC),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFEDF0F5)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF7BD48).withValues(alpha: 0.18),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(
-                                item['type'] == 'Emas Digital'
-                                    ? Icons.show_chart_rounded
-                                    : Icons.savings_outlined,
-                                color: const Color(0xFF785600), size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item['type'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF213145),
-                                      )),
-                                  const SizedBox(height: 3),
-                                  Text(dateText,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10,
-                                        color: const Color(0xFF94A3B8),
-                                      )),
-                                  const SizedBox(height: 5),
-                                  Text(item['details'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10,
-                                        color: const Color(0xFF64748B),
-                                      )),
-                                  const SizedBox(height: 5),
-                                  Text(item['result'] as String,
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: isPositive
-                                            ? const Color(0xFF087443)
-                                            : const Color(0xFFB42318),
-                                      )),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Hapus histori',
-                              visualDensity: VisualDensity.compact,
-                              onPressed: () => setState(() => _calculationHistory.removeAt(index)),
-                              icon: const Icon(Icons.close_rounded, size: 18),
-                              color: const Color(0xFF94A3B8),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  if (_calculationHistory.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () => setState(() => _calculationHistory.clear()),
-                        icon: const Icon(Icons.delete_outline, size: 16),
-                        label: const Text('Hapus semua'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFB42318),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // HEADER
-  // ============================================================
-
-  Widget _buildHeader() {
-    return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FF).withValues(alpha: 0.95),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-         IconButton(
-  onPressed: () {
-    Navigator.pop(context);
-  },
-  icon: const Icon(
-    Icons.arrow_back_ios_new_rounded,
-    size: 20,
-    color: Color(0xFF111827),
-  ),
-  tooltip: 'Kembali',
-),
-          const SizedBox(width: 4),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFF785600).withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.calculate,
-              color: Color(0xFF785600),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'KALKULATOR',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0B1C30),
-                  ),
-                ),
-                Text(
-                  'PT EQUITYWORLD FUTURES',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF785600),
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: resetCalculator,
-            tooltip: 'Reset',
-            icon: const Icon(Icons.restart_alt),
-            color: const Color(0xFF4F4535),
-          ),
-        ],
+          bottomNavigationBar: _buildBottomNavigation(context),
+        ),
       ),
     );
   }
 
-  // ============================================================
-  // TOP UTILITY
-  // ============================================================
+  // HEADER: disamakan dengan Dashboard.
+
+  PreferredSizeWidget _buildHeader() {
+    return AppBar(
+      backgroundColor: _white,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      titleSpacing: 16,
+      title: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/images/logo_perusahaan.png',
+              width: 38,
+              height: 38,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'EQUITY ',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _textPrimary,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'PULSE',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                'MARKET INTELLIGENCE',
+                style: GoogleFonts.roboto(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            );
+          },
+          icon: const Icon(Icons.notifications_none, color: _textPrimary),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: _surfaceContainer,
+              child: Text(
+                'A',
+                style: GoogleFonts.roboto(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _primary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildTopUtility() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
+        color: const Color(0xFFFFF3E8),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -652,12 +507,12 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF785600).withValues(alpha: 0.10),
+              color: const Color(0xFFF58220).withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
-              Icons.calculate,
-              color: Color(0xFF785600),
+              Icons.calculate_rounded,
+              color: Color(0xFFF58220),
               size: 23,
             ),
           ),
@@ -668,10 +523,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               children: [
                 Text(
                   'Simulasi Portofolio Emas',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0B1C30),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -690,10 +545,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                       child: Text(
                         'Multi-Variable Calculation Engine',
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.roboto(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF4F4535),
+                          color: const Color(0xFF475569),
                         ),
                       ),
                     ),
@@ -708,12 +563,9 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             icon: const Icon(Icons.restart_alt, size: 16),
             label: const Text('Reset'),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF4F4535),
-              backgroundColor: const Color(0xFFE5EEFF),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 7,
-              ),
+              foregroundColor: const Color(0xFF475569),
+              backgroundColor: const Color(0xFFFFE5CC),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -724,16 +576,12 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // TABS
-  // ============================================================
-
   Widget _buildTabs() {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFE9EDF2),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
@@ -767,26 +615,17 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     final selected = selectedTab == index;
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTab = index;
-        });
-      },
+      onTap: () => setState(() => selectedTab = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(
-          vertical: 11,
-          horizontal: 8,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
         decoration: BoxDecoration(
-          color: selected
-              ? const Color(0xFF213145)
-              : Colors.transparent,
+          color: selected ? const Color(0xFFF58220) : const Color(0xFFFFF3E8),
           borderRadius: BorderRadius.circular(9),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
+                    color: const Color(0xFFF58220).withValues(alpha: 0.10),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -799,44 +638,35 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             Icon(
               icon,
               size: 18,
-              color: selected
-                  ? Colors.white
-                  : const Color(0xFF4F4535),
+              color: selected ? Colors.white : const Color(0xFF475569),
             ),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
                 title,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.roboto(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: selected
-                      ? Colors.white
-                      : const Color(0xFF4F4535),
+                  color: selected ? Colors.white : const Color(0xFF475569),
                 ),
               ),
             ),
             const SizedBox(width: 5),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 5,
-                vertical: 2,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color(0xFF785600).withValues(alpha: 0.25)
-                    : const Color(0xFFD3E4FE),
+                    ? Colors.white.withValues(alpha: 0.20)
+                    : const Color(0xFFFFE5CC),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 badge,
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.roboto(
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
-                  color: selected
-                      ? const Color(0xFFF7BD48)
-                      : const Color(0xFF4F4535),
+                  color: selected ? Colors.white : const Color(0xFF64748B),
                 ),
               ),
             ),
@@ -846,17 +676,11 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // DIGITAL SECTION
-  // ============================================================
-
   Widget _buildDigitalSection() {
     return Column(
       key: const ValueKey('digital'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildDigitalBanner(),
-        const SizedBox(height: 12),
         _buildDigitalParameters(),
         const SizedBox(height: 12),
         _buildDigitalResultCards(),
@@ -868,81 +692,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // DIGITAL BANNER
-  // ============================================================
-
-  Widget _buildDigitalBanner() {
-    return Container(
-      width: double.infinity,
-      height: 96,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF213145),
-            Color(0xFF344B63),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7BD48).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.currency_bitcoin,
-              color: Color(0xFFF7BD48),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'KONTRAK BERJANGKA DIGITAL',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                    color: const Color(0xFFF7BD48),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Perhitungan Kontrak Lot & Net Bersih',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // DIGITAL PARAMETERS
-  // ============================================================
-
   Widget _buildDigitalParameters() {
     return _sectionCard(
       child: Column(
@@ -953,10 +702,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               Expanded(
                 child: Text(
                   'Parameter Transaksi',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0B1C30),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
               ),
@@ -973,7 +722,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   child: Text(
                     '1 Lot = Rp 1jt × Δ',
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.roboto(
                       fontSize: 9,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF006947),
@@ -1011,20 +760,17 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               const SizedBox(width: 8),
               Container(
                 margin: const EdgeInsets.only(top: 18),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 7,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF785600).withValues(alpha: 0.10),
+                  color: const Color(0xFFF58220).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(7),
                 ),
                 child: Text(
                   '${parseNumber(digitalLotController.text).round()} Lot',
-                  style: GoogleFonts.jetBrainsMono(
+                  style: GoogleFonts.roboto(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF785600),
+                    color: const Color(0xFFF58220),
                   ),
                 ),
               ),
@@ -1035,10 +781,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             children: [
               Text(
                 'Preset Lot:',
-                style: GoogleFonts.plusJakartaSans(
+                style: GoogleFonts.roboto(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF4F4535),
+                  color: const Color(0xFF475569),
                 ),
               ),
               const SizedBox(width: 7),
@@ -1048,8 +794,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   child: Row(
                     children: [1, 2, 5, 10, 20].map((lot) {
                       final selected =
-                          parseNumber(digitalLotController.text).round() ==
-                              lot;
+                          parseNumber(digitalLotController.text).round() == lot;
 
                       return Padding(
                         padding: const EdgeInsets.only(right: 6),
@@ -1062,20 +807,18 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                             ),
                             decoration: BoxDecoration(
                               color: selected
-                                  ? const Color(0xFF785600).withValues(
-                                      alpha: 0.10,
-                                    )
-                                  : const Color(0xFFE5EEFF),
+                                  ? const Color(0xFFF58220)
+                                  : const Color(0xFFFFF3E8),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               '$lot Lot',
-                              style: GoogleFonts.jetBrainsMono(
+                              style: GoogleFonts.roboto(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w500,
                                 color: selected
-                                    ? const Color(0xFF785600)
-                                    : const Color(0xFF0B1C30),
+                                    ? Colors.white
+                                    : const Color(0xFF64748B),
                               ),
                             ),
                           ),
@@ -1091,10 +834,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
       ),
     );
   }
-
-  // ============================================================
-  // DIGITAL RESULT CARDS
-  // ============================================================
 
   Widget _buildDigitalResultCards() {
     return GridView.count(
@@ -1117,7 +856,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           value: formatRupiah(digitalKotor),
           subtitle: 'Lot × Selisih × 1jt',
           icon: Icons.pie_chart_outline,
-          iconColor: const Color(0xFF785600),
+          iconColor: const Color(0xFFF58220),
         ),
         _resultCard(
           title: 'Broker Fee',
@@ -1139,10 +878,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // DIGITAL NET CARD
-  // ============================================================
-
   Widget _buildDigitalNetCard() {
     final positive = digitalNet >= 0;
 
@@ -1150,8 +885,9 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF213145),
-        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFFFFFCF7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0DCC4)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.10),
@@ -1170,7 +906,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               height: 130,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFF7BD48).withValues(alpha: 0.08),
+                color: const Color(0xFFF58220).withValues(alpha: 0.06),
               ),
             ),
           ),
@@ -1193,11 +929,11 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   Expanded(
                     child: Text(
                       'HASIL AKHIR BERSIH (NET PROFIT)',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.roboto(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
-                        color: const Color(0xFFF7BD48),
+                        color: const Color(0xFFD96812),
                       ),
                     ),
                   ),
@@ -1207,15 +943,15 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF00855B).withValues(alpha: 0.20),
+                      color: const Color(0xFFE7F7EF),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '${digitalNetPercentage >= 0 ? '+' : ''}${digitalNetPercentage.toStringAsFixed(2)}% Net',
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.roboto(
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF4EDEA3),
+                        color: const Color(0xFF00866A),
                       ),
                     ),
                   ),
@@ -1224,18 +960,18 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               const SizedBox(height: 12),
               Text(
                 formatRupiah(digitalNet),
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.roboto(
                   fontSize: 27,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFFF8F9FF),
+                  color: const Color(0xFF1F2937),
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 'Setelah dikurangi Beban Fee & PPN',
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.roboto(
                   fontSize: 10,
-                  color: const Color(0xFFCBDBF5),
+                  color: const Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1244,15 +980,15 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   Expanded(
                     child: Text(
                       'Kotor: ${formatRupiah(digitalKotor)}',
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.roboto(
                         fontSize: 9,
-                        color: const Color(0xFFEAF1FF),
+                        color: const Color(0xFF475569),
                       ),
                     ),
                   ),
                   Text(
                     'Potongan: -${formatRupiah(digitalFee + digitalPajak)}',
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.roboto(
                       fontSize: 9,
                       color: const Color(0xFFFF8A8A),
                     ),
@@ -1270,14 +1006,14 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                           : 1,
                       child: Container(
                         height: 7,
-                        color: const Color(0xFF4EDEA3),
+                        color: const Color(0xFF00866A),
                       ),
                     ),
                     Expanded(
                       flex: digitalKotor > 0
                           ? (digitalKotor - digitalNet)
-                              .clamp(0, digitalKotor)
-                              .round()
+                                .clamp(0, digitalKotor)
+                                .round()
                           : 1,
                       child: Container(
                         height: 7,
@@ -1294,15 +1030,11 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // DIGITAL FORMULA
-  // ============================================================
-
   Widget _buildDigitalFormula() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
+        color: const Color(0xFFFFF3E8),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1313,31 +1045,25 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               const Icon(
                 Icons.info_outline,
                 size: 18,
-                color: Color(0xFF785600),
+                color: Color(0xFFF58220),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Formula Standardisasi Digital (BBJ / ICDX)',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0B1C30),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 9),
-          _formulaRow(
-            '1. Selisih Point',
-            'Harga Jual − Harga Beli',
-          ),
+          _formulaRow('1. Selisih Point', 'Harga Jual − Harga Beli'),
           const SizedBox(height: 5),
-          _formulaRow(
-            '2. Gross Revenue',
-            'Lot × Selisih × Rp 1.000.000',
-          ),
+          _formulaRow('2. Gross Revenue', 'Lot × Selisih × Rp 1.000.000'),
           const SizedBox(height: 5),
           _formulaRow(
             '3. Total Biaya Operasional',
@@ -1348,17 +1074,11 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // FISIK SECTION
-  // ============================================================
-
   Widget _buildFisikSection() {
     return Column(
       key: const ValueKey('fisik'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildFisikBanner(),
-        const SizedBox(height: 12),
         _buildTozNotice(),
         const SizedBox(height: 12),
         _buildFisikParameters(),
@@ -1372,95 +1092,16 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // FISIK BANNER
-  // ============================================================
-
-  Widget _buildFisikBanner() {
-    return Container(
-      width: double.infinity,
-      height: 96,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF213145),
-            Color(0xFF344B63),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7BD48).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.workspace_premium,
-              color: Color(0xFFF7BD48),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SPOT PHYSICAL GOLD / LM',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                    color: const Color(0xFFF7BD48),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Konversi Troy Ounce & Valuasi Rupiah',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ============================================================
-  // TOZ NOTICE
-  // ============================================================
-
   Widget _buildTozNotice() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF785600).withValues(alpha: 0.10),
+        color: const Color(0xFFF58220).withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.lock_outline,
-            color: Color(0xFF785600),
-            size: 24,
-          ),
+          const Icon(Icons.lock_outline, color: Color(0xFFF58220), size: 24),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1468,38 +1109,35 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               children: [
                 Text(
                   'Standar Bobot Tetap',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0B1C30),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Troy Ounce Internasional (Non-Editable)',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 10,
-                    color: const Color(0xFF4F4535),
+                    color: const Color(0xFF475569),
                   ),
                 ),
               ],
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 7,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
               '31.10 Gram',
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.roboto(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF785600),
+                color: const Color(0xFFF58220),
               ),
             ),
           ),
@@ -1507,10 +1145,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
       ),
     );
   }
-
-  // ============================================================
-  // FISIK PARAMETERS
-  // ============================================================
 
   Widget _buildFisikParameters() {
     return _sectionCard(
@@ -1522,25 +1156,22 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               Expanded(
                 child: Text(
                   'Parameter Pembelian Fisik',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0B1C30),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00855B).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'USD/IDR Live Basis',
-                  style: GoogleFonts.jetBrainsMono(
+                  style: GoogleFonts.roboto(
                     fontSize: 9,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF006947),
@@ -1568,27 +1199,19 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             label: 'Harga Beli Spot (USD / oz)',
             prefix: '\$',
             controller: fisikBeliController,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           const SizedBox(height: 10),
           _calculatorInput(
             label: 'Harga Jual Spot (USD / oz)',
             prefix: '\$',
             controller: fisikJualController,
-            keyboardType: const TextInputType.numberWithOptions(
-              decimal: true,
-            ),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ],
       ),
     );
   }
-
-  // ============================================================
-  // FISIK RESULT CARDS
-  // ============================================================
 
   Widget _buildFisikResultCards() {
     return GridView.count(
@@ -1604,14 +1227,14 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           value: formatRupiah(fisikBeliPerGram),
           subtitle: '(USD × Kurs) / 31.1',
           icon: Icons.sell_outlined,
-          iconColor: const Color(0xFF4F4535),
+          iconColor: const Color(0xFF475569),
         ),
         _resultCard(
           title: 'Jual / Gram',
           value: formatRupiah(fisikJualPerGram),
           subtitle: '(USD × Kurs) / 31.1',
           icon: Icons.shopping_cart_outlined,
-          iconColor: const Color(0xFF4F4535),
+          iconColor: const Color(0xFF475569),
         ),
         _resultCard(
           title: 'Selisih / Gram',
@@ -1627,23 +1250,19 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           value: '${fisikJumlahGram.toStringAsFixed(2)} gr',
           subtitle: 'Modal / Beli Gram',
           icon: Icons.scale_outlined,
-          iconColor: const Color(0xFF785600),
-          valueColor: const Color(0xFF785600),
+          iconColor: const Color(0xFFF58220),
+          valueColor: const Color(0xFFF58220),
         ),
       ],
     );
   }
-
-  // ============================================================
-  // FISIK NET CARD
-  // ============================================================
 
   Widget _buildFisikNetCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF213145),
+        color: const Color(0xFF1F2937),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1677,7 +1296,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                     height: 9,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Color(0xFFF7BD48),
+                        color: Color(0xFFFFC58A),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -1686,11 +1305,11 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   Expanded(
                     child: Text(
                       'ESTIMASI KEUNTUNGAN BERSIH',
-                      style: GoogleFonts.plusJakartaSans(
+                      style: GoogleFonts.roboto(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1,
-                        color: const Color(0xFFF7BD48),
+                        color: const Color(0xFFFFC58A),
                       ),
                     ),
                   ),
@@ -1705,7 +1324,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                     ),
                     child: Text(
                       '${fisikRoi >= 0 ? '+' : ''}${fisikRoi.toStringAsFixed(2)}% ROI',
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.roboto(
                         fontSize: 9,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF4EDEA3),
@@ -1717,16 +1336,16 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               const SizedBox(height: 12),
               Text(
                 formatRupiah(fisikCuan),
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.roboto(
                   fontSize: 27,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFFF8F9FF),
+                  color: const Color(0xFFF8FAFC),
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 'Selisih/Gram × Bobot Didapat',
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.roboto(
                   fontSize: 10,
                   color: const Color(0xFFCBDBF5),
                 ),
@@ -1744,16 +1363,12 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.scale,
-                      size: 16,
-                      color: Color(0xFFF7BD48),
-                    ),
+                    const Icon(Icons.scale, size: 16, color: Color(0xFFFFC58A)),
                     const SizedBox(width: 7),
                     Expanded(
                       child: Text(
                         'Valuasi Penjualan Fisik:',
-                        style: GoogleFonts.plusJakartaSans(
+                        style: GoogleFonts.roboto(
                           fontSize: 10,
                           color: const Color(0xFFEAF1FF),
                         ),
@@ -1761,10 +1376,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                     ),
                     Text(
                       formatRupiah(fisikTotalNilai),
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.roboto(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFFF8F9FF),
+                        color: const Color(0xFFF8FAFC),
                       ),
                     ),
                   ],
@@ -1777,25 +1392,17 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // FISIK FOOTNOTE
-  // ============================================================
-
   Widget _buildFisikFootnote() {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF4FF),
+        color: const Color(0xFFFFF3E8),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.help_outline,
-            size: 20,
-            color: Color(0xFF4F4535),
-          ),
+          const Icon(Icons.help_outline, size: 20, color: Color(0xFF475569)),
           const SizedBox(width: 9),
           Expanded(
             child: Column(
@@ -1803,10 +1410,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
               children: [
                 Text(
                   'Catatan Konversi Fisik',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF0B1C30),
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1815,10 +1422,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   '24 Karat (99.99%). Standar satuan troy ounce (oz) '
                   'konstan di 31.1035 gram. Biaya cetak & sertifikasi '
                   '(Antam/UBS) tidak diperhitungkan.',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 10,
                     height: 1.45,
-                    color: const Color(0xFF4F4535),
+                    color: const Color(0xFF475569),
                   ),
                 ),
               ],
@@ -1829,13 +1436,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // GENERAL SECTION CARD
-  // ============================================================
-
-  Widget _sectionCard({
-    required Widget child,
-  }) {
+  Widget _sectionCard({required Widget child}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -1853,10 +1454,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // INPUT
-  // ============================================================
-
   Widget _calculatorInput({
     required String label,
     required TextEditingController controller,
@@ -1869,16 +1466,16 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
       children: [
         Text(
           label,
-          style: GoogleFonts.plusJakartaSans(
+          style: GoogleFonts.roboto(
             fontSize: 10,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF4F4535),
+            color: const Color(0xFF475569),
           ),
         ),
         const SizedBox(height: 5),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFEFF4FF),
+            color: const Color(0xFFFFF3E8),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -1888,10 +1485,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   padding: const EdgeInsets.only(left: 12),
                   child: Text(
                     prefix,
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.roboto(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF4F4535),
+                      color: const Color(0xFF475569),
                     ),
                   ),
                 ),
@@ -1900,19 +1497,17 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   controller: controller,
                   keyboardType: keyboardType,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[0-9.]'),
-                    ),
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
-                  style: GoogleFonts.jetBrainsMono(
+                  style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF0B1C30),
+                    color: const Color(0xFF1F2937),
                   ),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Masukkan nilai',
-                    hintStyle: GoogleFonts.jetBrainsMono(
+                    hintStyle: GoogleFonts.roboto(
                       fontSize: 11,
                       color: const Color(0xFF817563),
                     ),
@@ -1930,10 +1525,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   padding: const EdgeInsets.only(right: 12),
                   child: Text(
                     suffix,
-                    style: GoogleFonts.jetBrainsMono(
+                    style: GoogleFonts.roboto(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF4F4535),
+                      color: const Color(0xFF475569),
                     ),
                   ),
                 ),
@@ -1943,10 +1538,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
       ],
     );
   }
-
-  // ============================================================
-  // RESULT CARD
-  // ============================================================
 
   Widget _resultCard({
     required String title,
@@ -1978,18 +1569,14 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     fontSize: 10,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF4F4535),
+                    color: const Color(0xFF475569),
                   ),
                 ),
               ),
-              Icon(
-                icon,
-                size: 16,
-                color: iconColor,
-              ),
+              Icon(icon, size: 16, color: iconColor),
             ],
           ),
           const SizedBox(height: 8),
@@ -2000,10 +1587,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.roboto(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: valueColor ?? const Color(0xFF0B1C30),
+                  color: valueColor ?? const Color(0xFF1F2937),
                 ),
               ),
             ),
@@ -2012,7 +1599,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.jetBrainsMono(
+            style: GoogleFonts.roboto(
               fontSize: 8,
               color: const Color(0xFF817563),
             ),
@@ -2022,14 +1609,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  // ============================================================
-  // FORMULA ROW
-  // ============================================================
-
-  Widget _formulaRow(
-    String title,
-    String formula,
-  ) {
+  Widget _formulaRow(String title, String formula) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(9),
@@ -2042,9 +1622,9 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           Expanded(
             child: Text(
               title,
-              style: GoogleFonts.plusJakartaSans(
+              style: GoogleFonts.roboto(
                 fontSize: 10,
-                color: const Color(0xFF4F4535),
+                color: const Color(0xFF475569),
               ),
             ),
           ),
@@ -2053,13 +1633,290 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             child: Text(
               formula,
               textAlign: TextAlign.right,
-              style: GoogleFonts.jetBrainsMono(
+              style: GoogleFonts.roboto(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
-                color: const Color(0xFF0B1C30),
+                color: const Color(0xFF1F2937),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  // HISTORI PERHITUNGAN
+
+  void _saveCalculationToHistory() {
+    final now = DateTime.now();
+    final Map<String, dynamic> item;
+
+    if (selectedTab == 0) {
+      item = {
+        'type': 'Emas Digital',
+        'date': now,
+        'details':
+            'Beli ${formatRupiah(parseNumber(digitalBeliController.text))} • '
+            'Jual ${formatRupiah(parseNumber(digitalJualController.text))} • '
+            'Lot ${digitalLotController.text}',
+        'result': formatRupiah(digitalNet),
+        'positive': digitalNet >= 0,
+      };
+    } else {
+      item = {
+        'type': 'Emas Fisik',
+        'date': now,
+        'details':
+            'Modal ${formatRupiah(parseNumber(fisikModalController.text))} • '
+            'Kurs ${formatNumber(parseNumber(fisikKursController.text))} • '
+            'ROI ${fisikRoi.toStringAsFixed(2)}%',
+        'result': formatRupiah(fisikCuan),
+        'positive': fisikCuan >= 0,
+      };
+    }
+
+    setState(() {
+      _calculationHistory.insert(0, item);
+      _showHistory = true;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Perhitungan ditambahkan ke histori sesi ini.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  Widget _buildHistorySection() {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFE5CC)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => setState(() => _showHistory = !_showHistory),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFC58A).withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.history_rounded,
+                      color: Color(0xFFF58220),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Histori Perhitungan',
+                          style: GoogleFonts.roboto(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1F2937),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${_calculationHistory.length} perhitungan di sesi ini',
+                          style: GoogleFonts.roboto(
+                            fontSize: 11,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    _showHistory
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: const Color(0xFF64748B),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_showHistory) ...[
+            const Divider(height: 1, color: Color(0xFFFFE5CC)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveCalculationToHistory,
+                      icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                      label: const Text('Simpan Perhitungan Saat Ini'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1F2937),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_calculationHistory.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 22),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 34,
+                            color: Colors.blueGrey.shade200,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Belum ada histori perhitungan',
+                            style: GoogleFonts.roboto(
+                              fontSize: 12,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tekan tombol di atas untuk menyimpan hasil.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.roboto(
+                              fontSize: 11,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ..._calculationHistory.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      final date = item['date'] as DateTime;
+                      final dateText =
+                          '${date.day.toString().padLeft(2, '0')}/'
+                          '${date.month.toString().padLeft(2, '0')}/${date.year} '
+                          '${date.hour.toString().padLeft(2, '0')}:'
+                          '${date.minute.toString().padLeft(2, '0')}';
+                      final isPositive = item['positive'] as bool;
+
+                      return Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFFE5CC)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFFFFC58A,
+                                ).withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                item['type'] == 'Emas Digital'
+                                    ? Icons.show_chart_rounded
+                                    : Icons.savings_outlined,
+                                color: const Color(0xFFF58220),
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item['type'] as String,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF1F2937),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    dateText,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 10,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    item['details'] as String,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 10,
+                                      color: const Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    item['result'] as String,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isPositive
+                                          ? const Color(0xFF087443)
+                                          : const Color(0xFFB42318),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: 'Hapus histori',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => setState(
+                                () => _calculationHistory.removeAt(index),
+                              ),
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              color: const Color(0xFF64748B),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  if (_calculationHistory.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            setState(() => _calculationHistory.clear()),
+                        icon: const Icon(Icons.delete_outline, size: 16),
+                        label: const Text('Hapus semua'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFFB42318),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

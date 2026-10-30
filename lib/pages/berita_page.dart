@@ -1,17 +1,17 @@
 import 'dart:async';
-import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'berita_detail_page.dart';
 import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'berita_detail_page.dart';
 import 'dashboard_page.dart';
 import 'harga_emas_page.dart';
 import 'pivot_point_page.dart';
 import 'kalkulator_page.dart';
-import 'histori_page.dart';
-import 'informasi_pt_page.dart';
 
 class BeritaPage extends StatefulWidget {
   const BeritaPage({super.key});
@@ -21,6 +21,17 @@ class BeritaPage extends StatefulWidget {
 }
 
 class _BeritaPageState extends State<BeritaPage> {
+  // ============================================================
+  // COLORS
+  // ============================================================
+
+  static const Color _textPrimary = Color(0xFF1F2937);
+  static const Color _primary = Color(0xFFF58220);
+
+  // ============================================================
+  // STATE
+  // ============================================================
+
   int selectedCategory = 0;
   int selectedPage = 1;
 
@@ -40,9 +51,15 @@ class _BeritaPageState extends State<BeritaPage> {
 
   List<Map<String, dynamic>> news = [];
   Set<String> savedNewsKeys = {};
+
   bool isLoadingSavedNews = true;
   bool isLoadingNews = true;
+
   String newsError = '';
+
+  // ============================================================
+  // INIT STATE
+  // ============================================================
 
   @override
   void initState() {
@@ -50,6 +67,10 @@ class _BeritaPageState extends State<BeritaPage> {
     _loadNews();
     _loadSavedNews();
   }
+
+  // ============================================================
+  // LOAD SAVED NEWS
+  // ============================================================
 
   Future<void> _loadSavedNews() async {
     final prefs = await SharedPreferences.getInstance();
@@ -62,12 +83,14 @@ class _BeritaPageState extends State<BeritaPage> {
         final item = jsonDecode(raw) as Map<String, dynamic>;
         return _newsKey(item);
       }).toSet();
+
       isLoadingSavedNews = false;
     });
   }
 
   String _newsKey(Map<String, dynamic> item) {
     final url = (item['url'] ?? '').toString().trim();
+
     if (url.isNotEmpty) return url;
 
     return (item['title'] ?? '').toString().trim();
@@ -75,6 +98,7 @@ class _BeritaPageState extends State<BeritaPage> {
 
   Future<void> _toggleSavedNews(Map<String, dynamic> item) async {
     final prefs = await SharedPreferences.getInstance();
+
     final items = prefs.getStringList('saved_news_items') ?? [];
     final key = _newsKey(item);
 
@@ -113,6 +137,10 @@ class _BeritaPageState extends State<BeritaPage> {
     );
   }
 
+  // ============================================================
+  // SHARE NEWS
+  // ============================================================
+
   Future<void> _shareNews(Map<String, dynamic> item) async {
     final title = (item['title'] ?? 'Berita Emas').toString();
     final url = (item['url'] ?? '').toString().trim();
@@ -122,12 +150,20 @@ class _BeritaPageState extends State<BeritaPage> {
         : title;
 
     await SharePlus.instance.share(
-      ShareParams(text: text, subject: title),
+      ShareParams(
+        text: text,
+        subject: title,
+      ),
     );
   }
 
+  // ============================================================
+  // FORMAT DATE
+  // ============================================================
+
   String _formatDate(String raw) {
     final parsed = DateTime.tryParse(raw);
+
     if (parsed == null) return raw;
 
     final date = parsed.toLocal();
@@ -153,6 +189,10 @@ class _BeritaPageState extends State<BeritaPage> {
 
     return '$day ${months[date.month - 1]} ${date.year} • $hour:$minute';
   }
+
+  // ============================================================
+  // LOAD NEWS FROM API
+  // ============================================================
 
   Future<void> _loadNews() async {
     try {
@@ -188,6 +228,7 @@ class _BeritaPageState extends State<BeritaPage> {
             final dateA = DateTime.tryParse(
               (a['publishedAt'] ?? '').toString(),
             );
+
             final dateB = DateTime.tryParse(
               (b['publishedAt'] ?? '').toString(),
             );
@@ -219,6 +260,10 @@ class _BeritaPageState extends State<BeritaPage> {
     }
   }
 
+  // ============================================================
+  // BUILD
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
     return DefaultTextStyle.merge(
@@ -226,48 +271,71 @@ class _BeritaPageState extends State<BeritaPage> {
       child: Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
 
+        // ======================================================
+        // APP BAR
+        // ======================================================
+
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           titleSpacing: 16,
+
           title: Row(
             children: [
               Container(
-  width: 42,
-  height: 42,
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(8),
-  ),
-  clipBehavior: Clip.antiAlias,
-  child: Image.asset(
-    'assets/images/logo_perusahaan.png',
-    fit: BoxFit.contain,
-    errorBuilder: (context, error, stackTrace) {
-      return const Icon(
-        Icons.trending_up,
-        color: Color(0xFFD96812),
-      );
-    },
-  ),
-),
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/images/logo_perusahaan.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.trending_up,
+                      color: Color(0xFFD96812),
+                    );
+                  },
+                ),
+              ),
+
               const SizedBox(width: 10),
-              const Column(
+
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'EQUITY PULSE',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1F2937),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'EQUITY ',
+                          style: GoogleFonts.roboto(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: _textPrimary,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'PULSE',
+                          style: GoogleFonts.roboto(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: _primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
+
+                  const Text(
                     'MARKET INTELLIGENCE',
                     style: TextStyle(
-                      fontSize: 9,
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF64748B),
                     ),
@@ -276,6 +344,7 @@ class _BeritaPageState extends State<BeritaPage> {
               ),
             ],
           ),
+
           actions: [
             IconButton(
               onPressed: () {
@@ -292,6 +361,7 @@ class _BeritaPageState extends State<BeritaPage> {
                 color: Color(0xFF1F2937),
               ),
             ),
+
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: CircleAvatar(
@@ -310,6 +380,10 @@ class _BeritaPageState extends State<BeritaPage> {
           ],
         ),
 
+        // ======================================================
+        // BODY
+        // ======================================================
+
         body: SafeArea(
           top: false,
           bottom: false,
@@ -326,6 +400,10 @@ class _BeritaPageState extends State<BeritaPage> {
           ),
         ),
 
+        // ======================================================
+        // BOTTOM NAVIGATION
+        // ======================================================
+
         bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
@@ -337,62 +415,14 @@ class _BeritaPageState extends State<BeritaPage> {
 
   Widget _buildEditorialHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 4,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E8),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.feed_outlined,
-                  size: 16,
-                  color: Color(0xFFF58220),
-                ),
-                SizedBox(width: 5),
-                Text(
-                  'COMMODITY INTELLIGENCE',
-                  style: TextStyle(
-                    color: Color(0xFF475569),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.7,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Berita Emas & Wawasan Komoditas',
-            style: TextStyle(
-              color: Color(0xFF1F2937),
-              fontSize: 24,
-              height: 1.25,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
-            ),
-          ),
-          const SizedBox(height: 7),
-          const Text(
-            'Informasi dan analisis fundamental pasar emas fisik '
-            'dan berjangka terkurasi harian',
-            style: TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 14,
-              height: 1.45,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Text(
+        'Berita',
+        style: GoogleFonts.roboto(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: _textPrimary,
+        ),
       ),
     );
   }
@@ -425,7 +455,7 @@ class _BeritaPageState extends State<BeritaPage> {
           Container(
             height: 52,
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            color: const Color(0xFFF58220),
+            color: _primary,
             alignment: Alignment.center,
             child: const Text(
               'TOP NEWS',
@@ -437,6 +467,7 @@ class _BeritaPageState extends State<BeritaPage> {
               ),
             ),
           ),
+
           Expanded(
             child: SizedBox(
               height: 52,
@@ -468,6 +499,7 @@ class _BeritaPageState extends State<BeritaPage> {
                           ),
                         ),
                       ),
+
                       const Text(
                         '|',
                         style: TextStyle(
@@ -518,7 +550,9 @@ class _BeritaPageState extends State<BeritaPage> {
               size: 40,
               color: Color(0xFFD96812),
             ),
+
             const SizedBox(height: 12),
+
             Text(
               newsError,
               textAlign: TextAlign.center,
@@ -527,11 +561,13 @@ class _BeritaPageState extends State<BeritaPage> {
                 fontSize: 13,
               ),
             ),
+
             const SizedBox(height: 12),
+
             ElevatedButton(
               onPressed: _loadNews,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF58220),
+                backgroundColor: _primary,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Coba Lagi'),
@@ -608,6 +644,7 @@ class _BeritaPageState extends State<BeritaPage> {
                   },
                 ),
               ),
+
               Positioned(
                 top: 12,
                 left: 12,
@@ -632,6 +669,7 @@ class _BeritaPageState extends State<BeritaPage> {
               ),
             ],
           ),
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -642,7 +680,9 @@ class _BeritaPageState extends State<BeritaPage> {
                   (item['date'] ?? '').toString(),
                   derivative ? Icons.newspaper : Icons.storefront,
                 ),
+
                 const SizedBox(height: 9),
+
                 Text(
                   (item['title'] ?? '').toString(),
                   style: const TextStyle(
@@ -652,7 +692,9 @@ class _BeritaPageState extends State<BeritaPage> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(
                   (item['description'] ?? '').toString(),
                   maxLines: 3,
@@ -663,7 +705,9 @@ class _BeritaPageState extends State<BeritaPage> {
                     height: 1.5,
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
                 _buildNewsActions(item),
               ],
             ),
@@ -687,9 +731,11 @@ class _BeritaPageState extends State<BeritaPage> {
         Icon(
           icon,
           size: 16,
-          color: const Color(0xFFF58220),
+          color: _primary,
         ),
+
         const SizedBox(width: 6),
+
         Expanded(
           child: Text(
             source,
@@ -702,7 +748,9 @@ class _BeritaPageState extends State<BeritaPage> {
             ),
           ),
         ),
+
         const SizedBox(width: 8),
+
         Flexible(
           child: Text(
             date,
@@ -720,7 +768,7 @@ class _BeritaPageState extends State<BeritaPage> {
   }
 
   // ============================================================
-  // SAVE NEWS
+  // SAVE NEWS BUTTON
   // ============================================================
 
   Widget _buildSaveButton(Map<String, dynamic> item) {
@@ -731,7 +779,7 @@ class _BeritaPageState extends State<BeritaPage> {
       onPressed: () => _toggleSavedNews(item),
       icon: Icon(
         isSaved ? Icons.bookmark : Icons.bookmark_border,
-        color: const Color(0xFFF58220),
+        color: _primary,
       ),
     );
   }
@@ -744,19 +792,23 @@ class _BeritaPageState extends State<BeritaPage> {
     return Row(
       children: [
         _buildSaveButton(item),
+
         const SizedBox(width: 7),
+
         IconButton(
           tooltip: 'Bagikan berita',
           onPressed: () => _shareNews(item),
           icon: const Icon(Icons.share_outlined),
-          color: const Color(0xFFF58220),
+          color: _primary,
         ),
+
         const Spacer(),
+
         Flexible(
           child: ElevatedButton(
             onPressed: () => _openNewsDetail(item),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF58220),
+              backgroundColor: _primary,
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(
@@ -780,8 +832,13 @@ class _BeritaPageState extends State<BeritaPage> {
                     ),
                   ),
                 ),
+
                 SizedBox(width: 5),
-                Icon(Icons.arrow_forward, size: 16),
+
+                Icon(
+                  Icons.arrow_forward,
+                  size: 16,
+                ),
               ],
             ),
           ),
@@ -789,6 +846,10 @@ class _BeritaPageState extends State<BeritaPage> {
       ],
     );
   }
+
+  // ============================================================
+  // OPEN NEWS DETAIL
+  // ============================================================
 
   void _openNewsDetail(Map<String, dynamic> item) {
     Navigator.push(
@@ -818,7 +879,7 @@ class _BeritaPageState extends State<BeritaPage> {
       (
         icon: Icons.show_chart,
         activeIcon: Icons.show_chart,
-        label: 'Harga',
+        label: 'Data',
       ),
       (
         icon: Icons.table_chart_outlined,
@@ -830,16 +891,6 @@ class _BeritaPageState extends State<BeritaPage> {
         activeIcon: Icons.calculate,
         label: 'Kalkulator',
       ),
-      (
-        icon: Icons.history_outlined,
-        activeIcon: Icons.history,
-        label: 'Histori',
-      ),
-      (
-        icon: Icons.apartment_outlined,
-        activeIcon: Icons.apartment,
-        label: 'Profil PT',
-      ),
     ];
 
     return Container(
@@ -847,7 +898,9 @@ class _BeritaPageState extends State<BeritaPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(color: Colors.grey.shade200),
+          top: BorderSide(
+            color: Colors.grey.shade200,
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -878,8 +931,10 @@ class _BeritaPageState extends State<BeritaPage> {
                           ),
                         );
                         break;
+
                       case 1:
                         break;
+
                       case 2:
                         Navigator.push(
                           context,
@@ -888,6 +943,7 @@ class _BeritaPageState extends State<BeritaPage> {
                           ),
                         );
                         break;
+
                       case 3:
                         Navigator.push(
                           context,
@@ -896,27 +952,12 @@ class _BeritaPageState extends State<BeritaPage> {
                           ),
                         );
                         break;
+
                       case 4:
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const KalkulatorPage(),
-                          ),
-                        );
-                        break;
-                      case 5:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HistoriPage(),
-                          ),
-                        );
-                        break;
-                      case 6:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const InformasiPtPage(),
                           ),
                         );
                         break;
@@ -929,16 +970,18 @@ class _BeritaPageState extends State<BeritaPage> {
                         active
                             ? items[index].activeIcon
                             : items[index].icon,
-                        size: 21,
+                        size: 27,
                         color: active
                             ? const Color(0xFFD96812)
                             : const Color(0xFF9CA3AF),
                       ),
+
                       const SizedBox(height: 4),
+
                       Text(
                         items[index].label,
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: active
                               ? FontWeight.w800
                               : FontWeight.w600,

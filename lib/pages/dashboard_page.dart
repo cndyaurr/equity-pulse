@@ -17,10 +17,7 @@ import 'login.dart';
 class DashboardPage extends StatefulWidget {
   final Map<String, dynamic>? user;
 
-  const DashboardPage({
-    super.key,
-    this.user,
-  });
+  const DashboardPage({super.key, this.user});
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
@@ -62,10 +59,11 @@ class _DashboardPageState extends State<DashboardPage> {
     FontWeight weight = FontWeight.w400,
     Color color = textPrimary,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.roboto(
       fontSize: size,
       fontWeight: weight,
       color: color,
+      height: 1.2,
     );
   }
 
@@ -105,9 +103,21 @@ class _DashboardPageState extends State<DashboardPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'EQUITY PULSE',
-                  style: jakarta(size: 16, weight: FontWeight.w700),
+                RichText(
+                  text: TextSpan(
+                    style: jakarta(
+                      size: 18,
+                      weight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
+                    children: const [
+                      TextSpan(text: 'EQUITY '),
+                      TextSpan(
+                        text: 'PULSE',
+                        style: TextStyle(color: Color(0xFFFF9800)),
+                      ),
+                    ],
+                  ),
                 ),
                 Text(
                   'MARKET INTELLIGENCE',
@@ -141,9 +151,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ProfileScreen(
-  user: widget.user,
-),
+                    builder: (context) => ProfileScreen(user: widget.user),
                   ),
                 );
               },
@@ -226,7 +234,7 @@ class _DashboardPageState extends State<DashboardPage> {
         activeIcon: Icons.newspaper,
         label: 'Berita',
       ),
-      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Harga'),
+      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Data'),
       (
         icon: Icons.table_chart_outlined,
         activeIcon: Icons.table_chart,
@@ -236,16 +244,6 @@ class _DashboardPageState extends State<DashboardPage> {
         icon: Icons.calculate_outlined,
         activeIcon: Icons.calculate,
         label: 'Kalkulator',
-      ),
-      (
-        icon: Icons.history_outlined,
-        activeIcon: Icons.history,
-        label: 'Histori',
-      ),
-      (
-        icon: Icons.apartment_outlined,
-        activeIcon: Icons.apartment,
-        label: 'Profil PT',
       ),
     ];
 
@@ -313,24 +311,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         );
                         break;
-
-                      case 5:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HistoriPage(),
-                          ),
-                        );
-                        break;
-
-                      case 6:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const InformasiPtPage(),
-                          ),
-                        );
-                        break;
                     }
                   },
                   child: Column(
@@ -338,14 +318,14 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       Icon(
                         active ? items[index].activeIcon : items[index].icon,
-                        size: 21,
+                        size: 27,
                         color: active ? primary : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         items[index].label,
                         style: GoogleFonts.roboto(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: active
                               ? FontWeight.w700
                               : FontWeight.w500,
@@ -465,8 +445,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const HargaEmasPage(),
+                    builder: (context) => const HargaEmasPage(),
                   ),
                 );
               },
