@@ -488,6 +488,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
 
   Widget _buildTabs() {
   return Container(
+    height: 48,
     padding: const EdgeInsets.all(4),
     decoration: BoxDecoration(
       color: const Color(0xFFE9EDF2),
@@ -498,14 +499,12 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
         Expanded(
           child: _calcTab(
             index: 0,
-            icon: Icons.currency_bitcoin,
             title: 'Emas Digital',
           ),
         ),
         Expanded(
           child: _calcTab(
             index: 1,
-            icon: Icons.edit_note,
             title: 'Emas Fisik',
           ),
         ),
@@ -517,24 +516,24 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   
 Widget _calcTab({
   required int index,
-  required IconData icon,
   required String title,
 }) {
   final selected = selectedTab == index;
 
   return GestureDetector(
-    onTap: () => setState(() => selectedTab = index),
+    onTap: () {
+      setState(() {
+        selectedTab = index;
+      });
+    },
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(
-        vertical: 11,
-        horizontal: 8,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
         color: selected
             ? const Color(0xFFF58220)
             : const Color(0xFFFFF3E8),
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: selected
             ? [
                 BoxShadow(
@@ -546,36 +545,23 @@ Widget _calcTab({
               ]
             : null,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: selected
-                ? Colors.white
-                : const Color(0xFF475569),
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              title,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.roboto(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: selected
-                    ? Colors.white
-                    : const Color(0xFF475569),
-              ),
-            ),
-          ),
-        ],
+      alignment: Alignment.center,
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.roboto(
+          fontSize: 12,
+          fontWeight: selected
+              ? FontWeight.w800
+              : FontWeight.w600,
+          color: selected
+              ? Colors.white
+              : const Color(0xFF64748B),
+        ),
       ),
     ),
   );
 }
-
 
   Widget _buildDigitalSection() {
     return Column(

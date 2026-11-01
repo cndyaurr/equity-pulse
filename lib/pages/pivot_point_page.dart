@@ -465,73 +465,83 @@ class _PivotPointPageState extends State<PivotPointPage> {
     );
   }
 
+
+
   Widget _buildAssetBar() {
-    return _card(
-      child: Row(
-        children: [
-          Expanded(
-            child: _assetButton(label: 'LGD (Loco London Gold)', asset: 'LGD'),
+  return Container(
+    height: 48,
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE9EDF2),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: _assetButton(
+            label: 'LGD',
+            asset: 'LGD',
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _assetButton(label: 'HSI (Hang Seng Index)', asset: 'HSI'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _assetButton({required String label, required String asset}) {
-    final active = _currentAsset == asset;
-
-    return GestureDetector(
-      onTap: () => _switchAsset(asset),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 12),
-        decoration: BoxDecoration(
-          color: active ? const Color(0xFFF58220) : const Color(0xFFFFFFFF),
-          borderRadius: BorderRadius.circular(9),
-          border: Border.all(
-            color: active ? const Color(0xFFF58220) : const Color(0xFFE2E8F0),
-          ),
-          boxShadow: active
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFF58220).withValues(alpha: 0.18),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: active ? Colors.white : const Color(0xFFCBD5E1),
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: active ? Colors.white : const Color(0xFF64748B),
+        Expanded(
+          child: _assetButton(
+            label: 'HSI',
+            asset: 'HSI',
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _assetButton({
+  required String label,
+  required String asset,
+}) {
+  final selected = _currentAsset == asset;
+
+  return GestureDetector(
+    onTap: () {
+      if (_currentAsset != asset) {
+        _switchAsset(asset);
+      }
+    },
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: selected
+            ? const Color(0xFFF58220)
+            : const Color(0xFFFFF3E8),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFF58220)
+                      .withValues(alpha: 0.10),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-            ),
-          ],
+              ]
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.roboto(
+          fontSize: 12,
+          fontWeight: selected
+              ? FontWeight.w800
+              : FontWeight.w600,
+          color: selected
+              ? Colors.white
+              : const Color(0xFF64748B),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildWorkspace() {
     return Column(
