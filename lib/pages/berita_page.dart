@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-
+import 'profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'notifications_screen.dart';
 import 'berita_detail_page.dart';
 import 'dashboard_page.dart';
 import 'harga_emas_page.dart';
 import 'pivot_point_page.dart';
 import 'kalkulator_page.dart';
+
 
 class BeritaPage extends StatefulWidget {
   const BeritaPage({super.key});
@@ -348,14 +349,13 @@ class _BeritaPageState extends State<BeritaPage> {
           actions: [
             IconButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Fitur notifikasi belum dihubungkan.',
-                    ),
-                  ),
-                );
-              },
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const NotificationsScreen(),
+    ),
+  );
+},
               icon: const Icon(
                 Icons.notifications_none,
                 color: Color(0xFF1F2937),
@@ -363,20 +363,31 @@ class _BeritaPageState extends State<BeritaPage> {
             ),
 
             Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: const Color(0xFFFFF3E8),
-                child: const Text(
-                  'A',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFD96812),
-                  ),
-                ),
-              ),
-            ),
+  padding: const EdgeInsets.only(right: 12),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(30),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ProfileScreen(),
+        ),
+      );
+    },
+    child: const CircleAvatar(
+      radius: 18,
+      backgroundColor: Color(0xFFFFF3E8),
+      child: Text(
+        'A',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFFD96812),
+        ),
+      ),
+    ),
+  ),
+),
           ],
         ),
 

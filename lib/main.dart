@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/login.dart';
 
+final GlobalKey<NavigatorState> navigatorKey =
+    GlobalKey<NavigatorState>();
+
 const Color ewfOrange = Color(0xFFF58220);
 const Color ewfOrangeDark = Color(0xFFD96812);
 const Color ewfOrangeLight = Color(0xFFFFF3E8);
@@ -27,8 +30,9 @@ class EwfGoldHubApp extends StatelessWidget {
       surface: Colors.white,
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
+   return MaterialApp(
+  navigatorKey: navigatorKey,
+  debugShowCheckedModeBanner: false,
       title: 'EWF Gold Hub',
       theme: ThemeData(
         useMaterial3: true,

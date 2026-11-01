@@ -17,16 +17,16 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // Warna mengikuti Dashboard Equity Pulse.
-  static const Color background = Color(0xFFF8FAFC);
+  // Warna mengikuti BeritaDetailPage.
+  static const Color background = Color(0xFFFFFBF7);
   static const Color white = Color(0xFFFFFFFF);
   static const Color primary = Color(0xFFF58220);
   static const Color primaryDark = Color(0xFFD96812);
-  static const Color primaryLight = Color(0xFFFFC58A);
+  static const Color primaryLight = Color(0xFFFFE5CC);
   static const Color surfaceContainer = Color(0xFFFFE5CC);
   static const Color surfaceContainerLow = Color(0xFFFFF3E8);
-  static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textPrimary = Color(0xFF252525);
+  static const Color textSecondary = Color(0xFF555555);
 
   bool _isLoading = true;
   bool _allRead = false;
@@ -116,24 +116,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<PivotPoint?> _getPivotSafely(String commodity) async {
-  try {
-    final pivot = await ApiService.getPivotPoint(commodity);
+    try {
+      final pivot = await ApiService.getPivotPoint(commodity);
 
-    // pivot.date dari backend berbentuk String.
-    final pivotDate = DateTime.tryParse(
-      pivot.date.substring(0, 10),
-    );
+      final pivotDate = DateTime.tryParse(
+        pivot.date.substring(0, 10),
+      );
 
-    if (pivotDate == null ||
-        _dateKey(pivotDate) != _dateKey(_today)) {
+      if (pivotDate == null ||
+          _dateKey(pivotDate) != _dateKey(_today)) {
+        return null;
+      }
+
+      return pivot;
+    } catch (_) {
       return null;
     }
-
-    return pivot;
-  } catch (_) {
-    return null;
   }
-}
 
   Future<void> _loadNotifications() async {
     if (mounted) {
@@ -169,29 +168,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = 'Tidak dapat memuat notifikasi. Periksa koneksi server.';
+        _errorMessage =
+            'Tidak dapat memuat notifikasi. Periksa koneksi server.';
         _isLoading = false;
       });
     }
   }
 
   List<GoldPrice> get _todayPrices {
-  return _prices.where((price) {
-    final date = price.recordedAt;
+    return _prices.where((price) {
+      final date = price.recordedAt;
 
-    return date != null &&
-        _dateKey(date.toLocal()) == _dateKey(_today);
-  }).toList();
-}
+      return date != null &&
+          _dateKey(date.toLocal()) == _dateKey(_today);
+    }).toList();
+  }
 
-List<GoldPrice> get _yesterdayPrices {
-  return _prices.where((price) {
-    final date = price.recordedAt;
+  List<GoldPrice> get _yesterdayPrices {
+    return _prices.where((price) {
+      final date = price.recordedAt;
 
-    return date != null &&
-        _dateKey(date.toLocal()) == _dateKey(_yesterday);
-  }).toList();
-}
+      return date != null &&
+          _dateKey(date.toLocal()) == _dateKey(_yesterday);
+    }).toList();
+  }
 
   List<String> get _commodities {
     final values = _prices.map((price) => price.commodity).toSet();
@@ -199,28 +199,28 @@ List<GoldPrice> get _yesterdayPrices {
   }
 
   GoldPrice? _findPrice(
-  List<GoldPrice> source,
-  String commodity,
-) {
-  final matches = source
-      .where((price) => price.commodity == commodity)
-      .toList();
+    List<GoldPrice> source,
+    String commodity,
+  ) {
+    final matches = source
+        .where((price) => price.commodity == commodity)
+        .toList();
 
-  if (matches.isEmpty) return null;
+    if (matches.isEmpty) return null;
 
-  matches.sort((a, b) {
-    final dateA = a.recordedAt;
-    final dateB = b.recordedAt;
+    matches.sort((a, b) {
+      final dateA = a.recordedAt;
+      final dateB = b.recordedAt;
 
-    if (dateA == null && dateB == null) return 0;
-    if (dateA == null) return 1;
-    if (dateB == null) return -1;
+      if (dateA == null && dateB == null) return 0;
+      if (dateA == null) return 1;
+      if (dateB == null) return -1;
 
-    return dateB.compareTo(dateA);
-  });
+      return dateB.compareTo(dateA);
+    });
 
-  return matches.first;
-}
+    return matches.first;
+  }
 
   List<Map<String, dynamic>> _buildTodayNotifications() {
     final notifications = <Map<String, dynamic>>[];
@@ -347,27 +347,14 @@ List<GoldPrice> get _yesterdayPrices {
             color: textPrimary,
           ),
         ),
-        title: Column(
-          children: [
-            Text(
-              'NOTIFIKASI',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: textPrimary,
-                letterSpacing: 1.2,
-              ),
-            ),
-            Text(
-              'MARKET INTELLIGENCE',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                color: textSecondary,
-                letterSpacing: 1.1,
-              ),
-            ),
-          ],
+        title: Text(
+          'Notifikasi',
+          style: GoogleFonts.roboto(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: textPrimary,
+            letterSpacing: 0.3,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -385,10 +372,10 @@ List<GoldPrice> get _yesterdayPrices {
                 ),
                 child: Text(
                   '$newCount BARU',
-                  style: GoogleFonts.plusJakartaSans(
+                  style: GoogleFonts.roboto(
                     color: white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -454,7 +441,6 @@ List<GoldPrice> get _yesterdayPrices {
                         ),
 
                       const SizedBox(height: 28),
-                      _buildFooter(),
                     ],
                   ),
       ),
@@ -470,11 +456,11 @@ List<GoldPrice> get _yesterdayPrices {
       children: [
         Text(
           title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
+          style: GoogleFonts.roboto(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
             color: textSecondary,
-            letterSpacing: 1.5,
+            letterSpacing: 0.5,
           ),
         ),
         if (showMarkRead)
@@ -486,9 +472,9 @@ List<GoldPrice> get _yesterdayPrices {
             },
             child: Text(
               _allRead ? 'Sudah dibaca' : 'Tandai semua dibaca',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+              style: GoogleFonts.roboto(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
                 color: primaryDark,
               ),
             ),
@@ -503,22 +489,23 @@ List<GoldPrice> get _yesterdayPrices {
       decoration: BoxDecoration(
         color: white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5EAF0)),
+        border: Border.all(color: primaryLight),
       ),
       child: Center(
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
+          style: GoogleFonts.roboto(
+            fontSize: 15,
             color: textSecondary,
+            height: 1.5,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildErrorState() {
+    Widget _buildErrorState() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
@@ -533,9 +520,9 @@ List<GoldPrice> get _yesterdayPrices {
           child: Text(
             _errorMessage ?? 'Terjadi kesalahan.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
+            style: GoogleFonts.roboto(
               color: textSecondary,
-              fontSize: 13,
+              fontSize: 15,
             ),
           ),
         ),
@@ -544,7 +531,13 @@ List<GoldPrice> get _yesterdayPrices {
           child: ElevatedButton.icon(
             onPressed: _loadNotifications,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Coba Lagi'),
+            label: Text(
+              'Coba Lagi',
+              style: GoogleFonts.roboto(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: white,
@@ -554,32 +547,7 @@ List<GoldPrice> get _yesterdayPrices {
       ],
     );
   }
-
-  Widget _buildFooter() {
-    return Row(
-      children: [
-        const Expanded(
-          child: Divider(color: Color(0xFFE2E8F0)),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(
-            'EQUITY PULSE  •  MARKET INTELLIGENCE',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: textSecondary,
-              letterSpacing: 0.7,
-            ),
-          ),
-        ),
-        const Expanded(
-          child: Divider(color: Color(0xFFE2E8F0)),
-        ),
-      ],
-    );
-  }
-}
+} // Penutup class _NotificationsScreenState
 
 class _NotificationCard extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -601,13 +569,13 @@ class _NotificationCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: highlight && !isRead
-            ? const Color(0xFFFFF8F0)
-            : Colors.white,
+            ? const Color(0xFFFFE5CC)
+            : const Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: highlight && !isRead
-              ? const Color(0xFFF3E4D4)
-              : const Color(0xFFE2E8F0),
+              ? const Color(0xFFFFC58A)
+              : const Color(0xFFFFE5CC),
         ),
         boxShadow: [
           BoxShadow(
@@ -644,11 +612,11 @@ class _NotificationCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item['category'] as String,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
+                        style: GoogleFonts.roboto(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                           color: color,
-                          letterSpacing: 0.7,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ),
@@ -656,8 +624,8 @@ class _NotificationCard extends StatelessWidget {
                     Text(
                       item['time'] as String,
                       style: GoogleFonts.roboto(
-                        fontSize: 10,
-                        color: const Color(0xFF64748B),
+                        fontSize: 11,
+                        color: const Color(0xFF777777),
                       ),
                     ),
                   ],
@@ -665,21 +633,21 @@ class _NotificationCard extends StatelessWidget {
                 const SizedBox(height: 7),
                 Text(
                   item['title'] as String,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1F2937),
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF252525),
                     height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   item['description'] as String,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF64748B),
-                    height: 1.5,
+                  style: GoogleFonts.roboto(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF555555),
+                    height: 1.8,
                   ),
                 ),
               ],

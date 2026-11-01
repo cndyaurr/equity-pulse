@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-
+import 'profile_screen.dart';
 import '../models/gold_price.dart';
 import '../services/api_service.dart';
-
+import 'notifications_screen.dart';
 import 'dashboard_page.dart';
 import 'berita_page.dart';
 import 'pivot_point_page.dart';
@@ -512,27 +512,45 @@ appBar: AppBar(
   ),
   actions: [
     IconButton(
-      onPressed: () {},
-      icon: const Icon(
-        Icons.notifications_none,
-        color: Color(0xFF1F2937),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationsScreen(),
       ),
-    ),
-    const Padding(
-      padding: EdgeInsets.only(right: 12),
-      child: CircleAvatar(
-        radius: 18,
-        backgroundColor: Color(0xFFFFF3E8),
-        child: Text(
-          'A',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFFD96812),
-          ),
+    );
+  },
+  icon: const Icon(
+    Icons.notifications_none,
+    color: Color(0xFF1F2937),
+  ),
+),
+    Padding(
+  padding: const EdgeInsets.only(right: 12),
+  child: InkWell(
+    borderRadius: BorderRadius.circular(30),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const ProfileScreen(),
+        ),
+      );
+    },
+    child: const CircleAvatar(
+      radius: 18,
+      backgroundColor: Color(0xFFFFF3E8),
+      child: Text(
+        'A',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFFD96812),
         ),
       ),
     ),
+  ),
+),
   ],
 ),
 
@@ -552,8 +570,6 @@ appBar: AppBar(
                     _buildSettlementCard(),
                     const SizedBox(height: 18),
                     _buildFilterCard(),
-                    const SizedBox(height: 18),
-                    _buildChartCard(),
                     const SizedBox(height: 18),
                     _buildOhlcCard(),
                     const SizedBox(height: 18),
@@ -1073,169 +1089,7 @@ Widget _buildSettlementCard() {
     );
   }
 
-  // ============================================================
-  // CHART CARD
-  // ============================================================
-
-  Widget _buildChartCard() {
-    final data = _chartData;
-
-    if (data.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: const Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 30),
-            child: Text(
-              'Data historis belum tersedia',
-              style: TextStyle(fontSize: 12, color: textSecondary),
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (_selectedChartPoint >= data.length) {
-      _selectedChartPoint = data.length - 1;
-    }
-
-    final selectedPoint = data[_selectedChartPoint];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(17, 17, 17, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tren Harga Penutupan (Close)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: textPrimary,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Pergerakan historis dari data News Maker',
-                      style: TextStyle(fontSize: 10, color: textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(
-                  color: primaryLight,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.show_chart, size: 14, color: Color(0xFF16A34A)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Live Data',
-                      style: TextStyle(
-                        color: Color(0xFF15803D),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  selectedPoint.date,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '\$${_formatPrice(selectedPoint.price)}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 235,
-            width: double.infinity,
-            child: GestureDetector(
-              onTapDown: (details) {
-                if (data.length == 1) return;
-
-                final localPosition = details.localPosition;
-                final width = MediaQuery.of(context).size.width - 74;
-
-                const chartLeft = 40.0;
-                final chartRight = width - 10;
-                final usableWidth = chartRight - chartLeft;
-
-                if (usableWidth <= 0) return;
-
-                final ratio = ((localPosition.dx - chartLeft) / usableWidth)
-                    .clamp(0.0, 1.0);
-
-                final index = (ratio * (data.length - 1)).round().clamp(
-                  0,
-                  data.length - 1,
-                );
-
-                setState(() {
-                  _selectedChartPoint = index;
-                });
-              },
-              child: CustomPaint(
-                painter: GoldChartPainter(
-                  data: data,
-                  selectedIndex: _selectedChartPoint,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  
   // ============================================================
   // OHLC TABLE
   // ============================================================

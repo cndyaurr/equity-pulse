@@ -86,11 +86,10 @@ class BeritaDetailPage extends StatelessWidget {
               child: Text(
                 category.toUpperCase(),
                 style: GoogleFonts.roboto(
-                  color: primaryDark,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
-                ),
+  color: primaryDark,
+  fontSize: 10,
+  fontWeight: FontWeight.w700,
+),
               ),
             ),
 
@@ -100,11 +99,11 @@ class BeritaDetailPage extends StatelessWidget {
             Text(
               title,
               style: GoogleFonts.roboto(
-                color: textPrimary,
-                fontSize: 24,
-                height: 1.35,
-                fontWeight: FontWeight.w800,
-              ),
+  color: const Color(0xFF1F2937),
+  fontSize: 16,
+  height: 1.35,
+  fontWeight: FontWeight.w700,
+),
             ),
 
             const SizedBox(height: 14),
@@ -118,10 +117,10 @@ class BeritaDetailPage extends StatelessWidget {
                   child: Text(
                     source,
                     style: GoogleFonts.roboto(
-                      color: textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+  color: const Color(0xFF64748B),
+  fontSize: 10,
+  fontWeight: FontWeight.w600,
+),
                   ),
                 ),
                 const Icon(
@@ -134,7 +133,11 @@ class BeritaDetailPage extends StatelessWidget {
                   child: Text(
                     date,
                     textAlign: TextAlign.end,
-                    style: GoogleFonts.roboto(color: muted, fontSize: 11),
+                    style: GoogleFonts.roboto(
+  color: const Color(0xFF64748B),
+  fontSize: 9,
+  fontWeight: FontWeight.w500,
+),
                   ),
                 ),
               ],
@@ -150,10 +153,10 @@ class BeritaDetailPage extends StatelessWidget {
             Text(
               'Isi Berita',
               style: GoogleFonts.roboto(
-                color: textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+  color: const Color(0xFF1F2937),
+  fontSize: 16,
+  fontWeight: FontWeight.w700,
+),
             ),
 
             const SizedBox(height: 12),
@@ -161,10 +164,10 @@ class BeritaDetailPage extends StatelessWidget {
             SelectableText(
               content.isNotEmpty ? content : 'Isi berita belum tersedia.',
               style: GoogleFonts.roboto(
-                color: textPrimary,
-                fontSize: 15,
-                height: 1.8,
-              ),
+  color: const Color(0xFF475569),
+  fontSize: 13,
+  height: 1.5,
+),
             ),
 
             const SizedBox(height: 28),

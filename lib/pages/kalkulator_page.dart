@@ -134,7 +134,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     final lot = parseNumber(digitalLotController.text);
 
     final selisih = jual - beli;
-    final kotor = lot * selisih * 1000000;
+    final kotor = lot * selisih * 10000000;
     final fee = 300000 * lot;
     final pajak = 0.11 * fee;
     final net = kotor - fee - pajak;
@@ -366,8 +366,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        _buildTopUtility(),
-                        const SizedBox(height: 16),
                         _buildTabs(),
                         const SizedBox(height: 12),
                         AnimatedSwitcher(
@@ -488,193 +486,96 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  Widget _buildTopUtility() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E8),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.025),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF58220).withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.calculate_rounded,
-              color: Color(0xFFF58220),
-              size: 23,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Simulasi Portofolio Emas',
-                  style: GoogleFonts.roboto(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF006947),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        'Multi-Variable Calculation Engine',
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.roboto(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: resetCalculator,
-            icon: const Icon(Icons.restart_alt, size: 16),
-            label: const Text('Reset'),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF475569),
-              backgroundColor: const Color(0xFFFFE5CC),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildTabs() {
-    return Container(
-      padding: const EdgeInsets.all(4),
+  return Container(
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE9EDF2),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: _calcTab(
+            index: 0,
+            icon: Icons.currency_bitcoin,
+            title: 'Emas Digital',
+          ),
+        ),
+        Expanded(
+          child: _calcTab(
+            index: 1,
+            icon: Icons.edit_note,
+            title: 'Emas Fisik',
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+  
+Widget _calcTab({
+  required int index,
+  required IconData icon,
+  required String title,
+}) {
+  final selected = selectedTab == index;
+
+  return GestureDetector(
+    onTap: () => setState(() => selectedTab = index),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(
+        vertical: 11,
+        horizontal: 8,
+      ),
       decoration: BoxDecoration(
-        color: const Color(0xFFE9EDF2),
-        borderRadius: BorderRadius.circular(10),
+        color: selected
+            ? const Color(0xFFF58220)
+            : const Color(0xFFFFF3E8),
+        borderRadius: BorderRadius.circular(9),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFF58220)
+                      .withValues(alpha: 0.10),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: _calcTab(
-              index: 0,
-              icon: Icons.currency_bitcoin,
-              title: 'Emas Digital',
-              badge: 'LOT',
-            ),
+          Icon(
+            icon,
+            size: 18,
+            color: selected
+                ? Colors.white
+                : const Color(0xFF475569),
           ),
-          Expanded(
-            child: _calcTab(
-              index: 1,
-              icon: Icons.edit_note,
-              title: 'Emas Fisik',
-              badge: 'TOZ',
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.roboto(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: selected
+                    ? Colors.white
+                    : const Color(0xFF475569),
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _calcTab({
-    required int index,
-    required IconData icon,
-    required String title,
-    required String badge,
-  }) {
-    final selected = selectedTab == index;
-
-    return GestureDetector(
-      onTap: () => setState(() => selectedTab = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF58220) : const Color(0xFFFFF3E8),
-          borderRadius: BorderRadius.circular(9),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFF58220).withValues(alpha: 0.10),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: selected ? Colors.white : const Color(0xFF475569),
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                title,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.roboto(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : const Color(0xFF475569),
-                ),
-              ),
-            ),
-            const SizedBox(width: 5),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.20)
-                    : const Color(0xFFFFE5CC),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                badge,
-                style: GoogleFonts.roboto(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : const Color(0xFF64748B),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildDigitalSection() {
     return Column(
@@ -693,147 +594,151 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   }
 
   Widget _buildDigitalParameters() {
-    return _sectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Parameter Transaksi',
-                  style: GoogleFonts.roboto(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1F2937),
-                  ),
+  return _sectionCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Parameter Transaksi',
+                style: GoogleFonts.roboto(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1F2937),
                 ),
               ),
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF00855B).withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '1 Lot = Rp 1jt × Δ',
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.roboto(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF006947),
-                    ),
-                  ),
-                ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 5,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _calculatorInput(
-            label: 'Harga Beli / Unit',
-            prefix: 'Rp',
-            controller: digitalBeliController,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 10),
-          _calculatorInput(
-            label: 'Harga Jual / Unit',
-            prefix: 'Rp',
-            controller: digitalJualController,
-            keyboardType: TextInputType.number,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _calculatorInput(
-                  label: 'Volume Kontrak',
-                  suffix: 'Lot',
-                  controller: digitalLotController,
-                  keyboardType: TextInputType.number,
-                ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE5CC),
+                borderRadius: BorderRadius.circular(6),
               ),
-              const SizedBox(width: 8),
-              Container(
-                margin: const EdgeInsets.only(top: 18),
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF58220).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Text(
-                  '${parseNumber(digitalLotController.text).round()} Lot',
-                  style: GoogleFonts.roboto(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFFF58220),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Text(
-                'Preset Lot:',
+              child: Text(
+                '1 Lot = Rp10.000.000',
                 style: GoogleFonts.roboto(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFF475569),
+                  color: const Color(0xFFD96812),
                 ),
               ),
-              const SizedBox(width: 7),
-              Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [1, 2, 5, 10, 20].map((lot) {
-                      final selected =
-                          parseNumber(digitalLotController.text).round() == lot;
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
 
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: GestureDetector(
-                          onTap: () => setDigitalLot(lot),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
+        _calculatorInput(
+          label: 'Harga Beli / Unit',
+          prefix: 'Rp',
+          controller: digitalBeliController,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 10),
+
+        _calculatorInput(
+          label: 'Harga Jual / Unit',
+          prefix: 'Rp',
+          controller: digitalJualController,
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 10),
+
+        Row(
+          children: [
+            Expanded(
+              child: _calculatorInput(
+                label: 'Volume Kontrak',
+                suffix: 'Lot',
+                controller: digitalLotController,
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              margin: const EdgeInsets.only(top: 18),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 9,
+                vertical: 7,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF58220).withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Text(
+                '${parseNumber(digitalLotController.text).round()} Lot',
+                style: GoogleFonts.roboto(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFF58220),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Text(
+              'Preset Lot:',
+              style: GoogleFonts.roboto(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF475569),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [1, 2, 5, 10, 20].map((lot) {
+                    final selected =
+                        parseNumber(digitalLotController.text).round() == lot;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: GestureDetector(
+                        onTap: () => setDigitalLot(lot),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? const Color(0xFFF58220)
+                                : const Color(0xFFFFF3E8),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '$lot Lot',
+                            style: GoogleFonts.roboto(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
                               color: selected
-                                  ? const Color(0xFFF58220)
-                                  : const Color(0xFFFFF3E8),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '$lot Lot',
-                              style: GoogleFonts.roboto(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: selected
-                                    ? Colors.white
-                                    : const Color(0xFF64748B),
-                              ),
+                                  ? Colors.white
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildDigitalResultCards() {
     return GridView.count(
@@ -1063,7 +968,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           const SizedBox(height: 9),
           _formulaRow('1. Selisih Point', 'Harga Jual − Harga Beli'),
           const SizedBox(height: 5),
-          _formulaRow('2. Gross Revenue', 'Lot × Selisih × Rp 1.000.000'),
+          _formulaRow('2. Gross Revenue', 'Lot × Selisih × Rp 10.000.000'),
           const SizedBox(height: 5),
           _formulaRow(
             '3. Total Biaya Operasional',
@@ -1257,140 +1162,149 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     );
   }
 
-  Widget _buildFisikNetCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -35,
-            bottom: -35,
-            child: Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF00855B).withValues(alpha: 0.10),
-              ),
+
+Widget _buildFisikNetCard() {
+  final positive = fisikCuan >= 0;
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFCF7),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFF0DCC4)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.10),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Stack(
+      children: [
+        Positioned(
+          right: -35,
+          bottom: -35,
+          child: Container(
+            width: 130,
+            height: 130,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFFF58220).withValues(alpha: 0.06),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const SizedBox(
-                    width: 9,
-                    height: 9,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFFC58A),
-                        shape: BoxShape.circle,
-                      ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: positive
+                        ? const Color(0xFF4EDEA3)
+                        : const Color(0xFFFF6B6B),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'HASIL AKHIR BERSIH (NET PROFIT)',
+                    style: GoogleFonts.roboto(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                      color: const Color(0xFFD96812),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE7F7EF),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${fisikRoi >= 0 ? '+' : ''}${fisikRoi.toStringAsFixed(2)}% ROI',
+                    style: GoogleFonts.roboto(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF00866A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              formatRupiah(fisikCuan),
+              style: GoogleFonts.roboto(
+                fontSize: 27,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Selisih/Gram × Bobot Didapat',
+              style: GoogleFonts.roboto(
+                fontSize: 10,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 9,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E8),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.scale,
+                    size: 16,
+                    color: Color(0xFFD96812),
+                  ),
+                  const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      'ESTIMASI KEUNTUNGAN BERSIH',
+                      'Valuasi Penjualan Fisik:',
                       style: GoogleFonts.roboto(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1,
-                        color: const Color(0xFFFFC58A),
+                        fontSize: 10,
+                        color: const Color(0xFF475569),
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00855B).withValues(alpha: 0.20),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${fisikRoi >= 0 ? '+' : ''}${fisikRoi.toStringAsFixed(2)}% ROI',
-                      style: GoogleFonts.roboto(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF4EDEA3),
-                      ),
+                  Text(
+                    formatRupiah(fisikTotalNilai),
+                    style: GoogleFonts.roboto(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1F2937),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                formatRupiah(fisikCuan),
-                style: GoogleFonts.roboto(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFFF8FAFC),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'Selisih/Gram × Bobot Didapat',
-                style: GoogleFonts.roboto(
-                  fontSize: 10,
-                  color: const Color(0xFFCBDBF5),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.scale, size: 16, color: Color(0xFFFFC58A)),
-                    const SizedBox(width: 7),
-                    Expanded(
-                      child: Text(
-                        'Valuasi Penjualan Fisik:',
-                        style: GoogleFonts.roboto(
-                          fontSize: 10,
-                          color: const Color(0xFFEAF1FF),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      formatRupiah(fisikTotalNilai),
-                      style: GoogleFonts.roboto(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFFF8FAFC),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildFisikFootnote() {
     return Container(

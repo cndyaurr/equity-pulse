@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../models/pivot_point.dart';
 import '../services/api_service.dart';
-
 import 'dashboard_page.dart';
 import 'berita_page.dart';
 import 'harga_emas_page.dart';
 import 'kalkulator_page.dart';
-import 'histori_page.dart';
-import 'informasi_pt_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';

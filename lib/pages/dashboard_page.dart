@@ -6,7 +6,6 @@ import 'berita_page.dart';
 import 'harga_emas_page.dart';
 import 'pivot_point_page.dart';
 import 'kalkulator_page.dart';
-import 'histori_page.dart';
 import 'informasi_pt_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
@@ -366,20 +365,24 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
 
                   const SizedBox(height: 10),
+
                   Text(
-                    'EWF GOLD HUB',
-                    style: jakarta(
-                      size: 18,
-                      weight: FontWeight.w700,
+                    'EQUITY PULSE',
+                    style: GoogleFonts.roboto(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
+                      height: 1.2,
                     ),
                   ),
+
                   Text(
-                    'PT EQUITYWORLD FUTURES',
-                    style: jakarta(
-                      size: 10,
-                      weight: FontWeight.w600,
+                    'MARKET INTELLIGENCE',
+                    style: GoogleFonts.roboto(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                       color: Colors.white70,
+                      height: 1.2,
                     ),
                   ),
                 ],
@@ -491,18 +494,7 @@ class _DashboardPageState extends State<DashboardPage> {
             // ========================================================
             // HISTORI
             // ========================================================
-            _drawerItem(
-              icon: Icons.history,
-              title: 'Histori',
-              hasArrow: true,
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const HistoriPage()),
-                );
-              },
-            ),
+  
 
             const Spacer(),
             const Divider(),
@@ -691,52 +683,47 @@ class _DashboardPageState extends State<DashboardPage> {
   // QUICK MENU
   // ============================================================
 
-  Widget _buildQuickMenu(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Akses Cepat', style: jakarta(size: 16, weight: FontWeight.w700)),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _quickButton(
-                Icons.analytics_outlined,
-                'Pivot Point',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PivotPointPage(),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _quickButton(Icons.calculate_outlined, 'Kalkulator'),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _quickButton(
-                Icons.history,
-                'Histori',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HistoriPage(),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+Widget _buildQuickMenu(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Akses Cepat',
+        style: jakarta(
+          size: 16,
+          weight: FontWeight.w700,
         ),
-      ],
-    );
-  }
+      ),
+      const SizedBox(height: 10),
+      Row(
+        children: [
+          Expanded(
+            child: _quickButton(
+              Icons.analytics_outlined,
+              'Pivot Point',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PivotPointPage(),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _quickButton(
+              Icons.calculate_outlined,
+              'Kalkulator',
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
 
   // ============================================================
   // QUICK BUTTON

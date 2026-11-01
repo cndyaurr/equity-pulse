@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'notifications_screen.dart';
+import 'profile_screen.dart';
 
 class InformasiPtPage extends StatefulWidget {
   const InformasiPtPage({super.key});
@@ -202,8 +205,10 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+Widget build(BuildContext context) {
+  return DefaultTextStyle.merge(
+    style: GoogleFonts.roboto(),
+    child: Scaffold(
       backgroundColor: surface,
       body: SafeArea(
         child: Column(
@@ -214,10 +219,8 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 child: Column(
                   children: [
-                    _buildBreadcrumb(),
-                    const SizedBox(height: 14),
                     _buildHero(),
-                    const SizedBox(height: 14),
+const SizedBox(height: 14),
                     _buildTabSwitcher(),
                     const SizedBox(height: 16),
                     if (selectedTab == 0) _buildLegalitas(),
@@ -232,146 +235,153 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildHeader() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
+Widget _buildHeader() {
+  return Container(
+    height: 56,
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+    ),
+    child: Row(
+      children: [
+        IconButton(
+  onPressed: () {
+    Navigator.pop(context);
+  },
+  icon: const Icon(
+  Icons.arrow_back,
+  size: 24,
+  color: Color(0xFF1F2937),
+),
+  tooltip: 'Kembali',
+  padding: EdgeInsets.zero,
+  constraints: const BoxConstraints(
+    minWidth: 36,
+    minHeight: 40,
+  ),
+),
+const SizedBox(width: 4),
+        // LOGO PERUSAHAAN
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
+          clipBehavior: Clip.antiAlias,
+          child: Image.asset(
+            'assets/images/logo_perusahaan.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.trending_up,
+                color: Color(0xFFD96812),
+              );
             },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-              color: Color(0xFF111827),
-            ),
-            tooltip: 'Kembali',
           ),
-          const SizedBox(width: 2),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.account_balance,
-              color: Colors.white,
-              size: 21,
-            ),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        ),
+
+        const SizedBox(width: 10),
+
+        // NAMA DAN SUBTITLE
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text.rich(
+                TextSpan(
                   children: [
-                    Flexible(
-                      child: Text(
-                        'EQUITY PULSE',
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    TextSpan(
+                      text: 'EQUITY ',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1F2937),
                       ),
                     ),
-                    const SizedBox(width: 7),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tertiary.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: tertiary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Market Open',
-                            style: TextStyle(
-                              color: tertiary,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
+                    TextSpan(
+                      text: 'PULSE',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFF58220),
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  'PT EQUITYWORLD FUTURES',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: primary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const Text(
+                'MARKET INTELLIGENCE',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Roboto',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              size: 22,
-            ),
+        ),
+
+        // NOTIFIKASI
+        IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationsScreen(),
+              ),
+            );
+          },
+          icon: const Icon(
+            Icons.notifications_none,
+            color: Color(0xFF1F2937),
           ),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: primary.withValues(alpha: 0.20),
-                width: 2,
+        ),
+
+        // PROFIL
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
+            child: const CircleAvatar(
+              radius: 18,
+              backgroundColor: Color(0xFFFFF3E8),
+              child: Text(
+                'A',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFD96812),
+                ),
               ),
             ),
-            child: Icon(
-              Icons.person,
-              size: 17,
-              color: primary,
-            ),
           ),
-          const SizedBox(width: 6),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildBreadcrumb() {
     return Row(
@@ -438,91 +448,45 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
     );
   }
 
-  Widget _buildHero() {
-    return Container(
-      width: double.infinity,
-      height: 190,
-      decoration: BoxDecoration(
-        color: const Color(0xFF213145),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Stack(
+
+Widget _buildHero() {
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 16,
+      vertical: 16,
+    ),
+    decoration: BoxDecoration(
+  color: const Color(0xFFF58220),
+  borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.10),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: CustomPaint(
+      painter: _HeroPatternPainter(primary: primary),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _HeroPatternPainter(
-                primary: primary,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primary.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.verified,
-                        color: const Color(0xFFF7BD48),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 5),
-                      const Text(
-                        'OFFICIAL INSTITUTIONAL PROFILE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.7,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 7),
-                const Text(
-                  'PT Equityworld Futures',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Profil Perusahaan & Legalitas Pialang Berjangka Resmi',
-                  style: TextStyle(
-                    color: Color(0xFFCBDBF5),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+          Text(
+            'PT Equityworld Futures',
+            style: GoogleFonts.roboto(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildTabSwitcher() {
     return Container(
@@ -924,8 +888,6 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
           ],
         ),
         const SizedBox(height: 10),
-        _headOfficeCard(),
-        const SizedBox(height: 18),
         Row(
           children: [
             Icon(
