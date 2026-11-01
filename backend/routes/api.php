@@ -18,6 +18,10 @@ Route::get('/news', [NewsController::class, 'index']);
 Route::get('/pivot-points', [PivotPointController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+});
 // Verifikasi email
 Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
     if (! URL::hasValidSignature($request)) {

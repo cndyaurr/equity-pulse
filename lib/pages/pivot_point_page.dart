@@ -11,7 +11,9 @@ import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 class PivotPointPage extends StatefulWidget {
-  const PivotPointPage({super.key});
+  final Map<String, dynamic>? user;
+
+  const PivotPointPage({super.key, this.user});
 
   @override
   State<PivotPointPage> createState() => _PivotPointPageState();
@@ -367,106 +369,101 @@ class _PivotPointPageState extends State<PivotPointPage> {
   }
 
   PreferredSizeWidget _buildHeader() {
-  return AppBar(
-    backgroundColor: _white,
-    elevation: 0,
-    scrolledUnderElevation: 0,
-    titleSpacing: 16,
-    title: Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            'assets/images/logo_perusahaan.png',
-            width: 38,
-            height: 38,
-            fit: BoxFit.contain,
+    return AppBar(
+      backgroundColor: _white,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      titleSpacing: 16,
+      title: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/images/logo_perusahaan.png',
+              width: 38,
+              height: 38,
+              fit: BoxFit.contain,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
+          const SizedBox(width: 10),
 
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: 'EQUITY ',
-                    style: GoogleFonts.roboto(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: _textPrimary,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'EQUITY ',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _textPrimary,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'PULSE',
-                    style: GoogleFonts.roboto(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: _primary,
+                    TextSpan(
+                      text: 'PULSE',
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Text(
-              'MARKET INTELLIGENCE',
-              style: GoogleFonts.roboto(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _textSecondary,
+              Text(
+                'MARKET INTELLIGENCE',
+                style: GoogleFonts.roboto(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _textSecondary,
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
-    ),
-    actions: [
-      IconButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const NotificationsScreen(),
-            ),
-          );
-        },
-        icon: const Icon(
-          Icons.notifications_none,
-          color: _textPrimary,
-        ),
+            ],
+          ),
+        ],
       ),
-      Padding(
-        padding: const EdgeInsets.only(right: 12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(30),
-          onTap: () {
+      actions: [
+        IconButton(
+          onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const ProfileScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
             );
           },
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: _surfaceContainer,
-            child: Text(
-              'A',
-              style: GoogleFonts.roboto(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _primary,
+          icon: const Icon(Icons.notifications_none, color: _textPrimary),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(30),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileScreen(user: widget.user),
+                ),
+              );
+            },
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: _surfaceContainer,
+              child: Text(
+                'A',
+                style: GoogleFonts.roboto(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: _primary,
+                ),
               ),
             ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildAssetBar() {
     return _card(

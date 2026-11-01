@@ -1,14 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/api_service.dart';
 import 'login.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? user;
 
-  const ProfileScreen({
-    super.key,
-    this.user,
-  });
+  const ProfileScreen({super.key, this.user});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -23,25 +26,151 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color textSecondary = Color(0xFF737373);
 
   late final TextEditingController name;
-late final TextEditingController email;
-late final TextEditingController unit;
+  late final TextEditingController email;
+  late final TextEditingController unit;
+  bool isLoadingProfile = true;
+  bool isSavingProfile = false;
 
-@override
-void initState() {
-  super.initState();
+  Future<bool> _updateProfile({
+    required String newName,
+    required String newUnit,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
 
-  final user = widget.user;
+      if (token == null || token.isEmpty) {
+        throw Exception('Token login tidak ditemukan.');
+      }
 
-  name = TextEditingController(
-    text: user?['name']?.toString() ?? '',
-  );
-  email = TextEditingController(
-    text: user?['email']?.toString() ?? '',
-  );
-  unit = TextEditingController(
-    text: user?['work_location']?.toString() ?? '',
-  );
-}
+      final response = await http
+          .put(
+            Uri.parse('${ApiService.baseUrl}/profile'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({'name': newName, 'work_location': newUnit}),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 &&
+          data is Map &&
+          data['success'] == true &&
+          data['user'] is Map) {
+        final updatedUser = Map<String, dynamic>.from(data['user'] as Map);
+
+        if (!mounted) return false;
+
+        setState(() {
+          name.text = updatedUser['name']?.toString() ?? '';
+          email.text = updatedUser['email']?.toString() ?? '';
+          unit.text = updatedUser['work_location']?.toString() ?? '';
+        });
+
+        return true;
+      }
+
+      if (response.statusCode == 401) {
+        throw Exception('Sesi login kedaluwarsa. Silakan login kembali.');
+      }
+
+      throw Exception(
+        data is Map
+            ? data['message']?.toString() ?? 'Gagal memperbarui profil.'
+            : 'Respons server tidak valid.',
+      );
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menyimpan profil: $e')));
+      }
+
+      return false;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    final user = widget.user;
+
+    name = TextEditingController(text: user?['name']?.toString() ?? '');
+
+    email = TextEditingController(text: user?['email']?.toString() ?? '');
+
+    unit = TextEditingController(
+      text: user?['work_location']?.toString() ?? '',
+    );
+
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Sesi login tidak ditemukan. Silakan login kembali.');
+      }
+
+      final response = await http
+          .get(
+            Uri.parse('${ApiService.baseUrl}/profile'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 &&
+          data is Map &&
+          data['success'] == true &&
+          data['user'] is Map) {
+        final user = Map<String, dynamic>.from(data['user'] as Map);
+
+        if (!mounted) return;
+
+        setState(() {
+          name.text = user['name']?.toString() ?? '';
+          email.text = user['email']?.toString() ?? '';
+          unit.text = user['work_location']?.toString() ?? '';
+        });
+      } else if (response.statusCode == 401) {
+        throw Exception('Sesi login kedaluwarsa. Silakan login kembali.');
+      } else {
+        throw Exception(
+          data is Map
+              ? data['message']?.toString() ?? 'Gagal mengambil profil.'
+              : 'Respons server tidak valid.',
+        );
+      }
+    } catch (e) {
+      debugPrint('Load profile error: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal memuat profil: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingProfile = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     name.dispose();
@@ -72,123 +201,149 @@ void initState() {
             ),
           ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        body: Column(
           children: [
-            _profileHeader(),
-            const SizedBox(height: 28),
-            _section(
-              title: 'Informasi Pribadi',
-              children: [
-                _infoRow(
-                  icon: Icons.badge_outlined,
-                  title: 'Nama lengkap',
-                  value: name.text,
-                ),
-                _infoRow(
-                  icon: Icons.mail_outline_rounded,
-                  title: 'Email perusahaan',
-                  value: email.text,
-                  trailing: const Icon(
-                    Icons.verified_rounded,
-                    color: Color(0xFF16845B),
-                    size: 19,
+            if (isLoadingProfile)
+              const LinearProgressIndicator(color: orange, minHeight: 2),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+                children: [
+                  _profileHeader(),
+                  const SizedBox(height: 28),
+
+                  _section(
+                    title: 'Informasi Pribadi',
+                    children: [
+                      _infoRow(
+                        icon: Icons.badge_outlined,
+                        title: 'Nama lengkap',
+                        value: name.text,
+                      ),
+                      _infoRow(
+                        icon: Icons.mail_outline_rounded,
+                        title: 'Email perusahaan',
+                        value: email.text,
+                        trailing: const Icon(
+                          Icons.verified_rounded,
+                          color: Color(0xFF16845B),
+                          size: 19,
+                        ),
+                      ),
+                      _infoRow(
+                        icon: Icons.business_outlined,
+                        title: 'Unit kantor',
+                        value: unit.text,
+                      ),
+                    ],
                   ),
-                ),
-                _infoRow(
-                  icon: Icons.business_outlined,
-                  title: 'Unit kantor',
-                  value: unit.text,
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _section(
-              title: 'Kredensial & Otentikasi',
-              children: [
-                _actionRow(
-                  icon: Icons.lock_outline_rounded,
-                  title: 'Perbarui kata sandi',
-                  subtitle: 'Ubah kata sandi akun Anda',
-                  onTap: _showPasswordDialog,
-                ),
-                _actionRow(
-                  icon: Icons.notifications_none_rounded,
-                  title: 'Notifikasi',
-                  subtitle: 'Atur notifikasi keamanan dan informasi pasar',
-                  trailing: Switch(
-                    value: notificationsEnabled,
-                    activeThumbColor: orange,
-                    onChanged: (value) =>
-                        setState(() => notificationsEnabled = value),
+
+                  const SizedBox(height: 18),
+
+                  _section(
+                    title: 'Kredensial & Otentikasi',
+                    children: [
+                      _actionRow(
+                        icon: Icons.lock_outline_rounded,
+                        title: 'Perbarui kata sandi',
+                        subtitle: 'Ubah kata sandi akun Anda',
+                        onTap: _showPasswordDialog,
+                      ),
+                      _actionRow(
+                        icon: Icons.notifications_none_rounded,
+                        title: 'Notifikasi',
+                        subtitle:
+                            'Atur notifikasi keamanan dan informasi pasar',
+                        trailing: Switch(
+                          value: notificationsEnabled,
+                          activeThumbColor: orange,
+                          onChanged: (value) {
+                            setState(() {
+                              notificationsEnabled = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _section(
-              title: 'Pengaturan',
-              children: [
-                _actionRow(
-                  icon: Icons.palette_outlined,
-                  title: 'Tema aplikasi',
-                  subtitle: 'Terang',
-                  trailing: const Text(
-                    'Terang',
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+
+                  const SizedBox(height: 18),
+
+                  _section(
+                    title: 'Pengaturan',
+                    children: [
+                      _actionRow(
+                        icon: Icons.palette_outlined,
+                        title: 'Tema aplikasi',
+                        subtitle: 'Terang',
+                        trailing: const Text(
+                          'Terang',
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      _actionRow(
+                        icon: Icons.support_agent_rounded,
+                        title: 'Hubungi dukungan',
+                        subtitle: 'Bantuan untuk akun EWF Gold Hub',
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Fitur dukungan belum dihubungkan.',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('auth_token');
+
+                      if (!context.mounted) return;
+
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                        (route) => false,
+                      );
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 19),
+                    label: const Text('Keluar dari akun'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFD64545),
+                      side: const BorderSide(color: Color(0xFFF0B8B8)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
-                ),
-                _actionRow(
-                  icon: Icons.support_agent_rounded,
-                  title: 'Hubungi dukungan',
-                  subtitle: 'Bantuan untuk akun EWF Gold Hub',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Fitur dukungan belum dihubungkan.'),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
-            OutlinedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                  (route) => false,
-                );
-              },
-              icon: const Icon(Icons.logout_rounded, size: 19),
-              label: const Text('Keluar dari akun'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFD64545),
-                side: const BorderSide(color: Color(0xFFF0B8B8)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
+                  const SizedBox(height: 18),
 
-            const SizedBox(height: 18),
-            const Center(
-              child: Text(
-                'PT EQUITYWORLD FUTURES • EWF GOLD HUB',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                  const Center(
+                    child: Text(
+                      'PT EQUITYWORLD FUTURES • EWF GOLD HUB',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-      ), // Menutup Scaffold
-    ); // Menutup Theme
+      ),
+    );
   }
 
   bool notificationsEnabled = true;
@@ -373,23 +528,44 @@ void initState() {
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: orange),
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                setState(() {
-                  name.text = nameController.text.trim();
-                  unit.text = unitController.text.trim();
-                });
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Perubahan tampil di aplikasi. Hubungkan API untuk menyimpan ke server.',
+            onPressed: isSavingProfile
+                ? null
+                : () async {
+                    if (!(formKey.currentState?.validate() ?? false)) {
+                      return;
+                    }
+
+                    setState(() => isSavingProfile = true);
+
+                    final success = await _updateProfile(
+                      newName: nameController.text.trim(),
+                      newUnit: unitController.text.trim(),
+                    );
+
+                    if (!mounted) return;
+
+                    setState(() => isSavingProfile = false);
+
+                    if (success) {
+                      Navigator.pop(dialogContext);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Profil berhasil diperbarui.'),
+                        ),
+                      );
+                    }
+                  },
+            child: isSavingProfile
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
                     ),
-                  ),
-                );
-              }
-            },
-            child: const Text('Simpan'),
+                  )
+                : const Text('Simpan'),
           ),
         ],
       ),

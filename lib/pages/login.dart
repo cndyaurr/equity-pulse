@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dashboard_page.dart';
 import 'daftar_akun_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -79,9 +81,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       // Khusus Android Emulator yang mengakses server di laptop.
-     
+
       // URL API untuk HP Android fisik.
-      const baseUrl = 'http://10.0.2.2:8000/api';
+      final baseUrl = ApiService.baseUrl;
 
       final response = await http
           .post(
@@ -90,13 +92,9 @@ class _LoginPageState extends State<LoginPage> {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
             },
-            body: jsonEncode({
-              'email': email,
-              'password': password,
-            }),
+            body: jsonEncode({'email': email, 'password': password}),
           )
           .timeout(const Duration(seconds: 15));
-
 
       debugPrint('Login HTTP status: ${response.statusCode}');
       debugPrint('Login response: ${response.body}');
@@ -117,6 +115,14 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200 &&
           data is Map &&
           data['success'] == true) {
+        final token = data['token']?.toString();
+
+        if (token == null || token.isEmpty) {
+          throw Exception('Token login tidak ditemukan dari server.');
+        }
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
         showStatus(
           'Login berhasil. Mengalihkan ke dashboard...',
           icon: Icons.check_circle_outline,
@@ -129,12 +135,12 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-  builder: (context) => DashboardPage(
-    user: data['user'] is Map
-        ? Map<String, dynamic>.from(data['user'] as Map)
-        : null,
-  ),
-),
+            builder: (context) => DashboardPage(
+              user: data['user'] is Map
+                  ? Map<String, dynamic>.from(data['user'] as Map)
+                  : null,
+            ),
+          ),
         );
       } else {
         final message = data is Map

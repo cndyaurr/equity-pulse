@@ -111,4 +111,44 @@ public function resendVerificationEmail(Request $request)
             ],
         ]);
     }
+    public function profile(Request $request)
+{
+    $user = $request->user();
+
+    return response()->json([
+        'success' => true,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'work_location' => $user->work_location,
+        ],
+    ]);
+}
+
+public function updateProfile(Request $request)
+{
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'work_location' => ['required', 'string', 'max:255'],
+    ]);
+
+    $user = $request->user();
+
+    $user->update([
+        'name' => $validated['name'],
+        'work_location' => $validated['work_location'],
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Profil berhasil diperbarui.',
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'work_location' => $user->work_location,
+        ],
+    ]);
+}
 }

@@ -297,7 +297,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PivotPointPage(),
+                            builder: (context) =>
+                                PivotPointPage(user: widget.user),
                           ),
                         );
                         break;
@@ -467,7 +468,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const PivotPointPage(),
+                    builder: (context) => PivotPointPage(user: widget.user),
                   ),
                 );
               },
@@ -494,7 +495,6 @@ class _DashboardPageState extends State<DashboardPage> {
             // ========================================================
             // HISTORI
             // ========================================================
-  
 
             const Spacer(),
             const Divider(),
@@ -683,47 +683,46 @@ class _DashboardPageState extends State<DashboardPage> {
   // QUICK MENU
   // ============================================================
 
-Widget _buildQuickMenu(BuildContext context) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Akses Cepat',
-        style: jakarta(
-          size: 16,
-          weight: FontWeight.w700,
+  Widget _buildQuickMenu(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Akses Cepat', style: jakarta(size: 16, weight: FontWeight.w700)),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _quickButton(
+                Icons.analytics_outlined,
+                'Pivot Point',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PivotPointPage(user: widget.user),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _quickButton(
+                Icons.calculate_outlined,
+                'Kalkulator',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const KalkulatorPage()),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-      ),
-      const SizedBox(height: 10),
-      Row(
-        children: [
-          Expanded(
-            child: _quickButton(
-              Icons.analytics_outlined,
-              'Pivot Point',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PivotPointPage(),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _quickButton(
-              Icons.calculate_outlined,
-              'Kalkulator',
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
+      ],
+    );
+  }
 
   // ============================================================
   // QUICK BUTTON
