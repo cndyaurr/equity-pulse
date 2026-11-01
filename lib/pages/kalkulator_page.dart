@@ -7,6 +7,8 @@ import 'pivot_point_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/profile_avatar.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class KalkulatorPage extends StatefulWidget {
   const KalkulatorPage({super.key});
@@ -21,6 +23,40 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   static const Color _primary = Color(0xFFF58220);
   static const Color _textSecondary = Color(0xFF64748B);
   static const double tozFixed = 31.10;
+  static const String _historyKey = 'calculation_history';
+
+  Future<void> _loadCalculationHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedHistory = prefs.getString(_historyKey);
+
+    if (savedHistory == null) return;
+
+    final List<dynamic> decoded = jsonDecode(savedHistory);
+
+    if (!mounted) return;
+
+    setState(() {
+      _calculationHistory
+        ..clear()
+        ..addAll(
+          decoded.map((item) {
+            final map = Map<String, dynamic>.from(item);
+            map['date'] = DateTime.parse(map['date'] as String);
+            return map;
+          }),
+        );
+    });
+  }
+
+  Future<void> _persistCalculationHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final data = _calculationHistory.map((item) {
+      return {...item, 'date': (item['date'] as DateTime).toIso8601String()};
+    }).toList();
+
+    await prefs.setString(_historyKey, jsonEncode(data));
+  }
 
   int selectedTab = 0;
   bool _showHistory = false;
@@ -67,7 +103,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   @override
   void initState() {
     super.initState();
-
+    _loadCalculationHistory();
     digitalBeliController.addListener(calculateDigital);
     digitalJualController.addListener(calculateDigital);
     digitalLotController.addListener(calculateDigital);
@@ -1535,6 +1571,8 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
       _showHistory = true;
     });
 
+    _persistCalculationHistory();
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Perhitungan ditambahkan ke histori sesi ini.'),
@@ -1619,7 +1657,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                       icon: const Icon(Icons.bookmark_add_outlined, size: 18),
                       label: const Text('Simpan Perhitungan Saat Ini'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1F2937),
+                        backgroundColor: const Color(0xFFF58220),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 13),
                         shape: RoundedRectangleBorder(
@@ -1745,9 +1783,13 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                             IconButton(
                               tooltip: 'Hapus histori',
                               visualDensity: VisualDensity.compact,
-                              onPressed: () => setState(
-                                () => _calculationHistory.removeAt(index),
-                              ),
+                              onPressed: () async {
+                                setState(() {
+                                  _calculationHistory.removeAt(index);
+                                });
+
+                                await _persistCalculationHistory();
+                              },
                               icon: const Icon(Icons.close_rounded, size: 18),
                               color: const Color(0xFF64748B),
                             ),
@@ -1759,8 +1801,13 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
-                        onPressed: () =>
-                            setState(() => _calculationHistory.clear()),
+                        onPressed: () async {
+                          setState(() {
+                            _calculationHistory.clear();
+                          });
+
+                          await _persistCalculationHistory();
+                        },
                         icon: const Icon(Icons.delete_outline, size: 16),
                         label: const Text('Hapus semua'),
                         style: TextButton.styleFrom(
