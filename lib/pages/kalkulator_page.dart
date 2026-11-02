@@ -9,6 +9,8 @@ import 'profile_screen.dart';
 import '../widgets/profile_avatar.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class KalkulatorPage extends StatefulWidget {
   const KalkulatorPage({super.key});
@@ -20,7 +22,7 @@ class KalkulatorPage extends StatefulWidget {
 class _KalkulatorPageState extends State<KalkulatorPage> {
   static const Color _white = Colors.white;
   static const Color _textPrimary = Color(0xFF1F2937);
-  
+
   static const Color _textSecondary = Color(0xFF64748B);
   static const double tozFixed = 31.10;
   static const String _historyKey = 'calculation_history';
@@ -47,7 +49,9 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
         );
     });
   }
-
+String _formatRupiahRate(double rate) {
+  return NumberFormat('#,##0.00', 'id_ID').format(rate);
+}
   Future<void> _persistCalculationHistory() async {
     final prefs = await SharedPreferences.getInstance();
 
@@ -79,6 +83,14 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   double digitalNet = 0;
   double digitalNetPercentage = 0;
 
+  // Penyimpanan kurs USD/IDR otomatis
+  static const String _rateCacheKey = 'usd_idr_rate';
+  static const String _rateLastUpdateKey = 'usd_idr_last_update';
+  static const String _rateNextUpdateKey = 'usd_idr_next_update';
+
+  bool _isLoadingRate = false;
+  String _rateStatus = 'Menyiapkan kurs USD/IDR...';
+  String? _rateLastUpdatedText;
   final TextEditingController fisikKursController = TextEditingController(
     text: '16250',
   );
@@ -104,6 +116,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   void initState() {
     super.initState();
     _loadCalculationHistory();
+
+    // Mengambil kurs USD/IDR secara otomatis
+    _loadUsdIdrRate();
+
     digitalBeliController.addListener(calculateDigital);
     digitalJualController.addListener(calculateDigital);
     digitalLotController.addListener(calculateDigital);
@@ -130,8 +146,13 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
   }
 
   double parseNumber(String value) {
-    return double.tryParse(value.replaceAll('.', '').replaceAll(',', '')) ?? 0;
-  }
+  final normalized = value
+      .trim()
+      .replaceAll('.', '')
+      .replaceAll(',', '.');
+
+  return double.tryParse(normalized) ?? 0;
+}
 
   String formatRupiah(double value) {
     final rounded = value.round();
@@ -191,6 +212,178 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     });
   }
 
+  String _formatRateUpdate(DateTime dateTime) {
+    final local = dateTime.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+
+    return '$day/$month/${local.year} $hour:$minute';
+  }
+
+  Future<void> _loadUsdIdrRate() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingRate = true;
+      _rateStatus = 'Memeriksa kurs USD/IDR terbaru...';
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+
+    // Mengambil kurs yang sudah tersimpan.
+    final cachedRate = prefs.getDouble(_rateCacheKey);
+    final cachedLastUpdate = prefs.getInt(_rateLastUpdateKey);
+    final cachedNextUpdate = prefs.getInt(_rateNextUpdateKey);
+
+    // Menggunakan kurs tersimpan terlebih dahulu.
+    if (cachedRate != null && cachedRate > 0) {
+     fisikKursController.text = _formatRupiahRate(cachedRate);
+      calculateFisik();
+
+      if (cachedLastUpdate != null && mounted) {
+        setState(() {
+          _rateLastUpdatedText = _formatRateUpdate(
+            DateTime.fromMillisecondsSinceEpoch(
+              cachedLastUpdate * 1000,
+              isUtc: true,
+            ),
+          );
+
+          _rateStatus = 'Menggunakan kurs tersimpan';
+        });
+      }
+
+      // Jika belum waktunya pembaruan, gunakan kurs tersimpan.
+      if (cachedNextUpdate != null &&
+          DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 <
+              cachedNextUpdate) {
+        if (mounted) {
+          setState(() {
+            _isLoadingRate = false;
+            _rateStatus = 'Kurs terbaru sudah tersimpan';
+          });
+        }
+        return;
+      }
+    }
+
+    try {
+      final response = await http
+          .get(Uri.parse('https://open.er-api.com/v6/latest/USD'))
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode != 200) {
+        throw Exception('Gagal mengambil data kurs');
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (data['result'] != 'success') {
+        throw Exception('API kurs tidak berhasil');
+      }
+
+      final rates = data['rates'] as Map<String, dynamic>;
+
+      final rate = (rates['IDR'] as num?)?.toDouble();
+      final lastUpdateUnix = data['time_last_update_unix'] as int?;
+      final nextUpdateUnix = data['time_next_update_unix'] as int?;
+
+      if (rate == null || rate <= 0 || lastUpdateUnix == null) {
+        throw Exception('Data kurs tidak tersedia');
+      }
+
+      // Memasukkan kurs terbaru ke kalkulator.
+    fisikKursController.text = _formatRupiahRate(rate);
+
+      // Menghitung ulang hasil kalkulator.
+      calculateFisik();
+
+      // Menyimpan kurs ke SharedPreferences.
+      await prefs.setDouble(_rateCacheKey, rate);
+      await prefs.setInt(_rateLastUpdateKey, lastUpdateUnix);
+
+      if (nextUpdateUnix != null) {
+        await prefs.setInt(_rateNextUpdateKey, nextUpdateUnix);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _rateLastUpdatedText = _formatRateUpdate(
+          DateTime.fromMillisecondsSinceEpoch(
+            lastUpdateUnix * 1000,
+            isUtc: true,
+          ),
+        );
+
+        _rateStatus = 'Kurs berhasil diperbarui';
+        _isLoadingRate = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingRate = false;
+
+        _rateStatus = cachedRate != null
+            ? 'Internet/API tidak tersedia. Memakai kurs tersimpan.'
+            : 'Gagal mengambil kurs. Periksa koneksi internet.';
+      });
+    }
+  }
+
+  Widget _buildRateStatus() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_isLoadingRate)
+            const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: Color(0xFFF58220),
+              ),
+            )
+          else
+            const Icon(
+              Icons.check_circle_outline,
+              size: 13,
+              color: Color(0xFF00855B),
+            ),
+
+          const SizedBox(width: 6),
+
+          Expanded(
+            child: Text(
+              '$_rateStatus${_rateLastUpdatedText == null ? '' : ' • Update: $_rateLastUpdatedText'}\n'
+              'Sumber: ExchangeRate-API (open.er-api.com)',
+              style: GoogleFonts.roboto(
+                fontSize: 9,
+                height: 1.4,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _isLoadingRate ? null : _loadUsdIdrRate,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: const Color(0xFFF58220),
+            ),
+            child: const Text('Perbarui'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void calculateFisik() {
     final kurs = parseNumber(fisikKursController.text);
     final modal = parseNumber(fisikModalController.text);
@@ -232,7 +425,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     digitalJualController.text = '1465000';
     digitalLotController.text = '5';
 
-    fisikKursController.text = '16250';
+    _loadUsdIdrRate();
     fisikModalController.text = '100000000';
     fisikBeliController.text = '2380';
     fisikJualController.text = '2410';
@@ -446,24 +639,24 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           const SizedBox(width: 10),
 
           Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'EQUICKLY',
-                          style: TextStyle(color: Color(0xFFFF9800)),
-                        ),
-                      ],
-                    ),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: const TextSpan(
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
                   ),
+                  children: [
+                    TextSpan(
+                      text: 'EQUICKLY',
+                      style: TextStyle(color: Color(0xFFFF9800)),
+                    ),
+                  ],
+                ),
+              ),
               Text(
                 'MARKET INTELLIGENCE',
                 style: GoogleFonts.roboto(
@@ -1049,7 +1242,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  'USD/IDR Live Basis',
+                  'Kurs Harian Otomatis',
                   style: GoogleFonts.roboto(
                     fontSize: 9,
                     fontWeight: FontWeight.w500,
@@ -1065,7 +1258,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
             prefix: 'Rp',
             controller: fisikKursController,
             keyboardType: TextInputType.number,
+            readOnly: true,
           ),
+
+          _buildRateStatus(),
           const SizedBox(height: 10),
           _calculatorInput(
             label: 'Modal Alokasi Tunai',
@@ -1298,6 +1494,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
     String? prefix,
     String? suffix,
     TextInputType? keyboardType,
+    bool readOnly = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1334,9 +1531,10 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                 child: TextField(
                   controller: controller,
                   keyboardType: keyboardType,
+                  readOnly: readOnly,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
+  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+],
                   style: GoogleFonts.roboto(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

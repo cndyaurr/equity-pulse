@@ -23,20 +23,47 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
   final Color tertiary = const Color(0xFF006947);
 
   Future<void> _callNumber(String number) async {
-    final uri = Uri.parse('tel:$number');
+  final uri = Uri(scheme: 'tel', path: number);
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+  } else {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Aplikasi telepon tidak tersedia.'),
+        backgroundColor: Color(0xFFF58220),
+      ),
+    );
   }
+}
 
   Future<void> _sendEmail(String email) async {
-    final uri = Uri.parse('mailto:$email');
+  final uri = Uri(
+    scheme: 'mailto',
+    path: email,
+  );
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+  } else {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Aplikasi email tidak tersedia.'),
+        backgroundColor: Color(0xFFF58220),
+      ),
+    );
   }
+}
 
   void _showLegalitas(String regulator) {
     String title = '';

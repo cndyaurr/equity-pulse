@@ -1,11 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 import 'profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'notifications_screen.dart';
 import 'berita_detail_page.dart';
 import 'dashboard_page.dart';
@@ -30,114 +28,42 @@ class _BeritaPageState extends State<BeritaPage> {
   static const Color _textPrimary = Color(0xFF1F2937);
   static const Color _primary = Color(0xFFF58220);
 
-  // ============================================================
-  // STATE
-  // ============================================================
+// ============================================================
+// STATE
+// ============================================================
 
-  int selectedCategory = 0;
-  int selectedPage = 1;
+int selectedCategory = 0;
+int selectedPage = 1;
 
-  final List<String> categories = [
-    'Semua Berita',
-    'Kebijakan The Fed & Inflasi',
-    'Permintaan Fisik & Bank Sentral',
-    'Produksi Emas Domestik',
-  ];
+final List<String> categories = [
+  'Semua Berita',
+  'Kebijakan The Fed & Inflasi',
+  'Permintaan Fisik & Bank Sentral',
+  'Produksi Emas Domestik',
+];
 
-  final List<IconData> categoryIcons = [
-    Icons.all_inclusive,
-    Icons.account_balance,
-    Icons.assured_workload,
-    Icons.factory,
-  ];
+final List<IconData> categoryIcons = [
+  Icons.all_inclusive,
+  Icons.account_balance,
+  Icons.assured_workload,
+  Icons.factory,
+];
 
-  List<Map<String, dynamic>> news = [];
-  Set<String> savedNewsKeys = {};
+List<Map<String, dynamic>> news = [];
 
-  bool isLoadingSavedNews = true;
-  bool isLoadingNews = true;
+bool isLoadingNews = true;
 
-  String newsError = '';
+String newsError = '';
 
   // ============================================================
   // INIT STATE
   // ============================================================
 
   @override
-  void initState() {
-    super.initState();
-    _loadNews();
-    _loadSavedNews();
-  }
-
-  // ============================================================
-  // LOAD SAVED NEWS
-  // ============================================================
-
-  Future<void> _loadSavedNews() async {
-    final prefs = await SharedPreferences.getInstance();
-    final items = prefs.getStringList('saved_news_items') ?? [];
-
-    if (!mounted) return;
-
-    setState(() {
-      savedNewsKeys = items.map((raw) {
-        final item = jsonDecode(raw) as Map<String, dynamic>;
-        return _newsKey(item);
-      }).toSet();
-
-      isLoadingSavedNews = false;
-    });
-  }
-
-  String _newsKey(Map<String, dynamic> item) {
-    final url = (item['url'] ?? '').toString().trim();
-
-    if (url.isNotEmpty) return url;
-
-    return (item['title'] ?? '').toString().trim();
-  }
-
-  Future<void> _toggleSavedNews(Map<String, dynamic> item) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final items = prefs.getStringList('saved_news_items') ?? [];
-    final key = _newsKey(item);
-
-    items.removeWhere((raw) {
-      final saved = jsonDecode(raw) as Map<String, dynamic>;
-      return _newsKey(saved) == key;
-    });
-
-    final alreadySaved = savedNewsKeys.contains(key);
-
-    if (!alreadySaved) {
-      items.add(jsonEncode(item));
-    }
-
-    await prefs.setStringList('saved_news_items', items);
-
-    if (!mounted) return;
-
-    setState(() {
-      if (alreadySaved) {
-        savedNewsKeys.remove(key);
-      } else {
-        savedNewsKeys.add(key);
-      }
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          alreadySaved
-              ? 'Berita dihapus dari Simpan.'
-              : 'Berita berhasil disimpan.',
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+void initState() {
+  super.initState();
+  _loadNews();
+}
 
   // ============================================================
   // SHARE NEWS
@@ -706,72 +632,61 @@ class _BeritaPageState extends State<BeritaPage> {
   // SAVE NEWS BUTTON
   // ============================================================
 
-  Widget _buildSaveButton(Map<String, dynamic> item) {
-    final isSaved = savedNewsKeys.contains(_newsKey(item));
-
-    return IconButton(
-      tooltip: isSaved ? 'Hapus dari Simpan' : 'Simpan berita',
-      onPressed: () => _toggleSavedNews(item),
-      icon: Icon(
-        isSaved ? Icons.bookmark : Icons.bookmark_border,
-        color: _primary,
-      ),
-    );
-  }
+  
 
   // ============================================================
   // NEWS ACTIONS
   // ============================================================
 
-  Widget _buildNewsActions(Map<String, dynamic> item) {
-    return Row(
-      children: [
-        _buildSaveButton(item),
+Widget _buildNewsActions(Map<String, dynamic> item) {
+  return Row(
+    children: [
+      IconButton(
+        tooltip: 'Bagikan berita',
+        onPressed: () => _shareNews(item),
+        icon: const Icon(Icons.share_outlined),
+        color: _primary,
+      ),
 
-        const SizedBox(width: 7),
+      const Spacer(),
 
-        IconButton(
-          tooltip: 'Bagikan berita',
-          onPressed: () => _shareNews(item),
-          icon: const Icon(Icons.share_outlined),
-          color: _primary,
-        ),
-
-        const Spacer(),
-
-        Flexible(
-          child: ElevatedButton(
-            onPressed: () => _openNewsDetail(item),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+      Flexible(
+        child: ElevatedButton(
+          onPressed: () => _openNewsDetail(item),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _primary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    'Baca Selengkapnya',
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                  ),
-                ),
-
-                SizedBox(width: 5),
-
-                Icon(Icons.arrow_forward, size: 16),
-              ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  'Baca Selengkapnya',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(width: 5),
+              Icon(Icons.arrow_forward, size: 16),
+            ],
+          ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   // ============================================================
   // OPEN NEWS DETAIL

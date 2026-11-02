@@ -928,6 +928,168 @@ _buildAssetBar(),
       ),
     );
   }
+  void _showCalculationDetail(String label) {
+  final high = _parseController(_highController);
+  final low = _parseController(_lowController);
+  final close = _parseController(_closeController);
+
+  final pp = (high + low + close) / 3;
+  final range = high - low;
+
+  late String formula;
+  late String substitution;
+  late double result;
+
+  switch (label) {
+    case 'R1':
+      formula = 'R1 = (2 × PP) − Low';
+      substitution =
+          '= (2 × ${_formatPivot(pp)}) − ${_formatPivot(low)}';
+      result = (2 * pp) - low;
+      break;
+
+    case 'R2':
+      formula = 'R2 = PP + (High − Low)';
+      substitution =
+          '= ${_formatPivot(pp)} + (${_formatPivot(high)} − ${_formatPivot(low)})';
+      result = pp + range;
+      break;
+
+    case 'R3':
+      formula = 'R3 = PP + 2 × (High − Low)';
+      substitution =
+          '= ${_formatPivot(pp)} + 2 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+      result = pp + (range * 2);
+      break;
+
+    case 'R4':
+      formula = 'R4 = PP + 3 × (High − Low)';
+      substitution =
+          '= ${_formatPivot(pp)} + 3 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+      result = pp + (range * 3);
+      break;
+
+    case 'S1':
+      formula = 'S1 = (2 × PP) − High';
+      substitution =
+          '= (2 × ${_formatPivot(pp)}) − ${_formatPivot(high)}';
+      result = (2 * pp) - high;
+      break;
+
+    case 'S2':
+      formula = 'S2 = PP − (High − Low)';
+      substitution =
+          '= ${_formatPivot(pp)} − (${_formatPivot(high)} − ${_formatPivot(low)})';
+      result = pp - range;
+      break;
+
+    case 'S3':
+      formula = 'S3 = PP − 2 × (High − Low)';
+      substitution =
+          '= ${_formatPivot(pp)} − 2 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+      result = pp - (range * 2);
+      break;
+
+    case 'S4':
+      formula = 'S4 = PP − 3 × (High − Low)';
+      substitution =
+          '= ${_formatPivot(pp)} − 3 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+      result = pp - (range * 3);
+      break;
+
+    case 'PP':
+      formula = 'PP = (High + Low + Close) ÷ 3';
+      substitution =
+          '= (${_formatPivot(high)} + ${_formatPivot(low)} + ${_formatPivot(close)}) ÷ 3';
+      result = pp;
+      break;
+
+        default:
+      return;
+  }
+
+  // Warna berdasarkan jenis Pivot Point
+  final detailColor = label.startsWith('S')
+      ? const Color(0xFF00866A)
+      : label.startsWith('R')
+          ? const Color(0xFFD64545)
+          : const Color(0xFFD96812);
+
+  final detailBackground = label.startsWith('S')
+      ? const Color(0xFFE8F5F0)
+      : label.startsWith('R')
+          ? const Color(0xFFFFF0EE)
+          : const Color(0xFFFFF3E8);
+
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+                title: Text(
+          label,
+          style: TextStyle(
+            color: detailColor,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              formula,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              substitution,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 12),
+                        Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(13),
+              decoration: BoxDecoration(
+                color: detailBackground,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$label = ${_format(result)}',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: detailColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(
+              'Tutup',
+              style: TextStyle(color: Color(0xFFD96812)),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   Widget _buildPivotLadder() {
     return _card(
@@ -989,22 +1151,39 @@ _buildAssetBar(),
     );
   }
 
-  Widget _ladderRow({
-    required String label,
-    required double value,
-    required bool isResistance,
-  }) {
-    final rowColor = isResistance
-        ? const Color(0xFFFFF0EE)
-        : const Color(0xFFE8F5F0);
+Widget _ladderRow({
+  required String label,
+  required double value,
+  required bool isResistance,
+}) {
+  final rowColor = isResistance
+      ? const Color(0xFFFFF0EE)
+      : const Color(0xFFE8F5F0);
 
-    final valueColor = isResistance
-        ? const Color(0xFFD64545)
-        : const Color(0xFF00866A);
+  final valueColor = isResistance
+      ? const Color(0xFFD64545)
+      : const Color(0xFF00866A);
 
-    return Container(
+  final formulas = {
+    'R1': '(2 × PP) − Low',
+    'R2': 'PP + Range',
+    'R3': 'PP + 2 × Range',
+    'R4': 'PP + 3 × Range',
+    'S1': '(2 × PP) − High',
+    'S2': 'PP − Range',
+    'S3': 'PP − 2 × Range',
+    'S4': 'PP − 3 × Range',
+  };
+
+  return InkWell(
+    onTap: () => _showCalculationDetail(label),
+    borderRadius: BorderRadius.circular(7),
+    child: Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 11,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: rowColor,
         borderRadius: BorderRadius.circular(7),
@@ -1022,10 +1201,13 @@ _buildAssetBar(),
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Pivot Level',
-              style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+              formulas[label]!,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
             ),
           ),
           Text(
@@ -1036,10 +1218,17 @@ _buildAssetBar(),
               color: valueColor,
             ),
           ),
+          const SizedBox(width: 5),
+          Icon(
+            Icons.chevron_right,
+            size: 15,
+            color: valueColor,
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _midRow({required double value}) {
     return Container(
@@ -1082,10 +1271,16 @@ _buildAssetBar(),
     );
   }
 
-  Widget _pivotRow() {
-    return Container(
+Widget _pivotRow() {
+  return InkWell(
+    onTap: () => _showCalculationDetail('PP'),
+    borderRadius: BorderRadius.circular(8),
+    child: Container(
       margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 13),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 11,
+        vertical: 13,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3E8),
         borderRadius: BorderRadius.circular(8),
@@ -1108,10 +1303,9 @@ _buildAssetBar(),
           ),
           const Expanded(
             child: Text(
-              'Pivot Point',
+              '(High + Low + Close) ÷ 3',
               style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
+                fontSize: 9,
                 color: Color(0xFFD96812),
               ),
             ),
@@ -1124,10 +1318,17 @@ _buildAssetBar(),
               color: Color(0xFFD96812),
             ),
           ),
+          const SizedBox(width: 5),
+          const Icon(
+            Icons.chevron_right,
+            size: 16,
+            color: Color(0xFFD96812),
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _card({required Widget child}) {
     return Container(

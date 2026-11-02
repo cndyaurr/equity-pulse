@@ -581,8 +581,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         });
 
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Profil berhasil diperbarui.'),
+                          SnackBar(
+                            content: const Text(
+                              'Profil berhasil diperbarui.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            backgroundColor: orange,
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         );
                       } else {
