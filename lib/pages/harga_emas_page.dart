@@ -30,7 +30,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   static const Color primaryLight = Color(0xFFFFF3E8);
   static const Color textPrimary = Color(0xFF1F2937);
   static const Color textSecondary = Color(0xFF64748B);
-  static const Color surface = Color(0xFFFFFFFF);
+
   GoldPrice? lgdPrice;
   GoldPrice? hsiPrice;
   GoldPrice? sniPrice;
@@ -90,7 +90,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
         hsiPrice = hsi;
         sniPrice = sni;
         isLoadingPrices = false;
-        _selectedChartPoint = 0;
+    
         _currentPage = 1;
       });
     } catch (e) {
@@ -115,7 +115,6 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   int _selectedAsset = 0;
   int _selectedPeriod = 1;
   int _currentPage = 1;
-  int _selectedChartPoint = 0;
 
   DateTime _startDate = DateTime(2026, 9, 24);
   DateTime _endDate = DateTime(2026, 10, 1);
@@ -207,23 +206,6 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     }
   }
 
-  List<GoldChartPoint> get _chartData {
-    return _filteredPrices.map((item) {
-      final date = item.recordedAt!.toLocal();
-
-      return GoldChartPoint(
-        date:
-            '${date.day.toString().padLeft(2, '0')}/'
-            '${date.month.toString().padLeft(2, '0')}/'
-            '${date.year}',
-        shortDate:
-            '${date.day.toString().padLeft(2, '0')}/'
-            '${date.month.toString().padLeft(2, '0')}',
-        price: item.close ?? item.price,
-      );
-    }).toList();
-  }
-
   List<OhlcData> get _ohlcData {
     final data = List<GoldPrice>.from(_filteredPrices);
 
@@ -271,16 +253,6 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     return matches.first;
   }
 
-  GoldPrice? get _selectedPrice {
-    switch (_selectedAsset) {
-      case 1:
-        return hsiPrice;
-      case 2:
-        return sniPrice;
-      default:
-        return lgdPrice;
-    }
-  }
 
   // ============================================================
   // FORMATTER
@@ -614,7 +586,6 @@ Widget _buildPageTitle() {
               onTap: () {
                 setState(() {
                   _selectedAsset = index;
-                  _selectedChartPoint = 0;
                   _currentPage = 1;
                 });
               },
@@ -918,7 +889,7 @@ Widget _buildSettlementCard() {
                     onTap: () {
                       setState(() {
                         _selectedPeriod = index;
-                        _selectedChartPoint = 0;
+                      
                         _currentPage = 1;
                       });
                     },
@@ -1661,7 +1632,7 @@ class GoldChartPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: value.toStringAsFixed(0),
-          style: const TextStyle(fontSize: 9, color: const Color(0xFF64748B)),
+          style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
         ),
         textDirection: TextDirection.ltr,
       );
@@ -1747,7 +1718,7 @@ class GoldChartPainter extends CustomPainter {
       final textPainter = TextPainter(
         text: TextSpan(
           text: data[i].shortDate,
-          style: const TextStyle(fontSize: 9, color: const Color(0xFF64748B)),
+          style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
         ),
         textDirection: TextDirection.ltr,
       );

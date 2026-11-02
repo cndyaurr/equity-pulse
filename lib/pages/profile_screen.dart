@@ -449,7 +449,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
-        if (trailing != null) trailing,
+        ?trailing,
       ],
     ),
   );
@@ -542,7 +542,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       newUnit: unitController.text.trim(),
                     );
 
-                    if (!mounted) return;
+                    if (!mounted || !dialogContext.mounted) return;
 
                     setState(() => isSavingProfile = false);
 

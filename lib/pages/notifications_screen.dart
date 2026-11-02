@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -23,8 +22,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   static const Color primary = Color(0xFFF58220);
   static const Color primaryDark = Color(0xFFD96812);
   static const Color primaryLight = Color(0xFFFFE5CC);
-  static const Color surfaceContainer = Color(0xFFFFE5CC);
-  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
   static const Color textPrimary = Color(0xFF252525);
   static const Color textSecondary = Color(0xFF555555);
 
@@ -41,8 +38,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return DateTime(now.year, now.month, now.day);
   }
 
-  DateTime get _yesterday =>
-      _today.subtract(const Duration(days: 1));
+  DateTime get _yesterday => _today.subtract(const Duration(days: 1));
 
   String _dateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -96,8 +92,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .map((item) => Map<String, dynamic>.from(item))
           .where((item) {
             final date = _parseNewsDate(item['published_at']);
-            return date != null &&
-                _dateKey(date.toLocal()) == _dateKey(_today);
+            return date != null && _dateKey(date.toLocal()) == _dateKey(_today);
           })
           .toList();
 
@@ -119,12 +114,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final pivot = await ApiService.getPivotPoint(commodity);
 
-      final pivotDate = DateTime.tryParse(
-        pivot.date.substring(0, 10),
-      );
+      final pivotDate = DateTime.tryParse(pivot.date.substring(0, 10));
 
-      if (pivotDate == null ||
-          _dateKey(pivotDate) != _dateKey(_today)) {
+      if (pivotDate == null || _dateKey(pivotDate) != _dateKey(_today)) {
         return null;
       }
 
@@ -179,8 +171,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return _prices.where((price) {
       final date = price.recordedAt;
 
-      return date != null &&
-          _dateKey(date.toLocal()) == _dateKey(_today);
+      return date != null && _dateKey(date.toLocal()) == _dateKey(_today);
     }).toList();
   }
 
@@ -188,8 +179,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return _prices.where((price) {
       final date = price.recordedAt;
 
-      return date != null &&
-          _dateKey(date.toLocal()) == _dateKey(_yesterday);
+      return date != null && _dateKey(date.toLocal()) == _dateKey(_yesterday);
     }).toList();
   }
 
@@ -198,10 +188,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return values.toList();
   }
 
-  GoldPrice? _findPrice(
-    List<GoldPrice> source,
-    String commodity,
-  ) {
+  GoldPrice? _findPrice(List<GoldPrice> source, String commodity) {
     final matches = source
         .where((price) => price.commodity == commodity)
         .toList();
@@ -252,8 +239,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       notifications.add({
         'category': 'BERITA TERBARU',
         'title': news['title'] ?? 'Berita Pasar Terbaru',
-        'description':
-            'Sumber: ${news['source'] ?? 'Equityworld Futures'}',
+        'description': 'Sumber: ${news['source'] ?? 'Equityworld Futures'}',
         'time': _formatTime(publishedAt),
         'icon': Icons.newspaper_rounded,
         'color': const Color(0xFF1976D2),
@@ -270,28 +256,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       notifications.add({
         'category': 'PIVOT POINT',
         'title': 'Pivot Point $commodity Hari Ini',
-        'description':
-            'Pivot: ${_formatPrice(pivot.pivot)} $unit.',
+        'description': 'Pivot: ${_formatPrice(pivot.pivot)} $unit.',
         'time': '07:30 WIB',
         'icon': Icons.analytics_outlined,
         'color': const Color(0xFFD18A00),
         'background': const Color(0xFFFFEDC7),
         'highlight': true,
       });
-
-      if (pivot.nest != null) {
-        notifications.add({
-          'category': 'TREND / NEST',
-          'title': 'Harga Trend $commodity Hari Ini',
-          'description':
-              'NEST: ${_formatPrice(pivot.nest)} $unit.',
-          'time': '07:30 WIB',
-          'icon': Icons.show_chart_rounded,
-          'color': const Color(0xFF7C3AED),
-          'background': const Color(0xFFEDE2FF),
-          'highlight': false,
-        });
-      }
     }
 
     return notifications;
@@ -342,10 +313,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: textPrimary,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded, color: textPrimary),
         ),
         title: Text(
           'Notifikasi',
@@ -391,66 +359,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
                   SizedBox(height: 260),
-                  Center(
-                    child: CircularProgressIndicator(color: primary),
-                  ),
+                  Center(child: CircularProgressIndicator(color: primary)),
                 ],
               )
             : _errorMessage != null
-                ? _buildErrorState()
-                : ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
-                    children: [
-                      _buildSectionHeader(
-                        'HARI INI',
-                        showMarkRead: true,
-                      ),
-                      const SizedBox(height: 14),
+            ? _buildErrorState()
+            : ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
+                children: [
+                  _buildSectionHeader('HARI INI', showMarkRead: true),
+                  const SizedBox(height: 14),
 
-                      if (todayNotifications.isEmpty)
-                        _buildEmptyMessage(
-                          'Belum ada notifikasi hari ini.',
-                        )
-                      else
-                        ...todayNotifications.map(
-                          (item) => _NotificationCard(
-                            item: item,
-                            isRead: _allRead,
-                          ),
-                        ),
+                  if (todayNotifications.isEmpty)
+                    _buildEmptyMessage('Belum ada notifikasi hari ini.')
+                  else
+                    ...todayNotifications.map(
+                      (item) => _NotificationCard(item: item, isRead: _allRead),
+                    ),
 
-                      const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                      _buildSectionHeader(
-                        'KEMARIN',
-                        showMarkRead: false,
-                      ),
-                      const SizedBox(height: 14),
+                  _buildSectionHeader('KEMARIN', showMarkRead: false),
+                  const SizedBox(height: 14),
 
-                      if (yesterdayNotifications.isEmpty)
-                        _buildEmptyMessage(
-                          'Belum ada data notifikasi kemarin.',
-                        )
-                      else
-                        ...yesterdayNotifications.map(
-                          (item) => _NotificationCard(
-                            item: item,
-                            isRead: true,
-                          ),
-                        ),
+                  if (yesterdayNotifications.isEmpty)
+                    _buildEmptyMessage('Belum ada data notifikasi kemarin.')
+                  else
+                    ...yesterdayNotifications.map(
+                      (item) => _NotificationCard(item: item, isRead: true),
+                    ),
 
-                      const SizedBox(height: 28),
-                    ],
-                  ),
+                  const SizedBox(height: 28),
+                ],
+              ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(
-    String title, {
-    required bool showMarkRead,
-  }) {
+  Widget _buildSectionHeader(String title, {required bool showMarkRead}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -505,25 +452,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-    Widget _buildErrorState() {
+  Widget _buildErrorState() {
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const SizedBox(height: 180),
-        const Icon(
-          Icons.wifi_off_rounded,
-          size: 45,
-          color: textSecondary,
-        ),
+        const Icon(Icons.wifi_off_rounded, size: 45, color: textSecondary),
         const SizedBox(height: 14),
         Center(
           child: Text(
             _errorMessage ?? 'Terjadi kesalahan.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.roboto(
-              color: textSecondary,
-              fontSize: 15,
-            ),
+            style: GoogleFonts.roboto(color: textSecondary, fontSize: 15),
           ),
         ),
         const SizedBox(height: 18),
@@ -553,10 +493,7 @@ class _NotificationCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isRead;
 
-  const _NotificationCard({
-    required this.item,
-    required this.isRead,
-  });
+  const _NotificationCard({required this.item, required this.isRead});
 
   @override
   Widget build(BuildContext context) {
@@ -595,11 +532,7 @@ class _NotificationCard extends StatelessWidget {
               color: iconBackground,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              item['icon'] as IconData,
-              color: color,
-              size: 27,
-            ),
+            child: Icon(item['icon'] as IconData, color: color, size: 27),
           ),
           const SizedBox(width: 14),
           Expanded(

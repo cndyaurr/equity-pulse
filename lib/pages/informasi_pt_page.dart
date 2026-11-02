@@ -72,9 +72,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: SafeArea(
             top: false,
@@ -83,11 +81,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.verified_rounded,
-                      color: primary,
-                      size: 25,
-                    ),
+                    Icon(Icons.verified_rounded, color: primary, size: 25),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -120,10 +114,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
                         valueColor: tertiary,
                       ),
                       const SizedBox(height: 12),
-                      _modalRow(
-                        'Nomor Registrasi',
-                        registration,
-                      ),
+                      _modalRow('Nomor Registrasi', registration),
                       const SizedBox(height: 12),
                       _modalRow(
                         'Kategori Keanggotaan',
@@ -158,9 +149,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
                     ),
                     child: const Text(
                       'Tutup Tinjauan Legalitas',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -172,21 +161,14 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
     );
   }
 
-  Widget _modalRow(
-    String label,
-    String value, {
-    Color? valueColor,
-  }) {
+  Widget _modalRow(String label, String value, {Color? valueColor}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Text(
             label,
-            style: TextStyle(
-              color: textSecondary,
-              fontSize: 11,
-            ),
+            style: TextStyle(color: textSecondary, fontSize: 11),
           ),
         ),
         const SizedBox(width: 12),
@@ -206,277 +188,198 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
   }
 
   @override
-Widget build(BuildContext context) {
-  return DefaultTextStyle.merge(
-    style: GoogleFonts.roboto(),
-    child: Scaffold(
-      backgroundColor: surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                child: Column(
-                  children: [
-                    _buildHero(),
-const SizedBox(height: 14),
-                    _buildTabSwitcher(),
-                    const SizedBox(height: 16),
-                    if (selectedTab == 0) _buildLegalitas(),
-                    if (selectedTab == 1) _buildNetwork(),
-                    if (selectedTab == 2) _buildCustomerCare(),
-                    const SizedBox(height: 16),
-                    _buildRiskNotice(),
-                  ],
+  Widget build(BuildContext context) {
+    return DefaultTextStyle.merge(
+      style: GoogleFonts.roboto(),
+      child: Scaffold(
+        backgroundColor: surface,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  child: Column(
+                    children: [
+                      _buildHero(),
+                      const SizedBox(height: 14),
+                      _buildTabSwitcher(),
+                      const SizedBox(height: 16),
+                      if (selectedTab == 0) _buildLegalitas(),
+                      if (selectedTab == 1) _buildNetwork(),
+                      if (selectedTab == 2) _buildCustomerCare(),
+                      const SizedBox(height: 16),
+                      _buildRiskNotice(),
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(color: Colors.white),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            icon: const Icon(
+              Icons.arrow_back,
+              size: 24,
+              color: Color(0xFF1F2937),
+            ),
+            tooltip: 'Kembali',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
+          ),
+          const SizedBox(width: 4),
+          // LOGO PERUSAHAAN
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/images/logo_perusahaan.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.trending_up, color: Color(0xFFD96812));
+              },
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // NAMA DAN SUBTITLE
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'EQUITY ',
+                        style: GoogleFonts.roboto(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'PULSE',
+                        style: GoogleFonts.roboto(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFF58220),
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const Text(
+                  'MARKET INTELLIGENCE',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // NOTIFIKASI
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(
+              Icons.notifications_none,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+
+          // PROFIL
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(30),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
+                );
+              },
+              child: const ProfileAvatar(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHero() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF58220),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: CustomPaint(
+        painter: _HeroPatternPainter(primary: primary),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'PT Equityworld Futures',
+              style: GoogleFonts.roboto(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
       ),
-    ),
-  );
-}
-
-Widget _buildHeader() {
-  return Container(
-    height: 56,
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    decoration: const BoxDecoration(
-      color: Colors.white,
-    ),
-    child: Row(
-      children: [
-        IconButton(
-  onPressed: () {
-    Navigator.pop(context);
-  },
-  icon: const Icon(
-  Icons.arrow_back,
-  size: 24,
-  color: Color(0xFF1F2937),
-),
-  tooltip: 'Kembali',
-  padding: EdgeInsets.zero,
-  constraints: const BoxConstraints(
-    minWidth: 36,
-    minHeight: 40,
-  ),
-),
-const SizedBox(width: 4),
-        // LOGO PERUSAHAAN
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Image.asset(
-            'assets/images/logo_perusahaan.png',
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(
-                Icons.trending_up,
-                color: Color(0xFFD96812),
-              );
-            },
-          ),
-        ),
-
-        const SizedBox(width: 10),
-
-        // NAMA DAN SUBTITLE
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'EQUITY ',
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1F2937),
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'PULSE',
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFF58220),
-                      ),
-                    ),
-                  ],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const Text(
-                'MARKET INTELLIGENCE',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // NOTIFIKASI
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NotificationsScreen(),
-              ),
-            );
-          },
-          icon: const Icon(
-            Icons.notifications_none,
-            color: Color(0xFF1F2937),
-          ),
-        ),
-
-        // PROFIL
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(),
-                ),
-              );
-            },
-            child: const ProfileAvatar(),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
-  Widget _buildBreadcrumb() {
-    return Row(
-      children: [
-        Text(
-          'EWF HUB',
-          style: TextStyle(
-            color: textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 5),
-          child: Icon(
-            Icons.chevron_right,
-            size: 15,
-            color: Color(0xFF817563),
-          ),
-        ),
-        Text(
-          'Profil Institusi',
-          style: TextStyle(
-            color: primary,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 9,
-            vertical: 5,
-          ),
-          decoration: BoxDecoration(
-            color: tertiary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: tertiary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'Pialang Resmi BAPPEBTI',
-                style: TextStyle(
-                  color: tertiary,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
-
-
-Widget _buildHero() {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 16,
-    ),
-    decoration: BoxDecoration(
-  color: const Color(0xFFF58220),
-  borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.10),
-          blurRadius: 8,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: CustomPaint(
-      painter: _HeroPatternPainter(primary: primary),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'PT Equityworld Futures',
-            style: GoogleFonts.roboto(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 
   Widget _buildTabSwitcher() {
     return Container(
@@ -487,11 +390,7 @@ Widget _buildHero() {
       ),
       child: Row(
         children: [
-          _tabButton(
-            index: 0,
-            icon: Icons.shield_outlined,
-            title: 'Legalitas',
-          ),
+          _tabButton(index: 0, icon: Icons.shield_outlined, title: 'Legalitas'),
           _tabButton(
             index: 1,
             icon: Icons.location_city_outlined,
@@ -523,10 +422,7 @@ Widget _buildHero() {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 5,
-            vertical: 9,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 9),
           decoration: BoxDecoration(
             color: active ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
@@ -542,11 +438,7 @@ Widget _buildHero() {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 15,
-                color: active ? primary : textSecondary,
-              ),
+              Icon(icon, size: 15, color: active ? primary : textSecondary),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
@@ -617,18 +509,9 @@ Widget _buildHero() {
                 ),
                 child: Row(
                   children: [
-                    _metric(
-                      'Pengawasan',
-                      'BAPPEBTI',
-                    ),
-                    _metric(
-                      'Bursa Mitra',
-                      'BBJ / JFX',
-                    ),
-                    _metric(
-                      'Penjaminan',
-                      'KBI (Persero)',
-                    ),
+                    _metric('Pengawasan', 'BAPPEBTI'),
+                    _metric('Bursa Mitra', 'BBJ / JFX'),
+                    _metric('Penjaminan', 'KBI (Persero)'),
                   ],
                 ),
               ),
@@ -638,11 +521,7 @@ Widget _buildHero() {
         const SizedBox(height: 14),
         Row(
           children: [
-            Icon(
-              Icons.verified_user_outlined,
-              color: primary,
-              size: 19,
-            ),
+            Icon(Icons.verified_user_outlined, color: primary, size: 19),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -655,10 +534,7 @@ Widget _buildHero() {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: tertiary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(5),
@@ -789,20 +665,14 @@ Widget _buildHero() {
                 Text(
                   description,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: textSecondary, fontSize: 11),
                 ),
                 const SizedBox(height: 5),
                 Row(
                   children: [
                     Text(
                       'No: ',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 9,
-                      ),
+                      style: TextStyle(color: textSecondary, fontSize: 9),
                     ),
                     Flexible(
                       child: Container(
@@ -837,10 +707,7 @@ Widget _buildHero() {
               backgroundColor: surfaceLow,
               foregroundColor: primary,
             ),
-            icon: const Icon(
-              Icons.open_in_new,
-              size: 18,
-            ),
+            icon: const Icon(Icons.open_in_new, size: 18),
           ),
         ],
       ),
@@ -852,11 +719,7 @@ Widget _buildHero() {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.domain_outlined,
-              color: primary,
-              size: 19,
-            ),
+            Icon(Icons.domain_outlined, color: primary, size: 19),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -870,21 +733,14 @@ Widget _buildHero() {
             ),
             Text(
               'Jakarta Pusat',
-              style: TextStyle(
-                color: textSecondary,
-                fontSize: 10,
-              ),
+              style: TextStyle(color: textSecondary, fontSize: 10),
             ),
           ],
         ),
         const SizedBox(height: 10),
         Row(
           children: [
-            Icon(
-              Icons.share_location_outlined,
-              color: primary,
-              size: 19,
-            ),
+            Icon(Icons.share_location_outlined, color: primary, size: 19),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -910,8 +766,7 @@ Widget _buildHero() {
         _branchCard(
           icon: Icons.apartment_outlined,
           title: 'Cabang Jakarta Cyber 2',
-          address:
-              'Cyber 2 Tower Lt. 19, Jl. H.R. Rasuna Said, Kuningan',
+          address: 'Cyber 2 Tower Lt. 19, Jl. H.R. Rasuna Said, Kuningan',
           phone: '(021) 2902-1555',
           phoneRaw: '02129021555',
         ),
@@ -927,8 +782,7 @@ Widget _buildHero() {
         _branchCard(
           icon: Icons.store_outlined,
           title: 'Cabang Semarang',
-          address:
-              'Ruko Peterongan Plaza Blok A No. 10, Jl. MT Haryono',
+          address: 'Ruko Peterongan Plaza Blok A No. 10, Jl. MT Haryono',
           phone: '(024) 845-6677',
           phoneRaw: '0248456677',
         ),
@@ -936,8 +790,7 @@ Widget _buildHero() {
         _branchCard(
           icon: Icons.business_outlined,
           title: 'Cabang Medan',
-          address:
-              'B&G Tower Lt. 8, Jl. Putri Hijau No. 10, Kesawan',
+          address: 'B&G Tower Lt. 8, Jl. Putri Hijau No. 10, Kesawan',
           phone: '(061) 457-8900',
           phoneRaw: '0614578900',
         ),
@@ -945,195 +798,11 @@ Widget _buildHero() {
         _branchCard(
           icon: Icons.domain_verification_outlined,
           title: 'Cabang Manado',
-          address:
-              'Komp. Mega Mas Blok 1D No. 22-23, Jl. Piere Tendean',
+          address: 'Komp. Mega Mas Blok 1D No. 22-23, Jl. Piere Tendean',
           phone: '(0431) 882-1666',
           phoneRaw: '04318821666',
         ),
       ],
-    );
-  }
-
-  Widget _headOfficeCard() {
-    return _sectionCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        children: [
-          Container(
-            height: 140,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              color: Color(0xFF213145),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _BuildingPainter(
-                      primary: primary,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 10,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF213145).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Text(
-                          'Pusat Operasional EWF',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: tertiary.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: const Text(
-                          'Open 08:30 - 17:30',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sahid Sudirman Center',
-                  style: TextStyle(
-                    color: textPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Lt. 9, Jl. Jend. Sudirman No. 86, Jakarta Pusat 10220',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: surfaceLow,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: primary.withValues(alpha: 0.10),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.call,
-                          color: primary,
-                          size: 17,
-                        ),
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Telepon Hunting Resmi',
-                              style: TextStyle(
-                                color: textSecondary,
-                                fontSize: 9,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '(021) 2788-9280',
-                              style: TextStyle(
-                                color: textPrimary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _callNumber('02127889280');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 11,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Row(
-                          children: [
-                            Text(
-                              'Panggil',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(width: 4),
-                            Icon(
-                              Icons.phone_forwarded,
-                              size: 14,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1168,18 +837,12 @@ Widget _buildHero() {
                   address,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 11,
-                  ),
+                  style: TextStyle(color: textSecondary, fontSize: 11),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Telp: $phone',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: textSecondary, fontSize: 10),
                 ),
               ],
             ),
@@ -1191,10 +854,7 @@ Widget _buildHero() {
               backgroundColor: surfaceLow,
               foregroundColor: primary,
             ),
-            icon: const Icon(
-              Icons.phone,
-              size: 18,
-            ),
+            icon: const Icon(Icons.phone, size: 18),
           ),
         ],
       ),
@@ -1206,11 +866,7 @@ Widget _buildHero() {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.contact_support_outlined,
-              color: primary,
-              size: 19,
-            ),
+            Icon(Icons.contact_support_outlined, color: primary, size: 19),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -1224,10 +880,7 @@ Widget _buildHero() {
             ),
             Text(
               '24/5 Trading Desk',
-              style: TextStyle(
-                color: textSecondary,
-                fontSize: 9,
-              ),
+              style: TextStyle(color: textSecondary, fontSize: 9),
             ),
           ],
         ),
@@ -1278,11 +931,7 @@ Widget _buildHero() {
               color: primary.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(
-              icon,
-              color: primary,
-              size: 21,
-            ),
+            child: Icon(icon, color: primary, size: 21),
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -1291,10 +940,7 @@ Widget _buildHero() {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 9,
-                  ),
+                  style: TextStyle(color: textSecondary, fontSize: 9),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -1307,13 +953,7 @@ Widget _buildHero() {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: tertiary,
-                    fontSize: 9,
-                  ),
-                ),
+                Text(subtitle, style: TextStyle(color: tertiary, fontSize: 9)),
               ],
             ),
           ),
@@ -1324,20 +964,14 @@ Widget _buildHero() {
               backgroundColor: surfaceLow,
               foregroundColor: primary,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 9,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: Text(
               buttonText,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -1352,11 +986,7 @@ Widget _buildHero() {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.schedule,
-                color: primary,
-                size: 20,
-              ),
+              Icon(Icons.schedule, color: primary, size: 20),
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
@@ -1411,10 +1041,7 @@ Widget _buildHero() {
             width: 8,
             height: 8,
             margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1451,20 +1078,13 @@ Widget _buildHero() {
         color: surfaceLow,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 5,
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 5),
         ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.info_outline,
-            color: primary,
-            size: 20,
-          ),
+          Icon(Icons.info_outline, color: primary, size: 20),
           const SizedBox(width: 9),
           Expanded(
             child: Column(
@@ -1530,11 +1150,7 @@ Widget _buildHero() {
         color: const Color(0xFFDCE9FF),
         borderRadius: BorderRadius.circular(11),
       ),
-      child: Icon(
-        icon,
-        color: primary,
-        size: 23,
-      ),
+      child: Icon(icon, color: primary, size: 23),
     );
   }
 
@@ -1546,11 +1162,7 @@ Widget _buildHero() {
         color: surfaceLow,
         borderRadius: BorderRadius.circular(9),
       ),
-      child: Icon(
-        icon,
-        color: primary,
-        size: 21,
-      ),
+      child: Icon(icon, color: primary, size: 21),
     );
   }
 }
@@ -1558,9 +1170,7 @@ Widget _buildHero() {
 class _HeroPatternPainter extends CustomPainter {
   final Color primary;
 
-  _HeroPatternPainter({
-    required this.primary,
-  });
+  _HeroPatternPainter({required this.primary});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1598,89 +1208,6 @@ class _HeroPatternPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HeroPatternPainter oldDelegate) {
-    return oldDelegate.primary != primary;
-  }
-}
-
-class _BuildingPainter extends CustomPainter {
-  final Color primary;
-
-  _BuildingPainter({
-    required this.primary,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final buildingPaint = Paint()
-      ..color = const Color(0xFF31445D)
-      ..style = PaintingStyle.fill;
-
-    final windowPaint = Paint()
-      ..color = primary.withValues(alpha: 0.55)
-      ..style = PaintingStyle.fill;
-
-    final darkPaint = Paint()
-      ..color = const Color(0xFF162538)
-      ..style = PaintingStyle.fill;
-
-    final buildingWidth = size.width * 0.58;
-    final buildingLeft = size.width * 0.20;
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        buildingLeft,
-        size.height * 0.10,
-        buildingWidth,
-        size.height * 0.90,
-      ),
-      buildingPaint,
-    );
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        0,
-        size.height * 0.73,
-        size.width,
-        size.height * 0.27,
-      ),
-      darkPaint,
-    );
-
-    for (int row = 0; row < 6; row++) {
-      for (int col = 0; col < 7; col++) {
-        final x =
-            buildingLeft + 12 + col * ((buildingWidth - 24) / 7);
-        final y = size.height * 0.17 + row * 14;
-
-        canvas.drawRect(
-          Rect.fromLTWH(
-            x,
-            y,
-            11,
-            7,
-          ),
-          windowPaint,
-        );
-      }
-    }
-
-    final sidePaint = Paint()
-      ..color = const Color(0xFF465A73)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        size.width * 0.80,
-        size.height * 0.22,
-        size.width * 0.14,
-        size.height * 0.58,
-      ),
-      sidePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BuildingPainter oldDelegate) {
     return oldDelegate.primary != primary;
   }
 }

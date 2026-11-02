@@ -24,19 +24,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final LiveQuoteService _liveQuoteService;
-String _getUserInitials() {
-  final name = widget.user?['name']?.toString().trim() ?? '';
 
-  if (name.isEmpty) return '?';
-
-  final parts = name.split(RegExp(r'\s+'));
-
-  if (parts.length == 1) {
-    return parts.first.substring(0, 1).toUpperCase();
-  }
-
-  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-}
   @override
   void initState() {
     super.initState();
@@ -56,7 +44,6 @@ String _getUserInitials() {
   // Warna utama EWF
   static const Color primary = Color(0xFFF58220);
   static const Color primaryContainer = Color(0xFFD96812);
-  static const Color primaryLight = Color(0xFFFFC58A);
 
   // Warna kartu
   static const Color surfaceContainer = Color(0xFFFFE5CC);

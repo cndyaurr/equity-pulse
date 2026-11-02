@@ -24,7 +24,6 @@ class _PivotPointPageState extends State<PivotPointPage> {
   static const Color _background = Color(0xFFF8FAFC);
   static const Color _white = Color(0xFFFFFFFF);
   static const Color _primary = Color(0xFFF58220);
-  static const Color _surfaceContainer = Color(0xFFFFE5CC);
   static const Color _textPrimary = Color(0xFF1F2937);
   static const Color _textSecondary = Color(0xFF64748B);
   PivotPoint? _pivotData;
@@ -455,83 +454,65 @@ class _PivotPointPageState extends State<PivotPointPage> {
     );
   }
 
-
-
   Widget _buildAssetBar() {
-  return Container(
-    height: 48,
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: const Color(0xFFE9EDF2),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: _assetButton(
-            label: 'LGD',
-            asset: 'LGD',
-          ),
-        ),
-        Expanded(
-          child: _assetButton(
-            label: 'HSI',
-            asset: 'HSI',
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _assetButton({
-  required String label,
-  required String asset,
-}) {
-  final selected = _currentAsset == asset;
-
-  return GestureDetector(
-    onTap: () {
-      if (_currentAsset != asset) {
-        _switchAsset(asset);
-      }
-    },
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      margin: const EdgeInsets.symmetric(horizontal: 2),
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: selected
-            ? const Color(0xFFF58220)
-            : const Color(0xFFFFF3E8),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFF58220)
-                      .withValues(alpha: 0.10),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
+        color: const Color(0xFFE9EDF2),
+        borderRadius: BorderRadius.circular(10),
       ),
-      alignment: Alignment.center,
-      child: Text(
-        label,
-        textAlign: TextAlign.center,
-        style: GoogleFonts.roboto(
-          fontSize: 12,
-          fontWeight: selected
-              ? FontWeight.w800
-              : FontWeight.w600,
-          color: selected
-              ? Colors.white
-              : const Color(0xFF64748B),
+      child: Row(
+        children: [
+          Expanded(
+            child: _assetButton(label: 'LGD', asset: 'LGD'),
+          ),
+          Expanded(
+            child: _assetButton(label: 'HSI', asset: 'HSI'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _assetButton({required String label, required String asset}) {
+    final selected = _currentAsset == asset;
+
+    return GestureDetector(
+      onTap: () {
+        if (_currentAsset != asset) {
+          _switchAsset(asset);
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF58220) : const Color(0xFFFFF3E8),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFF58220).withValues(alpha: 0.10),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.roboto(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            color: selected ? Colors.white : const Color(0xFF64748B),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildWorkspace() {
     return Column(
