@@ -49,7 +49,6 @@ class ApiService {
     return null;
   }
 
-  
   static Future<PivotPoint> getPivotPoint(String commodity) async {
     // Backend menerima kode komoditas LGD atau HSI.
     final symbol = commodity.toUpperCase() == 'XAUUSD'
@@ -57,9 +56,9 @@ class ApiService {
         : commodity.toUpperCase();
 
     final response = await http.get(
-      Uri.parse('$baseUrl/pivot-points').replace(
-        queryParameters: {'commodity': symbol},
-      ),
+      Uri.parse(
+        '$baseUrl/pivot-points',
+      ).replace(queryParameters: {'commodity': symbol}),
     );
 
     if (response.statusCode != 200) {

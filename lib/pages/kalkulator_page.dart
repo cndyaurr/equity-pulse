@@ -20,7 +20,7 @@ class KalkulatorPage extends StatefulWidget {
 class _KalkulatorPageState extends State<KalkulatorPage> {
   static const Color _white = Colors.white;
   static const Color _textPrimary = Color(0xFF1F2937);
-  static const Color _primary = Color(0xFFF58220);
+  
   static const Color _textSecondary = Color(0xFF64748B);
   static const double tozFixed = 31.10;
   static const String _historyKey = 'calculation_history';
@@ -446,31 +446,24 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
           const SizedBox(width: 10),
 
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'EQUITY ',
-                      style: GoogleFonts.roboto(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: _textPrimary,
+                        color: Color(0xFF1F2937),
                       ),
+                      children: [
+                        TextSpan(
+                          text: 'EQUICKLY',
+                          style: TextStyle(color: Color(0xFFFF9800)),
+                        ),
+                      ],
                     ),
-                    TextSpan(
-                      text: 'PULSE',
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: _primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
               Text(
                 'MARKET INTELLIGENCE',
                 style: GoogleFonts.roboto(

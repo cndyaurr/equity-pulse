@@ -1,10 +1,8 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'pages/login.dart';
 
-final GlobalKey<NavigatorState> navigatorKey =
-    GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 const Color ewfOrange = Color(0xFFF58220);
 const Color ewfOrangeDark = Color(0xFFD96812);
@@ -20,19 +18,20 @@ class EwfGoldHubApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: ewfOrange,
-      brightness: Brightness.light,
-    ).copyWith(
-      primary: ewfOrange,
-      onPrimary: Colors.white,
-      secondary: ewfOrangeDark,
-      surface: Colors.white,
-    );
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: ewfOrange,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: ewfOrange,
+          onPrimary: Colors.white,
+          secondary: ewfOrangeDark,
+          surface: Colors.white,
+        );
 
-   return MaterialApp(
-  navigatorKey: navigatorKey,
-  debugShowCheckedModeBanner: false,
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
       title: 'EWF Gold Hub',
       theme: ThemeData(
         useMaterial3: true,
@@ -57,17 +56,14 @@ class EwfGoldHubApp extends StatelessWidget {
           ),
         ),
 
-        floatingActionButtonTheme:
-            const FloatingActionButtonThemeData(
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: ewfOrange,
           foregroundColor: Colors.white,
         ),
 
         checkboxTheme: CheckboxThemeData(
           fillColor: WidgetStateProperty.resolveWith((states) {
-            return states.contains(WidgetState.selected)
-                ? ewfOrange
-                : null;
+            return states.contains(WidgetState.selected) ? ewfOrange : null;
           }),
         ),
 

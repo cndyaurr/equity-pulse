@@ -273,19 +273,11 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
                   TextSpan(
                     children: [
                       TextSpan(
-                        text: 'EQUITY ',
+                        text: 'EQUICKLY',
                         style: GoogleFonts.roboto(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'PULSE',
-                        style: GoogleFonts.roboto(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFF58220),
                         ),
                       ),
                     ],

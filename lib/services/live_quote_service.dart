@@ -70,70 +70,65 @@ class LiveQuoteService extends ChangeNotifier {
 
   final Map<String, LiveQuote> quotes = {};
   final Map<String, List<double>> priceHistory = {
-  'XUL10': <double>[],
-  'HKK50_BBJ': <double>[],
-};
+    'XUL10': <double>[],
+    'HKK50_BBJ': <double>[],
+  };
 
-final Map<String, List<PriceCandle>> candleHistory = {
-  'XUL10': <PriceCandle>[],
-  'HKK50_BBJ': <PriceCandle>[],
-};
+  final Map<String, List<PriceCandle>> candleHistory = {
+    'XUL10': <PriceCandle>[],
+    'HKK50_BBJ': <PriceCandle>[],
+  };
 
-static const int maxCandles = 100;
+  static const int maxCandles = 100;
 
-void _recordCandle(String symbol, double price, DateTime time) {
-  final candles = candleHistory.putIfAbsent(
-    symbol,
-    () => <PriceCandle>[],
-  );
+  void _recordCandle(String symbol, double price, DateTime time) {
+    final candles = candleHistory.putIfAbsent(symbol, () => <PriceCandle>[]);
 
-  final candleTime = DateTime(
-    time.year,
-    time.month,
-    time.day,
-    time.hour,
-    time.minute,
-  );
-
-  if (candles.isEmpty || candles.last.time != candleTime) {
-    candles.add(
-      PriceCandle(
-        time: candleTime,
-        open: price,
-        high: price,
-        low: price,
-        close: price,
-      ),
+    final candleTime = DateTime(
+      time.year,
+      time.month,
+      time.day,
+      time.hour,
+      time.minute,
     );
 
-    if (candles.length > maxCandles) {
-      candles.removeAt(0);
+    if (candles.isEmpty || candles.last.time != candleTime) {
+      candles.add(
+        PriceCandle(
+          time: candleTime,
+          open: price,
+          high: price,
+          low: price,
+          close: price,
+        ),
+      );
+
+      if (candles.length > maxCandles) {
+        candles.removeAt(0);
+      }
+      return;
     }
-    return;
+
+    final current = candles.last;
+
+    if (price > current.high) current.high = price;
+    if (price < current.low) current.low = price;
+
+    current.close = price;
   }
 
-  final current = candles.last;
+  static const int maxHistoryPoints = 100;
 
-  if (price > current.high) current.high = price;
-  if (price < current.low) current.low = price;
+  void _recordPrice(String symbol, double price) {
+    final history = priceHistory.putIfAbsent(symbol, () => <double>[]);
 
-  current.close = price;
-}
+    history.add(price);
 
-static const int maxHistoryPoints = 100;
-
-void _recordPrice(String symbol, double price) {
-  final history = priceHistory.putIfAbsent(
-    symbol,
-    () => <double>[],
-  );
-
-  history.add(price);
-
-  if (history.length > maxHistoryPoints) {
-    history.removeAt(0);
+    if (history.length > maxHistoryPoints) {
+      history.removeAt(0);
+    }
   }
-}
+
   WebSocketChannel? _channel;
   Timer? _reconnectTimer;
   Timer? _statusTimer;
@@ -233,23 +228,22 @@ void _recordPrice(String symbol, double price) {
 
         final data = Map<String, dynamic>.from(entry.value as Map);
         final quote = LiveQuote.fromJson(symbol, data);
-debugPrint(
-  '[LIVE QUOTE] $symbol | '
-  'price=${quote.price} | '
-  'date_time=${data['date_time']} | '
-  'sourceTime=${quote.sourceTime}',
-);
+        debugPrint(
+          '[LIVE QUOTE] $symbol | '
+          'price=${quote.price} | '
+          'date_time=${data['date_time']} | '
+          'sourceTime=${quote.sourceTime}',
+        );
         // Jangan mengganti harga valid dengan paket yang tidak memiliki harga.
 
-if (quote.price != null) {
-  quotes[symbol] = quote;
+        if (quote.price != null) {
+          quotes[symbol] = quote;
 
-  final priceTime = quote.sourceTime ?? DateTime.now();
+          final priceTime = quote.sourceTime ?? DateTime.now();
 
-  _recordPrice(symbol, quote.price!);
-  _recordCandle(symbol, quote.price!, priceTime);
-}
-
+          _recordPrice(symbol, quote.price!);
+          _recordCandle(symbol, quote.price!, priceTime);
+        }
       }
     } catch (_) {
       // Pesan sambutan/login server bukan data harga.

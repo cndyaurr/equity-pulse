@@ -13,6 +13,7 @@ import 'harga_emas_page.dart';
 import 'pivot_point_page.dart';
 import 'kalkulator_page.dart';
 import '../widgets/profile_avatar.dart';
+import 'package:marquee/marquee.dart';
 
 class BeritaPage extends StatefulWidget {
   const BeritaPage({super.key});
@@ -146,16 +147,9 @@ class _BeritaPageState extends State<BeritaPage> {
     final title = (item['title'] ?? 'Berita Emas').toString();
     final url = (item['url'] ?? '').toString().trim();
 
-    final text = url.isNotEmpty
-        ? '$title\n\nBaca selengkapnya: $url'
-        : title;
+    final text = url.isNotEmpty ? '$title\n\nBaca selengkapnya: $url' : title;
 
-    await SharePlus.instance.share(
-      ShareParams(
-        text: text,
-        subject: title,
-      ),
-    );
+    await SharePlus.instance.share(ShareParams(text: text, subject: title));
   }
 
   // ============================================================
@@ -212,9 +206,7 @@ class _BeritaPageState extends State<BeritaPage> {
               'image': item['image'] ?? '',
               'category': item['category'] ?? 'Emas',
               'source': item['source'] ?? 'Newsmaker.id',
-              'date': _formatDate(
-                (item['published_at'] ?? '').toString(),
-              ),
+              'date': _formatDate((item['published_at'] ?? '').toString()),
               'publishedAt': (item['published_at'] ?? '').toString(),
               'title': item['title'] ?? '',
               'url': item['url'] ?? '',
@@ -247,8 +239,7 @@ class _BeritaPageState extends State<BeritaPage> {
       } else {
         setState(() {
           isLoadingNews = false;
-          newsError =
-              'Gagal mengambil berita (${response.statusCode})';
+          newsError = 'Gagal mengambil berita (${response.statusCode})';
         });
       }
     } catch (e) {
@@ -275,7 +266,6 @@ class _BeritaPageState extends State<BeritaPage> {
         // ======================================================
         // APP BAR
         // ======================================================
-
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
@@ -309,24 +299,18 @@ class _BeritaPageState extends State<BeritaPage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text.rich(
-                    TextSpan(
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                      ),
                       children: [
                         TextSpan(
-                          text: 'EQUITY ',
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: _textPrimary,
-                          ),
-                        ),
-                        TextSpan(
-                          text: 'PULSE',
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: _primary,
-                          ),
+                          text: 'EQUICKLY',
+                          style: TextStyle(color: Color(0xFFFF9800)),
                         ),
                       ],
                     ),
@@ -349,13 +333,13 @@ class _BeritaPageState extends State<BeritaPage> {
           actions: [
             IconButton(
               onPressed: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => const NotificationsScreen(),
-    ),
-  );
-},
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsScreen(),
+                  ),
+                );
+              },
               icon: const Icon(
                 Icons.notifications_none,
                 color: Color(0xFF1F2937),
@@ -363,27 +347,26 @@ class _BeritaPageState extends State<BeritaPage> {
             ),
 
             Padding(
-  padding: const EdgeInsets.only(right: 12),
-  child: InkWell(
-    borderRadius: BorderRadius.circular(30),
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ProfileScreen(),
-        ),
-      );
-    },
-    child: const ProfileAvatar(),
-  ),
-),
+              padding: const EdgeInsets.only(right: 12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+                child: const ProfileAvatar(),
+              ),
+            ),
           ],
         ),
 
         // ======================================================
         // BODY
         // ======================================================
-
         body: SafeArea(
           top: false,
           bottom: false,
@@ -403,7 +386,6 @@ class _BeritaPageState extends State<BeritaPage> {
         // ======================================================
         // BOTTOM NAVIGATION
         // ======================================================
-
         bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
@@ -437,14 +419,15 @@ class _BeritaPageState extends State<BeritaPage> {
     }
 
     final headlines = news
-        .where(
-          (item) => (item['title'] ?? '').toString().trim().isNotEmpty,
-        )
+        .where((item) => (item['title'] ?? '').toString().trim().isNotEmpty)
+        .map((item) => item['title'].toString().trim())
         .toList();
 
     if (headlines.isEmpty) {
       return const SizedBox.shrink();
     }
+
+    final tickerText = headlines.join('     |     ');
 
     return Container(
       height: 52,
@@ -467,49 +450,26 @@ class _BeritaPageState extends State<BeritaPage> {
               ),
             ),
           ),
-
           Expanded(
             child: SizedBox(
               height: 52,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: headlines.length,
-                itemBuilder: (context, index) {
-                  final item = headlines[index];
-
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () => _openNewsDetail(item),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          child: Text(
-                            item['title'].toString(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const Text(
-                        '|',
-                        style: TextStyle(
-                          color: Color(0xFFF58220),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+              child: Marquee(
+                text: tickerText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+                scrollAxis: Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                blankSpace: 60,
+                velocity: 35,
+                startAfter: const Duration(milliseconds: 500),
+                pauseAfterRound: Duration.zero,
+                accelerationDuration: const Duration(seconds: 1),
+                accelerationCurve: Curves.easeIn,
+                decelerationDuration: const Duration(milliseconds: 500),
+                decelerationCurve: Curves.easeOut,
               ),
             ),
           ),
@@ -525,24 +485,16 @@ class _BeritaPageState extends State<BeritaPage> {
   Widget _buildNewsFeed() {
     if (isLoadingNews) {
       return const Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 40,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
         child: Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFF58220),
-          ),
+          child: CircularProgressIndicator(color: Color(0xFFF58220)),
         ),
       );
     }
 
     if (newsError.isNotEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 30,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 30),
         child: Column(
           children: [
             const Icon(
@@ -556,10 +508,7 @@ class _BeritaPageState extends State<BeritaPage> {
             Text(
               newsError,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF475569),
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Color(0xFF475569), fontSize: 13),
             ),
 
             const SizedBox(height: 12),
@@ -579,17 +528,11 @@ class _BeritaPageState extends State<BeritaPage> {
 
     if (news.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 40,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 40),
         child: Center(
           child: Text(
             'Belum ada berita.',
-            style: TextStyle(
-              color: Color(0xFF475569),
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Color(0xFF475569), fontSize: 13),
           ),
         ),
       );
@@ -721,18 +664,10 @@ class _BeritaPageState extends State<BeritaPage> {
   // SOURCE + DATE
   // ============================================================
 
-  Widget _buildSourceDate(
-    String source,
-    String date,
-    IconData icon,
-  ) {
+  Widget _buildSourceDate(String source, String date, IconData icon) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: _primary,
-        ),
+        Icon(icon, size: 16, color: _primary),
 
         const SizedBox(width: 6),
 
@@ -811,10 +746,7 @@ class _BeritaPageState extends State<BeritaPage> {
               backgroundColor: _primary,
               foregroundColor: Colors.white,
               elevation: 0,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -826,19 +758,13 @@ class _BeritaPageState extends State<BeritaPage> {
                   child: Text(
                     'Baca Selengkapnya',
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                   ),
                 ),
 
                 SizedBox(width: 5),
 
-                Icon(
-                  Icons.arrow_forward,
-                  size: 16,
-                ),
+                Icon(Icons.arrow_forward, size: 16),
               ],
             ),
           ),
@@ -854,9 +780,7 @@ class _BeritaPageState extends State<BeritaPage> {
   void _openNewsDetail(Map<String, dynamic> item) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => BeritaDetailPage(article: item),
-      ),
+      MaterialPageRoute(builder: (_) => BeritaDetailPage(article: item)),
     );
   }
 
@@ -866,21 +790,13 @@ class _BeritaPageState extends State<BeritaPage> {
 
   Widget _buildBottomNavigation() {
     final items = [
-      (
-        icon: Icons.home_outlined,
-        activeIcon: Icons.home,
-        label: 'Dashboard',
-      ),
+      (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
       (
         icon: Icons.newspaper_outlined,
         activeIcon: Icons.newspaper,
         label: 'Berita',
       ),
-      (
-        icon: Icons.show_chart,
-        activeIcon: Icons.show_chart,
-        label: 'Data',
-      ),
+      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Data'),
       (
         icon: Icons.table_chart_outlined,
         activeIcon: Icons.table_chart,
@@ -897,11 +813,7 @@ class _BeritaPageState extends State<BeritaPage> {
       height: 72,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
+        border: Border(top: BorderSide(color: Colors.grey.shade200)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -967,9 +879,7 @@ class _BeritaPageState extends State<BeritaPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        active
-                            ? items[index].activeIcon
-                            : items[index].icon,
+                        active ? items[index].activeIcon : items[index].icon,
                         size: 27,
                         color: active
                             ? const Color(0xFFD96812)
@@ -1009,11 +919,7 @@ class _BeritaPageState extends State<BeritaPage> {
     return Container(
       color: const Color(0xFFFFF3E8),
       child: const Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 50,
-          color: Color(0xFFD96812),
-        ),
+        child: Icon(Icons.image_outlined, size: 50, color: Color(0xFFD96812)),
       ),
     );
   }

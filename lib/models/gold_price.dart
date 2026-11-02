@@ -30,9 +30,7 @@ class GoldPrice {
       high: json['high'] == null
           ? null
           : double.tryParse(json['high'].toString()),
-      low: json['low'] == null
-          ? null
-          : double.tryParse(json['low'].toString()),
+      low: json['low'] == null ? null : double.tryParse(json['low'].toString()),
       close: json['close'] == null
           ? null
           : double.tryParse(json['close'].toString()),

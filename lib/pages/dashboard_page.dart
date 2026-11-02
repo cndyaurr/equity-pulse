@@ -110,9 +110,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       color: Colors.black,
                     ),
                     children: const [
-                      TextSpan(text: 'EQUITY '),
                       TextSpan(
-                        text: 'PULSE',
+                        text: 'EQUICKLY',
                         style: TextStyle(color: Color(0xFFFF9800)),
                       ),
                     ],
@@ -357,7 +356,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 10),
 
                   Text(
-                    'EQUITY PULSE',
+                    'EQUICKLY',
                     style: GoogleFonts.roboto(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,

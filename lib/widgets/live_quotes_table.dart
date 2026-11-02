@@ -5,10 +5,7 @@ import '../services/live_quote_service.dart';
 class LiveQuotesTable extends StatefulWidget {
   final LiveQuoteService service;
 
-  const LiveQuotesTable({
-    super.key,
-    required this.service,
-  });
+  const LiveQuotesTable({super.key, required this.service});
 
   @override
   State<LiveQuotesTable> createState() => _LiveQuotesTableState();
@@ -23,21 +20,21 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
   static const Color _secondary = Color(0xFF64748B);
 
   @override
-void initState() {
-  super.initState();
-  _service = widget.service;
-  _service.addListener(_onUpdate);
-}
+  void initState() {
+    super.initState();
+    _service = widget.service;
+    _service.addListener(_onUpdate);
+  }
 
   void _onUpdate() {
     if (mounted) setState(() {});
   }
 
   @override
-void dispose() {
-  _service.removeListener(_onUpdate);
-  super.dispose();
-}
+  void dispose() {
+    _service.removeListener(_onUpdate);
+    super.dispose();
+  }
 
   String _formatPrice(double? value) {
     if (value == null) return '—';
@@ -86,41 +83,42 @@ void dispose() {
     );
   }
 
-Widget _freshnessText(LiveQuote? gold, LiveQuote? hkk) {
-  final times = [gold?.sourceTime, hkk?.sourceTime]
-      .whereType<DateTime>()
-      .toList();
+  Widget _freshnessText(LiveQuote? gold, LiveQuote? hkk) {
+    final times = [
+      gold?.sourceTime,
+      hkk?.sourceTime,
+    ].whereType<DateTime>().toList();
 
-  if (times.isEmpty) {
-    return const Text(
-      'Menunggu data harga dari sumber',
-      style: TextStyle(fontSize: 10, color: _secondary),
-    );
-  }
+    if (times.isEmpty) {
+      return const Text(
+        'Menunggu data harga dari sumber',
+        style: TextStyle(fontSize: 10, color: _secondary),
+      );
+    }
 
-  times.sort((a, b) => b.compareTo(a));
-  final latest = times.first;
-final goldFresh = _service.hasFreshGoldPrice;
-final hkkFresh = _service.hasFreshHkkPrice;
-final bothFresh = goldFresh && hkkFresh;
+    times.sort((a, b) => b.compareTo(a));
+    final latest = times.first;
+    final goldFresh = _service.hasFreshGoldPrice;
+    final hkkFresh = _service.hasFreshHkkPrice;
+    final bothFresh = goldFresh && hkkFresh;
 
-final statusText = bothFresh
-    ? 'Data pasar diperbarui'
-    : !goldFresh && !hkkFresh
+    final statusText = bothFresh
+        ? 'Data pasar diperbarui'
+        : !goldFresh && !hkkFresh
         ? 'Menunggu pembaruan harga XUL dan HKK'
         : !goldFresh
-            ? 'Menunggu pembaruan harga XUL'
-            : 'Menunggu pembaruan harga HKK';
+        ? 'Menunggu pembaruan harga XUL'
+        : 'Menunggu pembaruan harga HKK';
 
-return Text(
-  '$statusText · ${_formatTime(latest)}',
-  style: TextStyle(
-    fontSize: 10,
-    color: bothFresh ? _green : _red,
-    fontWeight: FontWeight.w500,
-  ),
-);
-}
+    return Text(
+      '$statusText · ${_formatTime(latest)}',
+      style: TextStyle(
+        fontSize: 10,
+        color: bothFresh ? _green : _red,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -216,10 +214,10 @@ return Text(
           _freshnessText(gold, hkk),
           const SizedBox(height: 8),
           const Text(
-  'Data dianggap terbaru jika waktu sumber masing-masing instrumen '
-  'berusia maksimal 5 menit.',
-  style: TextStyle(fontSize: 10, color: _secondary),
-),
+            'Data dianggap terbaru jika waktu sumber masing-masing instrumen '
+            'berusia maksimal 5 menit.',
+            style: TextStyle(fontSize: 10, color: _secondary),
+          ),
         ],
       ),
     );

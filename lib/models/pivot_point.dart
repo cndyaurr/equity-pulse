@@ -1,4 +1,3 @@
-
 class PivotPoint {
   final String commodity;
   final String date;

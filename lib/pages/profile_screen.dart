@@ -332,7 +332,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const Center(
                     child: Text(
-                      'PT EQUITYWORLD FUTURES • EWF GOLD HUB',
+                      'PT EQUITYWORLD FUTURES',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
                     ),

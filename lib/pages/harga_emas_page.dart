@@ -90,7 +90,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
         hsiPrice = hsi;
         sniPrice = sni;
         isLoadingPrices = false;
-    
+
         _currentPage = 1;
       });
     } catch (e) {
@@ -119,7 +119,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   DateTime _startDate = DateTime(2026, 9, 24);
   DateTime _endDate = DateTime(2026, 10, 1);
 
-  final List<String> _assets = ['LGD (Loco Gold)', 'HSI', 'SNI'];
+  final List<String> _assets = ['LGD', 'HSI', 'SNI'];
 
   final List<String> _periods = ['Hari Ini', '7 Hari', '30 Hari', 'Kustom'];
 
@@ -234,25 +234,18 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     }).toList();
   }
 
-  GoldPrice? _priceForDate(String commodity, DateTime date) {
-    final targetDate = DateTime(date.year, date.month, date.day);
-
+  GoldPrice? _latestPriceForCommodity(String commodity) {
     final matches = _goldPrices.where((item) {
-      final recordedAt = item.recordedAt?.toLocal();
-
       return item.commodity.toUpperCase() == commodity.toUpperCase() &&
-          recordedAt != null &&
-          recordedAt.year == targetDate.year &&
-          recordedAt.month == targetDate.month &&
-          recordedAt.day == targetDate.day;
+          item.recordedAt != null;
     }).toList();
 
     if (matches.isEmpty) return null;
 
     matches.sort((a, b) => b.recordedAt!.compareTo(a.recordedAt!));
+
     return matches.first;
   }
-
 
   // ============================================================
   // FORMATTER
@@ -418,131 +411,128 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     return DefaultTextStyle.merge(
       style: GoogleFonts.roboto(),
       child: Scaffold(
-      backgroundColor: background,
-  
-appBar: AppBar(
-  backgroundColor: Colors.white,
-  elevation: 0,
-  surfaceTintColor: Colors.transparent,
-  titleSpacing: 16,
-  title: Row(
-    children: [
-      Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Image.asset(
-          'assets/images/logo_perusahaan.png',
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.trending_up,
-              color: Color(0xFFD96812),
-            );
-          },
-        ),
-      ),
-      const SizedBox(width: 10),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: const TextSpan(
-              style: TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+        backgroundColor: background,
+
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          titleSpacing: 16,
+          title: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.asset(
+                  'assets/images/logo_perusahaan.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.trending_up,
+                      color: Color(0xFFD96812),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'EQUICKLY',
+                          style: TextStyle(color: Color(0xFFFF9800)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Text(
+                    'MARKET INTELLIGENCE',
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.notifications_none,
                 color: Color(0xFF1F2937),
               ),
-              children: [
-                TextSpan(text: 'EQUITY '),
-                TextSpan(
-                  text: 'PULSE',
-                  style: TextStyle(
-                    color: Color(0xFFFF9800),
-                  ),
-                ),
-              ],
             ),
-          ),
-          const Text(
-            'MARKET INTELLIGENCE',
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
-            ),
-          ),
-        ],
-      ),
-    ],
-  ),
-  actions: [
-    IconButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const NotificationsScreen(),
-      ),
-    );
-  },
-  icon: const Icon(
-    Icons.notifications_none,
-    color: Color(0xFF1F2937),
-  ),
-),
-    Padding(
-  padding: const EdgeInsets.only(right: 12),
-  child: InkWell(
-    borderRadius: BorderRadius.circular(30),
-    onTap: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ProfileScreen(),
-        ),
-      );
-    },
-    child: const ProfileAvatar(),
-  ),
-),
-  ],
-),
-
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _buildPageTitle(),
-      const SizedBox(height: 20),
-                    _buildAssetTabs(),
-                    const SizedBox(height: 18),
-                    _buildSettlementCard(),
-                    const SizedBox(height: 18),
-                    _buildFilterCard(),
-                    const SizedBox(height: 18),
-                    _buildOhlcCard(),
-                    const SizedBox(height: 18),
-                    _buildPagination(),
-                  ],
-                ),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+                child: const ProfileAvatar(),
               ),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: _buildBottomNavigation(),
+
+        body: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPageTitle(),
+                      const SizedBox(height: 20),
+                      _buildAssetTabs(),
+                      const SizedBox(height: 18),
+                      _buildSettlementCard(),
+                      const SizedBox(height: 18),
+                      _buildFilterCard(),
+                      const SizedBox(height: 18),
+                      _buildOhlcCard(),
+                      const SizedBox(height: 18),
+                      _buildPagination(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
   }
@@ -551,19 +541,17 @@ appBar: AppBar(
   // PAGE TITLE
   // ============================================================
 
-  
-Widget _buildPageTitle() {
-  return Text(
-    'Data Harga Emas',
-    style: GoogleFonts.roboto(
-      fontSize: 22,
-      fontWeight: FontWeight.w700,
-      color: const Color(0xFF1F2937),
-      height: 1.2,
-    ),
-  );
-}
-
+  Widget _buildPageTitle() {
+    return Text(
+      'Data Harga Emas',
+      style: GoogleFonts.roboto(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: const Color(0xFF1F2937),
+        height: 1.2,
+      ),
+    );
+  }
 
   // ============================================================
   // ASSET TABS
@@ -594,13 +582,15 @@ Widget _buildPageTitle() {
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
                   color: isSelected
-    ? const Color(0xFFF58220)
-    : const Color(0xFFFFF3E8),
+                      ? const Color(0xFFF58220)
+                      : const Color(0xFFFFF3E8),
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFFF58220).withValues(alpha: 0.10),
+                            color: const Color(
+                              0xFFF58220,
+                            ).withValues(alpha: 0.10),
                             blurRadius: 5,
                             offset: const Offset(0, 2),
                           ),
@@ -613,9 +603,7 @@ Widget _buildPageTitle() {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected
-    ? Colors.white
-    : const Color(0xFF64748B),
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
                   ),
                 ),
               ),
@@ -630,233 +618,207 @@ Widget _buildPageTitle() {
   // LIVE SETTLEMENT CARD
   // ============================================================
 
-Widget _buildSettlementCard() {
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final yesterday = today.subtract(const Duration(days: 1));
+  Widget _buildSettlementCard() {
+    final commodity = switch (_selectedAsset) {
+      1 => 'HSI',
+      2 => 'SNI',
+      _ => 'LGD',
+    };
 
-  final commodity = switch (_selectedAsset) {
-    1 => 'HSI',
-    2 => 'SNI',
-    _ => 'LGD',
-  };
+    // Ambil data OHLC terbaru yang tersedia dari tabel.
+    final latestPrice = _latestPriceForCommodity(commodity);
 
-  
-  final yesterdayPrice = _priceForDate(commodity, yesterday);
+    // Gunakan fallback yang sama seperti tabel OHLC.
+    final openYesterday = latestPrice?.open ?? latestPrice?.price;
+    final closeYesterday = latestPrice?.close ?? latestPrice?.price;
 
-  final openYesterday = yesterdayPrice?.open;
-  final closeYesterday = yesterdayPrice?.close;
+    // Rumus sinyal berdasarkan Open dan Close Kemarin.
+    final signal = openYesterday == null || closeYesterday == null
+        ? 'MENUNGGU DATA'
+        : closeYesterday > openYesterday
+        ? 'BUY'
+        : closeYesterday < openYesterday
+        ? 'SELL'
+        : 'NETRAL';
 
-  // Rumus sinyal berdasarkan Open dan Close Kemarin.
-  final signal = openYesterday == null || closeYesterday == null
-      ? 'MENUNGGU DATA'
-      : closeYesterday > openYesterday
-          ? 'BUY'
-          : closeYesterday < openYesterday
-              ? 'SELL'
-              : 'NETRAL';
+    final signalColor = signal == 'BUY'
+        ? const Color(0xFF00866A)
+        : signal == 'SELL'
+        ? const Color(0xFFD64545)
+        : const Color(0xFFB7791F);
 
+    final signalBg = signal == 'BUY'
+        ? const Color(0xFFE7F7EF)
+        : signal == 'SELL'
+        ? const Color(0xFFFFEEEE)
+        : const Color(0xFFFFF4DF);
 
-  final signalColor = signal == 'BUY'
-      ? const Color(0xFF00866A)
-      : signal == 'SELL'
-          ? const Color(0xFFD64545)
-          : const Color(0xFFB7791F);
-
-  final signalBg = signal == 'BUY'
-      ? const Color(0xFFE7F7EF)
-      : signal == 'SELL'
-          ? const Color(0xFFFFEEEE)
-          : const Color(0xFFFFF4DF);
-
-  Widget priceRow({
-    required String label,
-    required double? value,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF64748B),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+    Widget priceRow({required String label, required double? value}) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          value == null ? 'Menunggu data' : _formatPrice(value),
-          style: const TextStyle(
-            color: Color(0xFF1F2937),
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+          const SizedBox(height: 5),
+          Text(
+            value == null ? 'Menunggu data' : _formatPrice(value),
+            style: const TextStyle(
+              color: Color(0xFF1F2937),
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+        ],
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFCF7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0DCC4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header NEST
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0DF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.show_chart_rounded,
+                  color: Color(0xFFD97732),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'NEST',
+                  style: TextStyle(
+                    color: Color(0xFF1F2937),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          // CK dan OH di kiri, sinyal di kanan
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    priceRow(label: 'Open Kemarin', value: openYesterday),
+                    const SizedBox(height: 14),
+                    priceRow(label: 'Close Kemarin', value: closeYesterday),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                constraints: const BoxConstraints(minWidth: 88),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: signalBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: signalColor.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  signal,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: signalColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(height: 1, color: Color(0xFFE9DCCB)),
+          ),
+
+          // Penjelasan NEST
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFFD97732),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  signal == 'MENUNGGU DATA'
+                      ? ' NEST adalah indikator untuk membantu membaca peluang arah pergerakan harga berdasarkan perbandingan Close Kemarin (CK) dan Open Hari Ini (OH).'
+                      : signal == 'NETRAL'
+                      ? 'Penjelasan NEST: Close Kemarin sama dengan Open Hari Ini, sehingga belum ada perbedaan harga untuk menentukan sinyal.'
+                      : 'Penjelasan NEST: sinyal $signal ditentukan dari perbandingan Close Kemarin dengan Open Hari Ini. Ini merupakan indikator awal, bukan jaminan arah harga.',
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 11,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          if (priceError != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              priceError!,
+              style: const TextStyle(color: Color(0xFFD64545), fontSize: 10),
+            ),
+          ],
+
+          if (isLoadingPrices) ...[
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(
+              minHeight: 2,
+              color: Color(0xFFF58220),
+              backgroundColor: Color(0xFFFFE8D1),
+            ),
+          ],
+        ],
+      ),
     );
   }
-
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFFCF7),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: const Color(0xFFF0DCC4),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.045),
-          blurRadius: 14,
-          offset: const Offset(0, 5),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header NEST
-        Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF0DF),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.show_chart_rounded,
-                color: Color(0xFFD97732),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'NEST',
-                style: TextStyle(
-                  color: Color(0xFF1F2937),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 18),
-
-        // CK dan OH di kiri, sinyal di kanan
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-  priceRow(
-    label: 'Open Kemarin',
-    value: openYesterday,
-  ),
-  const SizedBox(height: 14),
-  priceRow(
-    label: 'Close Kemarin',
-    value: closeYesterday,
-  ),
-],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              constraints: const BoxConstraints(
-                minWidth: 88,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: signalBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: signalColor.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Text(
-                signal,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: signalColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 14),
-          child: Divider(
-            height: 1,
-            color: Color(0xFFE9DCCB),
-          ),
-        ),
-
-        // Penjelasan NEST
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(
-              Icons.info_outline_rounded,
-              color: Color(0xFFD97732),
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                signal == 'MENUNGGU DATA'
-                    ? ' NEST adalah indikator untuk membantu membaca peluang arah pergerakan harga berdasarkan perbandingan Close Kemarin (CK) dan Open Hari Ini (OH).'
-                    : signal == 'NETRAL'
-                        ? 'Penjelasan NEST: Close Kemarin sama dengan Open Hari Ini, sehingga belum ada perbedaan harga untuk menentukan sinyal.'
-                        : 'Penjelasan NEST: sinyal $signal ditentukan dari perbandingan Close Kemarin dengan Open Hari Ini. Ini merupakan indikator awal, bukan jaminan arah harga.',
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 11,
-                  height: 1.45,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        if (priceError != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            priceError!,
-            style: const TextStyle(
-              color: Color(0xFFD64545),
-              fontSize: 10,
-            ),
-          ),
-        ],
-
-        if (isLoadingPrices) ...[
-          const SizedBox(height: 12),
-          const LinearProgressIndicator(
-            minHeight: 2,
-            color: Color(0xFFF58220),
-            backgroundColor: Color(0xFFFFE8D1),
-          ),
-        ],
-      ],
-    ),
-  );
-}
-
 
   // ============================================================
   // FILTER CARD
@@ -889,7 +851,7 @@ Widget _buildSettlementCard() {
                     onTap: () {
                       setState(() {
                         _selectedPeriod = index;
-                      
+
                         _currentPage = 1;
                       });
                     },
@@ -900,8 +862,8 @@ Widget _buildSettlementCard() {
                       ),
                       decoration: BoxDecoration(
                         color: selected
-    ? const Color(0xFFF58220)
-    : const Color(0xFFFFF3E8),
+                            ? const Color(0xFFF58220)
+                            : const Color(0xFFFFF3E8),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -910,8 +872,8 @@ Widget _buildSettlementCard() {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: selected
-    ? Colors.white
-    : const Color(0xFF64748B),
+                              ? Colors.white
+                              : const Color(0xFF64748B),
                         ),
                       ),
                     ),
@@ -1025,10 +987,7 @@ Widget _buildSettlementCard() {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: textSecondary,
-                    ),
+                    style: const TextStyle(fontSize: 9, color: textSecondary),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -1049,7 +1008,6 @@ Widget _buildSettlementCard() {
     );
   }
 
-  
   // ============================================================
   // OHLC TABLE
   // ============================================================
@@ -1083,10 +1041,7 @@ Widget _buildSettlementCard() {
                       SizedBox(height: 4),
                       Text(
                         'Data Open, High, Low & Close',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: textSecondary,
-                        ),
+                        style: TextStyle(fontSize: 10, color: textSecondary),
                       ),
                     ],
                   ),
@@ -1125,10 +1080,7 @@ Widget _buildSettlementCard() {
                 fontWeight: FontWeight.w800,
                 color: textSecondary,
               ),
-              dataTextStyle: const TextStyle(
-                fontSize: 10,
-                color: textPrimary,
-              ),
+              dataTextStyle: const TextStyle(fontSize: 10, color: textPrimary),
               columns: const [
                 DataColumn(label: Text('Tanggal')),
                 DataColumn(label: Text('Open')),
@@ -1487,7 +1439,6 @@ Widget _buildSettlementCard() {
                           ),
                         );
                         break;
-
                     }
                   },
                   child: Column(
@@ -1496,9 +1447,7 @@ Widget _buildSettlementCard() {
                       Icon(
                         active ? items[index].activeIcon : items[index].icon,
                         size: 27,
-                        color: active
-                            ? primary
-                            : textSecondary,
+                        color: active ? primary : textSecondary,
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1508,9 +1457,7 @@ Widget _buildSettlementCard() {
                           fontWeight: active
                               ? FontWeight.w800
                               : FontWeight.w600,
-                          color: active
-                              ? primary
-                              : textSecondary,
+                          color: active ? primary : textSecondary,
                         ),
                       ),
                     ],

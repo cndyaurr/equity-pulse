@@ -122,14 +122,11 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         final prefs = await SharedPreferences.getInstance();
-await prefs.setString('auth_token', token);
+        await prefs.setString('auth_token', token);
 
-if (data['user'] is Map) {
-  await prefs.setString(
-    'user_data',
-    jsonEncode(data['user']),
-  );
-}
+        if (data['user'] is Map) {
+          await prefs.setString('user_data', jsonEncode(data['user']));
+        }
         showStatus(
           'Login berhasil. Mengalihkan ke dashboard...',
           icon: Icons.check_circle_outline,
@@ -307,7 +304,7 @@ if (data['user'] is Map) {
 
   void triggerHelpFeedback() {
     showStatus(
-      'Helpdesk Operasional: itsupport.equitypulse@gmail.com | Hunting: +6285749963720',
+      'Helpdesk Operasional: itsupport.equicklye@gmail.com | Hunting: +6285749963720',
       icon: Icons.contact_support_outlined,
     );
   }
@@ -454,9 +451,8 @@ if (data['user'] is Map) {
                       color: onSurface,
                     ),
                     children: const [
-                      TextSpan(text: 'EQUITY '),
                       TextSpan(
-                        text: 'PULSE',
+                        text: 'EQUICKLY',
                         style: TextStyle(color: primary),
                       ),
                     ],
@@ -689,7 +685,7 @@ if (data['user'] is Map) {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Masuk ke Equity Pulse',
+                                  'Masuk ke Equickly',
                                   style: jakarta(
                                     size: 16,
                                     weight: FontWeight.w600,

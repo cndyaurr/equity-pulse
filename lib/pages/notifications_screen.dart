@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-
+import '../services/live_quote_service.dart';
 import '../models/gold_price.dart';
 import '../models/pivot_point.dart';
 import '../services/api_service.dart';
@@ -32,13 +32,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   List<GoldPrice> _prices = [];
   List<PivotPoint> _pivotPoints = [];
   Map<String, dynamic>? _latestNews;
+  late final LiveQuoteService _liveQuoteService;
 
   DateTime get _today {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
   }
-
-  DateTime get _yesterday => _today.subtract(const Duration(days: 1));
 
   String _dateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -167,44 +166,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  List<GoldPrice> get _todayPrices {
-    return _prices.where((price) {
-      final date = price.recordedAt;
-
-      return date != null && _dateKey(date.toLocal()) == _dateKey(_today);
-    }).toList();
-  }
-
-  List<GoldPrice> get _yesterdayPrices {
-    return _prices.where((price) {
-      final date = price.recordedAt;
-
-      return date != null && _dateKey(date.toLocal()) == _dateKey(_yesterday);
-    }).toList();
-  }
-
   List<String> get _commodities {
-    final values = _prices.map((price) => price.commodity).toSet();
-    return values.toList();
+    return ['LGD', 'SNI', 'HSI'];
   }
 
-  GoldPrice? _findPrice(List<GoldPrice> source, String commodity) {
-    final matches = source
-        .where((price) => price.commodity == commodity)
-        .toList();
+  GoldPrice? _findPreviousPrice(String commodity) {
+    final matches = _prices.where((price) {
+      final date = price.recordedAt;
+
+      return price.commodity.toUpperCase() == commodity.toUpperCase() &&
+          date != null &&
+          date.isBefore(_today);
+    }).toList();
 
     if (matches.isEmpty) return null;
 
-    matches.sort((a, b) {
-      final dateA = a.recordedAt;
-      final dateB = b.recordedAt;
-
-      if (dateA == null && dateB == null) return 0;
-      if (dateA == null) return 1;
-      if (dateB == null) return -1;
-
-      return dateB.compareTo(dateA);
-    });
+    matches.sort((a, b) => b.recordedAt!.compareTo(a.recordedAt!));
 
     return matches.first;
   }
@@ -212,18 +189,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   List<Map<String, dynamic>> _buildTodayNotifications() {
     final notifications = <Map<String, dynamic>>[];
 
-    // Harga pembukaan hari ini.
-    for (final commodity in _commodities) {
-      final price = _findPrice(_todayPrices, commodity);
+    // Harga pembukaan XUL dari Live Quotes.
+    final goldQuote = _liveQuoteService.quotes['XUL10'];
 
-      if (price == null || price.open == null) continue;
-
+    if (_liveQuoteService.hasFreshGoldPrice && goldQuote?.open != null) {
       notifications.add({
         'category': 'HARGA PEMBUKAAN',
-        'title': 'Harga Pembukaan $commodity Hari Ini',
+        'title': 'Harga Pembukaan XUL Hari Ini',
         'description':
-            'Harga pembukaan tercatat sebesar ${_formatPrice(price.open)} ${commodity == 'LGD' ? 'USD / t.oz.' : 'INDEX'}.',
-        'time': _formatTime(price.recordedAt),
+            'Harga pembukaan tercatat sebesar ${_formatPrice(goldQuote!.open)} USD / t.oz.',
+        'time': _formatTime(goldQuote.sourceTime),
+        'icon': Icons.trending_up_rounded,
+        'color': const Color(0xFF059669),
+        'background': const Color(0xFFE1F3E8),
+        'highlight': true,
+      });
+    }
+
+    // Harga pembukaan HKK dari Live Quotes.
+    final hkkQuote = _liveQuoteService.quotes['HKK50_BBJ'];
+
+    if (_liveQuoteService.hasFreshHkkPrice && hkkQuote?.open != null) {
+      notifications.add({
+        'category': 'HARGA PEMBUKAAN',
+        'title': 'Harga Pembukaan HKK Hari Ini',
+        'description':
+            'Harga pembukaan tercatat sebesar ${_formatPrice(hkkQuote!.open)} INDEX.',
+        'time': _formatTime(hkkQuote.sourceTime),
         'icon': Icons.trending_up_rounded,
         'color': const Color(0xFF059669),
         'background': const Color(0xFFE1F3E8),
@@ -248,7 +240,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     }
 
-    // Pivot Point dan NEST hari ini.
+    // Pivot Point hari ini.
     for (final pivot in _pivotPoints) {
       final commodity = pivot.commodity;
       final unit = pivot.unit;
@@ -272,15 +264,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final notifications = <Map<String, dynamic>>[];
 
     for (final commodity in _commodities) {
-      final price = _findPrice(_yesterdayPrices, commodity);
+      final price = _findPreviousPrice(commodity);
 
       if (price == null || price.close == null) continue;
 
       notifications.add({
         'category': 'HARGA PENUTUPAN',
-        'title': 'Harga Penutupan $commodity Kemarin',
+        'title': 'Harga Penutupan $commodity',
         'description':
-            'Harga penutupan tercatat sebesar ${_formatPrice(price.close)} ${commodity == 'LGD' ? 'USD / t.oz.' : 'INDEX'}.',
+            'Harga penutupan tercatat sebesar ${_formatPrice(price.close)} ${commodity.toUpperCase() == 'LGD' ? 'USD / t.oz.' : 'INDEX'}.',
         'time': _formatTime(price.recordedAt),
         'icon': Icons.trending_down_rounded,
         'color': const Color(0xFFDC2626),
@@ -292,10 +284,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return notifications;
   }
 
+  void _onLiveQuoteChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+
+    _liveQuoteService = LiveQuoteService();
+    _liveQuoteService.addListener(_onLiveQuoteChanged);
+    _liveQuoteService.start();
+
     _loadNotifications();
+  }
+
+  @override
+  void dispose() {
+    _liveQuoteService.removeListener(_onLiveQuoteChanged);
+    _liveQuoteService.dispose();
+
+    super.dispose();
   }
 
   @override

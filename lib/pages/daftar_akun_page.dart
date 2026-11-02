@@ -358,9 +358,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                       color: onSurface,
                     ),
                     children: const [
-                      TextSpan(text: 'EQUITY '),
                       TextSpan(
-                        text: 'PULSE',
+                        text: 'EQUICKLY',
                         style: TextStyle(color: primary),
                       ),
                     ],
