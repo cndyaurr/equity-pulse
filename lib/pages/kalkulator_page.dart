@@ -7,6 +7,7 @@ import 'pivot_point_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import 'dashboard_page.dart';
+import '../widgets/profile_avatar.dart';
 
 class KalkulatorPage extends StatefulWidget {
   const KalkulatorPage({super.key});
@@ -468,18 +469,7 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: _surfaceContainer,
-              child: Text(
-                'A',
-                style: GoogleFonts.roboto(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: _primary,
-                ),
-              ),
-            ),
+            child: const ProfileAvatar(),
           ),
         ),
       ],

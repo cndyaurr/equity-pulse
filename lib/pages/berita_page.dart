@@ -12,7 +12,7 @@ import 'dashboard_page.dart';
 import 'harga_emas_page.dart';
 import 'pivot_point_page.dart';
 import 'kalkulator_page.dart';
-
+import '../widgets/profile_avatar.dart';
 
 class BeritaPage extends StatefulWidget {
   const BeritaPage({super.key});
@@ -374,18 +374,7 @@ class _BeritaPageState extends State<BeritaPage> {
         ),
       );
     },
-    child: const CircleAvatar(
-      radius: 18,
-      backgroundColor: Color(0xFFFFF3E8),
-      child: Text(
-        'A',
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFFD96812),
-        ),
-      ),
-    ),
+    child: const ProfileAvatar(),
   ),
 ),
           ],

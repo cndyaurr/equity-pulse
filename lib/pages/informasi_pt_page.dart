@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/profile_avatar.dart';
 
 class InformasiPtPage extends StatefulWidget {
   const InformasiPtPage({super.key});
@@ -363,18 +364,7 @@ const SizedBox(width: 4),
                 ),
               );
             },
-            child: const CircleAvatar(
-              radius: 18,
-              backgroundColor: Color(0xFFFFF3E8),
-              child: Text(
-                'A',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFFD96812),
-                ),
-              ),
-            ),
+            child: const ProfileAvatar(),
           ),
         ),
       ],

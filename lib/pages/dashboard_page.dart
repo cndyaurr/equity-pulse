@@ -12,6 +12,7 @@ import 'profile_screen.dart';
 import '../widgets/live_quotes_table.dart';
 import '../widgets/latest_news_section.dart';
 import 'login.dart';
+import '../widgets/profile_avatar.dart';
 
 class DashboardPage extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -23,7 +24,19 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final LiveQuoteService _liveQuoteService;
+String _getUserInitials() {
+  final name = widget.user?['name']?.toString().trim() ?? '';
 
+  if (name.isEmpty) return '?';
+
+  final parts = name.split(RegExp(r'\s+'));
+
+  if (parts.length == 1) {
+    return parts.first.substring(0, 1).toUpperCase();
+  }
+
+  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+}
   @override
   void initState() {
     super.initState();
@@ -154,18 +167,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 );
               },
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: surfaceContainer,
-                child: Text(
-                  'A',
-                  style: jakarta(
-                    size: 13,
-                    weight: FontWeight.w700,
-                    color: primary,
-                  ),
-                ),
-              ),
+              child: const ProfileAvatar(),
             ),
           ),
         ],

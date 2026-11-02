@@ -9,6 +9,7 @@ import 'kalkulator_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
+import '../widgets/profile_avatar.dart';
 
 class PivotPointPage extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -447,18 +448,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
                 ),
               );
             },
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: _surfaceContainer,
-              child: Text(
-                'A',
-                style: GoogleFonts.roboto(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: _primary,
-                ),
-              ),
-            ),
+            child: const ProfileAvatar(),
           ),
         ),
       ],

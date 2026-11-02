@@ -122,7 +122,14 @@ class _LoginPageState extends State<LoginPage> {
         }
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
+await prefs.setString('auth_token', token);
+
+if (data['user'] is Map) {
+  await prefs.setString(
+    'user_data',
+    jsonEncode(data['user']),
+  );
+}
         showStatus(
           'Login berhasil. Mengalihkan ke dashboard...',
           icon: Icons.check_circle_outline,
