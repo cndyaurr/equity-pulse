@@ -29,7 +29,116 @@ class _PivotPointPageState extends State<PivotPointPage> {
   PivotPoint? _pivotData;
   bool _isLoading = true;
   String? _errorMessage;
+Widget _buildPivotInfoCard() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      InkWell(
+        onTap: () {
+          setState(() {
+            _isPivotInfoExpanded = !_isPivotInfoExpanded;
+          });
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: Color(0xFFD96812),
+                size: 17,
+              ),
+              const SizedBox(width: 7),
+              const Expanded(
+                child: Text(
+                  'Apa Itu Pivot Point?',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ),
+              AnimatedRotation(
+                turns: _isPivotInfoExpanded ? 0.5 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFFD96812),
+                  size: 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
 
+      AnimatedSize(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        child: _isPivotInfoExpanded
+            ? Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 5, bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFFFF0E2),
+                      Color(0xFFF1F3F5),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFF58220).withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Mengenal Pivot Point',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFD96812),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Pivot Point adalah indikator analisis teknikal '
+                      'yang digunakan untuk menentukan potensi level '
+                      'support dan resistance berdasarkan harga Open, '
+                      'High, Low, dan Close pada periode sebelumnya.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.6,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Catatan: Pivot Point merupakan alat bantu analisis, '
+                      'bukan jaminan arah pergerakan harga.',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.5,
+                        fontStyle: FontStyle.italic,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : const SizedBox(width: double.infinity),
+      ),
+    ],
+  );
+}
   @override
   void initState() {
     super.initState();
@@ -37,6 +146,7 @@ class _PivotPointPageState extends State<PivotPointPage> {
   }
 
   String _currentAsset = 'LGD';
+  bool _isPivotInfoExpanded = false;
 
   final TextEditingController _openController = TextEditingController(
     text: '0.00',
@@ -331,16 +441,21 @@ class _PivotPointPageState extends State<PivotPointPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Pivot Point',
-                        style: GoogleFonts.roboto(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: _textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+  'Pivot Point',
+  style: GoogleFonts.roboto(
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    color: _textPrimary,
+  ),
+),
 
-                      _buildAssetBar(),
+const SizedBox(height: 5),
+
+_buildPivotInfoCard(),
+
+const SizedBox(height: 10),
+
+_buildAssetBar(),
                       const SizedBox(height: 16),
 
                       if (_isLoading)

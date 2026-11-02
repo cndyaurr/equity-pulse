@@ -47,7 +47,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Warna kartu
   static const Color surfaceContainer = Color(0xFFFFE5CC);
-  static const Color surfaceContainerLow = Color(0xFFFFF3E8);
 
   // Warna teks
   static const Color textPrimary = Color(0xFF1F2937);
@@ -176,25 +175,40 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(height: 16),
 
               // Grafik dan tabel khusus instrumen XUL dan HKK
-              _buildLiveChart(
-                title: 'XUL',
-                subtitle: 'Loco London Gold',
-                color: primary,
+
+              // Grafik XUL dan HKK secara horizontal
+              SizedBox(
+                height: 430,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 64,
+                      child: _buildLiveChart(
+                        title: 'XUL',
+                        subtitle: 'Loco London Gold',
+                        color: primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 64,
+                      child: _buildLiveChart(
+                        title: 'HKK',
+                        subtitle: 'Hang Seng Index Futures',
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              _buildLiveChart(
-                title: 'HKK',
-                subtitle: 'Hang Seng Index Futures',
-                color: primary,
-              ),
+
               const SizedBox(height: 20),
               _buildLiveQuotesTable(),
               const SizedBox(height: 16),
               _buildQuickMenu(context),
               const SizedBox(height: 20),
               const LatestNewsSection(),
-              const SizedBox(height: 16),
-              _buildInformationCard(),
             ],
           ),
         ),
@@ -480,10 +494,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 );
               },
             ),
+
             // ========================================================
             // HISTORI
             // ========================================================
-
             const Spacer(),
             const Divider(),
 
@@ -741,47 +755,6 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-
-  // ============================================================
-  // INFORMATION CARD
-  // ============================================================
-
-  Widget _buildInformationCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: surfaceContainerLow,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline, color: primary, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Informasi Data',
-                  style: jakarta(size: 13, weight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Grafik dan tabel XUL/HKK memerlukan koneksi ke sumber data live yang valid.',
-                  style: jakarta(size: 11, color: textSecondary),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Class painter harus berada di luar DashboardPage.
-  // Pastikan semua kode DashboardPage berakhir di sini.
 }
 
 class _TradingViewChart extends StatefulWidget {

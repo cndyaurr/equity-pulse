@@ -1,30 +1,72 @@
+
 <?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\Verified;
+
+use App\Models\User;
+
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoldPriceController;
 use App\Http\Controllers\Api\PivotPointController;
-use Illuminate\Support\Facades\URL;
-use App\Models\User;
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Support\Facades\Password;
 use App\Http\Controllers\Api\NewsController;
+
+// ==========================================
+// GOLD PRICE
+// ==========================================
 
 Route::get('/gold-prices', [GoldPriceController::class, 'index']);
 Route::get('/gold-prices/latest', [GoldPriceController::class, 'latest']);
+
+// ==========================================
+// NEWS
+// ==========================================
+
 Route::get('/news', [NewsController::class, 'index']);
+
+// ==========================================
+// PIVOT POINT
+// ==========================================
+
 Route::get('/pivot-points', [PivotPointController::class, 'index']);
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// ==========================================
+// AUTHENTICATED USER
+// ==========================================
+
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Mengambil informasi profil
     Route::get('/profile', [AuthController::class, 'profile']);
+
+    // Memperbarui profil pengguna
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+
+    // Memperbarui kata sandi pengguna
+    Route::put('/change-password', [AuthController::class, 'changePassword']);
+
 });
-// Verifikasi email
-Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
-    if (! URL::hasValidSignature($request)) {
+
+// ==========================================
+// EMAIL VERIFICATION
+// ==========================================
+
+Route::get('/email/verify/{id}/{hash}', function (
+    Request $request,
+    $id,
+    $hash
+) {
+    if (!URL::hasValidSignature($request)) {
         return response()->json([
             'success' => false,
             'message' => 'Link verifikasi tidak valid atau sudah kedaluwarsa.',
@@ -33,14 +75,17 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
 
     $user = User::findOrFail($id);
 
-    if (! hash_equals(sha1($user->getEmailForVerification()), $hash)) {
+    if (!hash_equals(
+        sha1($user->getEmailForVerification()),
+        $hash
+    )) {
         return response()->json([
             'success' => false,
             'message' => 'Link verifikasi tidak cocok dengan email akun.',
         ], 403);
     }
 
-    if (! $user->hasVerifiedEmail()) {
+    if (!$user->hasVerifiedEmail()) {
         $user->markEmailAsVerified();
         event(new Verified($user));
     }
@@ -51,13 +96,18 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
     ]);
 })->name('verification.verify');
 
+// Mengirim ulang email verifikasi
 Route::post(
     '/email/resend-verification',
     [AuthController::class, 'resendVerificationEmail']
 )->middleware('throttle:6,1');
 
+// ==========================================
+// FORGOT PASSWORD
+// ==========================================
 
 Route::post('/forgot-password', function (Request $request) {
+
     $request->validate([
         'email' => ['required', 'email'],
     ]);
@@ -68,16 +118,23 @@ Route::post('/forgot-password', function (Request $request) {
 
     if ($status === Password::RESET_LINK_SENT) {
         return response()->json([
+            'success' => true,
             'message' => 'Link reset sandi berhasil dikirim ke email.',
         ]);
     }
 
     return response()->json([
+        'success' => false,
         'message' => 'Email tidak ditemukan atau link reset gagal dikirim.',
     ], 422);
 });
 
+// ==========================================
+// RESET PASSWORD
+// ==========================================
+
 Route::post('/reset-password', function (Request $request) {
+
     $request->validate([
         'token' => ['required'],
         'email' => ['required', 'email'],
@@ -85,21 +142,30 @@ Route::post('/reset-password', function (Request $request) {
     ]);
 
     $status = Password::reset(
-        $request->only('email', 'password', 'password_confirmation', 'token'),
+        $request->only(
+            'email',
+            'password',
+            'password_confirmation',
+            'token'
+        ),
         function ($user, $password) {
+
             $user->forceFill([
                 'password' => \Illuminate\Support\Facades\Hash::make($password),
             ])->save();
+
         }
     );
 
     if ($status === Password::PASSWORD_RESET) {
         return response()->json([
+            'success' => true,
             'message' => 'Sandi berhasil diubah.',
         ]);
     }
 
     return response()->json([
+        'success' => false,
         'message' => 'Token tidak valid atau sudah kedaluwarsa.',
     ], 422);
 });

@@ -133,26 +133,6 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
                     height: 1.55,
                   ),
                 ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                    ),
-                    child: const Text(
-                      'Tutup Tinjauan Legalitas',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -374,81 +354,103 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
   }
 
   Widget _buildTabSwitcher() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: surfaceLow,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          _tabButton(index: 0, icon: Icons.shield_outlined, title: 'Legalitas'),
-          _tabButton(
-            index: 1,
-            icon: Icons.location_city_outlined,
-            title: 'Jaringan Cabang',
-          ),
-          _tabButton(
-            index: 2,
-            icon: Icons.support_agent,
-            title: 'Layanan Care',
-          ),
-        ],
-      ),
-    );
-  }
+  return Container(
+    height: 48,
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE9EDF2),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Row(
+      children: [
+        _tabButton(
+          index: 0,
+          icon: Icons.shield_outlined,
+          title: 'Legalitas',
+        ),
+        _tabButton(
+          index: 1,
+          icon: Icons.location_city_outlined,
+          title: 'Jaringan Cabang',
+        ),
+        _tabButton(
+          index: 2,
+          icon: Icons.support_agent,
+          title: 'Layanan Care',
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _tabButton({
-    required int index,
-    required IconData icon,
-    required String title,
-  }) {
-    final bool active = selectedTab == index;
+  required int index,
+  required IconData icon,
+  required String title,
+}) {
+  final bool active = selectedTab == index;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedTab = index;
-          });
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 9),
-          decoration: BoxDecoration(
-            color: active ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-            boxShadow: active
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 4,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 15, color: active ? primary : textSecondary),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: active ? textPrimary : textSecondary,
-                    fontSize: 10,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+  return Expanded(
+    child: GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedTab = index;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 5,
+          vertical: 9,
+        ),
+        decoration: BoxDecoration(
+          color: active
+              ? const Color(0xFFF58220)
+              : const Color(0xFFFFF3E8),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFF58220)
+                        .withValues(alpha: 0.10),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
                   ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: active
+                  ? Colors.white
+                  : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                title,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: active
+                      ? Colors.white
+                      : const Color(0xFF64748B),
+                  fontSize: 15,
+                  fontWeight:
+                      active ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildLegalitas() {
     return Column(
@@ -582,7 +584,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: textSecondary,
-              fontSize: 9,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -730,9 +732,94 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
           ],
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Icon(Icons.share_location_outlined, color: primary, size: 19),
+
+// Detail Kantor Pusat
+Padding(
+  padding: const EdgeInsets.only(left: 25),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Alamat
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.location_on_outlined,
+            color: textSecondary,
+            size: 15,
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              'Sahid Sudirman Center Lt. 9 Unit C, D, G, H & '
+              'Lt. 21 Unit A, Jl. Jend. Sudirman No. 86, '
+              'Jakarta Pusat 10220',
+              style: TextStyle(
+                color: textSecondary,
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 7),
+
+      // Nomor Telepon
+      Row(
+        children: [
+          Icon(
+            Icons.phone_outlined,
+            color: textSecondary,
+            size: 15,
+          ),
+          const SizedBox(width: 7),
+          Text(
+            '+62 21 27889280',
+            style: TextStyle(
+              color: textSecondary,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 7),
+
+      // Email
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.email_outlined,
+            color: textSecondary,
+            size: 15,
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              'corporate@equityworld-futures.co.id',
+              style: TextStyle(
+                color: textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
+
+const SizedBox(height: 14),
+
+// Kantor Cabang Resmi
+Row(
+  children: [
+    Icon(
+      Icons.share_location_outlined,
+      color: primary,
+      size: 19,
+    ),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -757,41 +844,41 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
         const SizedBox(height: 9),
         _branchCard(
           icon: Icons.apartment_outlined,
-          title: 'Cabang Jakarta Cyber 2',
+          title: 'Jakarta Cyber 2',
           address: 'Cyber 2 Tower Lt. 19, Jl. H.R. Rasuna Said, Kuningan',
-          phone: '(021) 2902-1555',
+          phone: '+62 21 2902 1661',
           phoneRaw: '02129021555',
         ),
         const SizedBox(height: 9),
         _branchCard(
           icon: Icons.location_city_outlined,
-          title: 'Cabang Surabaya',
+          title: 'Surabaya - Trilium',
           address: 'Trillium Office Lt. 2, Jl. Pemuda No. 108-116',
-          phone: '(031) 6000-3688',
+          phone: '+62 31 6000 3788',
           phoneRaw: '03160003688',
         ),
         const SizedBox(height: 9),
         _branchCard(
           icon: Icons.store_outlined,
-          title: 'Cabang Semarang',
-          address: 'Ruko Peterongan Plaza Blok A No. 10, Jl. MT Haryono',
-          phone: '(024) 845-6677',
+          title: 'Surabaya - Praxis',
+          address: 'Gedung Praxis Lt.5 Unit No.5p (33,35,36), Jl Sono Kembang No.4-6, Embong Kaliasin',
+          phone: '+62 31 99255088 ',
           phoneRaw: '0248456677',
         ),
         const SizedBox(height: 9),
         _branchCard(
           icon: Icons.business_outlined,
-          title: 'Cabang Medan',
-          address: 'B&G Tower Lt. 8, Jl. Putri Hijau No. 10, Kesawan',
-          phone: '(061) 457-8900',
+          title: 'Semarang',
+          address: 'Rukan Pemuda Mas, Blok A Kav. 12-13 Jl. Pemuda No.150, Semarang',
+          phone: '+62 24 3520226',
           phoneRaw: '0614578900',
         ),
         const SizedBox(height: 9),
         _branchCard(
           icon: Icons.domain_verification_outlined,
-          title: 'Cabang Manado',
-          address: 'Komp. Mega Mas Blok 1D No. 22-23, Jl. Piere Tendean',
-          phone: '(0431) 882-1666',
+          title: 'Cirebon',
+          address: 'Perkantoran CSB Mall Yellow Ribon 15-18 Jl. Dr Cipto Mangunkusumo, Pekiringan',
+          phone: '+62 31 8291700',
           phoneRaw: '04318821666',
         ),
       ],
@@ -932,7 +1019,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(color: textSecondary, fontSize: 9),
+                  style: TextStyle(color: textSecondary, fontSize: 12),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -940,7 +1027,7 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: textPrimary,
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

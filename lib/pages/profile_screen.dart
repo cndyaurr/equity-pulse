@@ -1,11 +1,12 @@
 import 'dart:convert';
-
+import '../main.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/api_service.dart';
+import '../widgets/profile_avatar.dart';
 import 'login.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -62,6 +63,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           data['success'] == true &&
           data['user'] is Map) {
         final updatedUser = Map<String, dynamic>.from(data['user'] as Map);
+
+        // Simpan profil terbaru dan perbarui inisial avatar di seluruh halaman.
+        await ProfileAvatar.updateUser(updatedUser);
 
         if (!mounted) return false;
 
@@ -139,6 +143,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           data['success'] == true &&
           data['user'] is Map) {
         final user = Map<String, dynamic>.from(data['user'] as Map);
+
+        // Sinkronkan data dari server agar avatar selalu memakai nama terbaru.
+        await ProfileAvatar.updateUser(user);
 
         if (!mounted) return;
 
@@ -275,20 +282,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _actionRow(
                         icon: Icons.palette_outlined,
                         title: 'Tema aplikasi',
-                        subtitle: 'Terang',
-                        trailing: const Text(
-                          'Terang',
-                          style: TextStyle(
-                            color: textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                        subtitle: 'Sesuaikan tampilan aplikasi',
+                        trailing: ValueListenableBuilder<ThemeMode>(
+                          valueListenable: themeModeNotifier,
+                          builder: (context, mode, child) {
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  mode == ThemeMode.dark ? 'Gelap' : 'Terang',
+                                  style: const TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: textSecondary,
+                                ),
+                              ],
+                            );
+                          },
                         ),
+                        onTap: _showThemeDialog,
                       ),
                       _actionRow(
                         icon: Icons.support_agent_rounded,
                         title: 'Hubungi dukungan',
-                        subtitle: 'Bantuan untuk akun EWF Gold Hub',
+                        subtitle: 'Bantuan untuk akun EQUICKLY',
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -308,6 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.remove('auth_token');
+                      await prefs.remove('user_data');
 
                       if (!context.mounted) return;
 
@@ -486,93 +510,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final unitController = TextEditingController(text: unit.text);
     final formKey = GlobalKey<FormState>();
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit profil'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Nama lengkap'),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Nama wajib diisi'
-                      : null,
-                ),
-                TextFormField(
-                  controller: unitController,
-                  decoration: const InputDecoration(labelText: 'Unit kantor'),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Unit kantor wajib diisi'
-                      : null,
-                ),
-                TextFormField(
-                  initialValue: email.text,
-                  readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Email perusahaan (terverifikasi)',
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Edit profil'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama lengkap',
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Nama wajib diisi'
+                        : null,
                   ),
-                ),
-              ],
+                  TextFormField(
+                    controller: unitController,
+                    decoration: const InputDecoration(labelText: 'Unit kantor'),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Unit kantor wajib diisi'
+                        : null,
+                  ),
+                  TextFormField(
+                    initialValue: email.text,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Email perusahaan (terverifikasi)',
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: orange),
-            onPressed: isSavingProfile
-                ? null
-                : () async {
-                    if (!(formKey.currentState?.validate() ?? false)) {
-                      return;
-                    }
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: orange),
+              onPressed: isSavingProfile
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) {
+                        return;
+                      }
 
-                    setState(() => isSavingProfile = true);
+                      setState(() => isSavingProfile = true);
 
-                    final success = await _updateProfile(
-                      newName: nameController.text.trim(),
-                      newUnit: unitController.text.trim(),
-                    );
-
-                    if (!mounted || !dialogContext.mounted) return;
-
-                    setState(() => isSavingProfile = false);
-
-                    if (success) {
-                      Navigator.pop(dialogContext);
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Profil berhasil diperbarui.'),
-                        ),
+                      final success = await _updateProfile(
+                        newName: nameController.text.trim(),
+                        newUnit: unitController.text.trim(),
                       );
-                    }
-                  },
-            child: isSavingProfile
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Simpan'),
-          ),
-        ],
-      ),
-    );
 
-    nameController.dispose();
-    unitController.dispose();
+                      if (!mounted || !dialogContext.mounted) return;
+
+                      if (success) {
+                        Navigator.pop(dialogContext);
+
+                        if (!mounted) return;
+
+                        setState(() {
+                          isSavingProfile = false;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Profil berhasil diperbarui.'),
+                          ),
+                        );
+                      } else {
+                        setState(() {
+                          isSavingProfile = false;
+                        });
+                      }
+                    },
+              child: isSavingProfile
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Simpan'),
+            ),
+          ],
+        ),
+      );
+
+      // Tunggu animasi penutupan dialog selesai sebelum dispose.
+      await Future.delayed(const Duration(milliseconds: 300));
+    } finally {
+      nameController.dispose();
+      unitController.dispose();
+    }
   }
 
   Future<void> _showPasswordDialog() async {
@@ -581,76 +620,241 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmPassword = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Perbarui kata sandi'),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: currentPassword,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Kata sandi saat ini',
-                  ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Wajib diisi' : null,
-                ),
-                TextFormField(
-                  controller: newPassword,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Kata sandi baru',
-                  ),
-                  validator: (value) => value == null || value.length < 8
-                      ? 'Minimal 8 karakter'
-                      : null,
-                ),
-                TextFormField(
-                  controller: confirmPassword,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Konfirmasi kata sandi baru',
-                  ),
-                  validator: (value) => value != newPassword.text
-                      ? 'Kata sandi belum cocok'
-                      : null,
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Batal'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: orange),
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Validasi berhasil. Hubungkan endpoint API untuk memperbarui kata sandi.',
+    bool isChangingPassword = false;
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Perbarui kata sandi'),
+                content: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: currentPassword,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Kata sandi saat ini',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Kata sandi saat ini wajib diisi';
+                            }
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: newPassword,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Kata sandi baru',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.length < 8) {
+                              return 'Minimal 8 karakter';
+                            }
+
+                            if (value == currentPassword.text) {
+                              return 'Kata sandi baru harus berbeda';
+                            }
+
+                            return null;
+                          },
+                        ),
+                        TextFormField(
+                          controller: confirmPassword,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Konfirmasi kata sandi baru',
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Konfirmasi kata sandi wajib diisi';
+                            }
+
+                            if (value != newPassword.text) {
+                              return 'Kata sandi belum cocok';
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }
-            },
-            child: const Text('Lanjutkan'),
-          ),
-        ],
-      ),
-    );
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isChangingPassword
+                        ? null
+                        : () => Navigator.pop(dialogContext),
+                    child: const Text('Batal'),
+                  ),
+                  FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: orange),
+                    onPressed: isChangingPassword
+                        ? null
+                        : () async {
+                            if (!(formKey.currentState?.validate() ?? false)) {
+                              return;
+                            }
 
-    currentPassword.dispose();
-    newPassword.dispose();
-    confirmPassword.dispose();
+                            setDialogState(() {
+                              isChangingPassword = true;
+                            });
+
+                            try {
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+
+                              final token = prefs.getString('auth_token');
+
+                              if (token == null || token.isEmpty) {
+                                throw Exception(
+                                  'Sesi login tidak ditemukan. Silakan login kembali.',
+                                );
+                              }
+
+                              final result = await ApiService.changePassword(
+                                token: token,
+                                currentPassword: currentPassword.text,
+                                newPassword: newPassword.text,
+                                confirmPassword: confirmPassword.text,
+                              );
+
+                              if (!mounted || !dialogContext.mounted) {
+                                return;
+                              }
+
+                              if (result['success'] == true) {
+                                Navigator.pop(dialogContext);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      result['message'] ??
+                                          'Kata sandi berhasil diperbarui.',
+                                    ),
+                                    backgroundColor: orange,
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              } else {
+                                setDialogState(() {
+                                  isChangingPassword = false;
+                                });
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      result['message'] ??
+                                          'Gagal memperbarui kata sandi.',
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (!mounted || !dialogContext.mounted) {
+                                return;
+                              }
+
+                              setDialogState(() {
+                                isChangingPassword = false;
+                              });
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Gagal memperbarui kata sandi: $e',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                    child: isChangingPassword
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Lanjutkan'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      // Tunggu animasi dialog selesai sebelum menghapus controller.
+      await Future.delayed(const Duration(milliseconds: 300));
+    } finally {
+      currentPassword.dispose();
+      newPassword.dispose();
+      confirmPassword.dispose();
+    }
+  }
+
+  Future<void> _showThemeDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeModeNotifier,
+          builder: (context, currentMode, child) {
+            return AlertDialog(
+              title: const Text('Tema Aplikasi'),
+              content: RadioGroup<ThemeMode>(
+                groupValue: currentMode,
+                onChanged: (value) async {
+                  if (value == null) return;
+
+                  await changeAppTheme(value);
+
+                  if (!mounted || !dialogContext.mounted) return;
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    RadioListTile<ThemeMode>(
+                      value: ThemeMode.light,
+                      activeColor: ewfOrange,
+                      title: const Text('Terang'),
+                      subtitle: const Text('Tampilan terang'),
+                      secondary: const Icon(Icons.light_mode_outlined),
+                    ),
+                    RadioListTile<ThemeMode>(
+                      value: ThemeMode.dark,
+                      activeColor: ewfOrange,
+                      title: const Text('Gelap'),
+                      subtitle: const Text('Tampilan gelap'),
+                      secondary: const Icon(Icons.dark_mode_outlined),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Selesai'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

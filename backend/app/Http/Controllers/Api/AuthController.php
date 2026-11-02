@@ -11,6 +11,10 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    // ==========================================
+    // REGISTER
+    // ==========================================
+
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -42,38 +46,47 @@ class AuthController extends Controller
         ], 201);
     }
 
-public function resendVerificationEmail(Request $request)
-{
-    $request->validate([
-        'email' => ['required', 'email'],
-    ]);
+    // ==========================================
+    // RESEND VERIFICATION EMAIL
+    // ==========================================
 
-    $user = User::where(
-        'email',
-        strtolower($request->email)
-    )->first();
+    public function resendVerificationEmail(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+        ]);
 
-    if (!$user) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Akun tidak ditemukan.',
-        ], 404);
-    }
+        $user = User::where(
+            'email',
+            strtolower($request->email)
+        )->first();
 
-    if ($user->hasVerifiedEmail()) {
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Email sudah terverifikasi.',
+            ]);
+        }
+
+        $user->sendEmailVerificationNotification();
+
         return response()->json([
             'success' => true,
-            'message' => 'Email sudah terverifikasi.',
+            'message' => 'Email verifikasi berhasil dikirim ulang.',
         ]);
     }
 
-    $user->sendEmailVerificationNotification();
+    // ==========================================
+    // LOGIN
+    // ==========================================
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Email verifikasi berhasil dikirim ulang.',
-    ]);
-}
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -81,9 +94,15 @@ public function resendVerificationEmail(Request $request)
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('email', strtolower($validated['email']))->first();
+        $user = User::where(
+            'email',
+            strtolower($validated['email'])
+        )->first();
 
-        if (!$user || !Hash::check($validated['password'], $user->password)) {
+        if (
+            !$user ||
+            !Hash::check($validated['password'], $user->password)
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Email atau kata sandi salah.',
@@ -111,44 +130,101 @@ public function resendVerificationEmail(Request $request)
             ],
         ]);
     }
+
+    // ==========================================
+    // PROFILE
+    // ==========================================
+
     public function profile(Request $request)
-{
-    $user = $request->user();
+    {
+        $user = $request->user();
 
-    return response()->json([
-        'success' => true,
-        'user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'work_location' => $user->work_location,
-        ],
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'work_location' => $user->work_location,
+            ],
+        ]);
+    }
 
-public function updateProfile(Request $request)
-{
-    $validated = $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'work_location' => ['required', 'string', 'max:255'],
-    ]);
+    // ==========================================
+    // UPDATE PROFILE
+    // ==========================================
 
-    $user = $request->user();
+    public function updateProfile(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'work_location' => ['required', 'string', 'max:255'],
+        ]);
 
-    $user->update([
-        'name' => $validated['name'],
-        'work_location' => $validated['work_location'],
-    ]);
+        $user = $request->user();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Profil berhasil diperbarui.',
-        'user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'work_location' => $user->work_location,
-        ],
-    ]);
-}
+        $user->update([
+            'name' => $validated['name'],
+            'work_location' => $validated['work_location'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'work_location' => $user->work_location,
+            ],
+        ]);
+    }
+
+    // ==========================================
+    // CHANGE PASSWORD
+    // ==========================================
+
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'current_password.required' => 'Kata sandi saat ini wajib diisi.',
+            'password.required' => 'Kata sandi baru wajib diisi.',
+            'password.min' => 'Kata sandi baru minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi kata sandi baru tidak cocok.',
+        ]);
+
+        // Mengambil pengguna berdasarkan token login
+        $user = $request->user();
+
+        // Memeriksa kata sandi saat ini
+        if (!Hash::check(
+            $validated['current_password'],
+            $user->password
+        )) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kata sandi saat ini tidak sesuai.',
+            ], 422);
+        }
+
+        // Memastikan kata sandi baru berbeda dari kata sandi lama
+        if (Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kata sandi baru harus berbeda dari kata sandi saat ini.',
+            ], 422);
+        }
+
+        // Mengenkripsi dan menyimpan kata sandi baru
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Kata sandi berhasil diperbarui.',
+        ], 200);
+    }
 }

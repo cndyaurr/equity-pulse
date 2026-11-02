@@ -40,21 +40,6 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
     if (value == null) return '—';
     return value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2);
   }
-
-  String _formatTime(DateTime? time) {
-    if (time == null) return 'Belum tersedia';
-
-    final local = time.toLocal();
-    final d = local.day.toString().padLeft(2, '0');
-    final m = local.month.toString().padLeft(2, '0');
-    final y = local.year.toString();
-    final h = local.hour.toString().padLeft(2, '0');
-    final min = local.minute.toString().padLeft(2, '0');
-    final s = local.second.toString().padLeft(2, '0');
-
-    return '$d/$m/$y $h:$min:$s';
-  }
-
   Widget _statusIndicator() {
     final connected = _service.isConnected;
     final color = connected ? _green : _red;
@@ -80,43 +65,6 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _freshnessText(LiveQuote? gold, LiveQuote? hkk) {
-    final times = [
-      gold?.sourceTime,
-      hkk?.sourceTime,
-    ].whereType<DateTime>().toList();
-
-    if (times.isEmpty) {
-      return const Text(
-        'Menunggu data harga dari sumber',
-        style: TextStyle(fontSize: 10, color: _secondary),
-      );
-    }
-
-    times.sort((a, b) => b.compareTo(a));
-    final latest = times.first;
-    final goldFresh = _service.hasFreshGoldPrice;
-    final hkkFresh = _service.hasFreshHkkPrice;
-    final bothFresh = goldFresh && hkkFresh;
-
-    final statusText = bothFresh
-        ? 'Data pasar diperbarui'
-        : !goldFresh && !hkkFresh
-        ? 'Menunggu pembaruan harga XUL dan HKK'
-        : !goldFresh
-        ? 'Menunggu pembaruan harga XUL'
-        : 'Menunggu pembaruan harga HKK';
-
-    return Text(
-      '$statusText · ${_formatTime(latest)}',
-      style: TextStyle(
-        fontSize: 10,
-        color: bothFresh ? _green : _red,
-        fontWeight: FontWeight.w500,
-      ),
     );
   }
 
@@ -211,13 +159,7 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
             ),
           ),
           const SizedBox(height: 8),
-          _freshnessText(gold, hkk),
           const SizedBox(height: 8),
-          const Text(
-            'Data dianggap terbaru jika waktu sumber masing-masing instrumen '
-            'berusia maksimal 5 menit.',
-            style: TextStyle(fontSize: 10, color: _secondary),
-          ),
         ],
       ),
     );

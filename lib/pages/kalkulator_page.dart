@@ -967,8 +967,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
         _buildFisikResultCards(),
         const SizedBox(height: 12),
         _buildFisikNetCard(),
-        const SizedBox(height: 12),
-        _buildFisikFootnote(),
       ],
     );
   }
@@ -1270,50 +1268,6 @@ class _KalkulatorPageState extends State<KalkulatorPage> {
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFisikFootnote() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E8),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.help_outline, size: 20, color: Color(0xFF475569)),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Catatan Konversi Fisik',
-                  style: GoogleFonts.roboto(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Perhitungan mengasumsikan transaksi bullion murni '
-                  '24 Karat (99.99%). Standar satuan troy ounce (oz) '
-                  'konstan di 31.1035 gram. Biaya cetak & sertifikasi '
-                  '(Antam/UBS) tidak diperhitungkan.',
-                  style: GoogleFonts.roboto(
-                    fontSize: 10,
-                    height: 1.45,
-                    color: const Color(0xFF475569),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
