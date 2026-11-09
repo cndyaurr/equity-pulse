@@ -40,6 +40,7 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
     if (value == null) return '—';
     return value.toStringAsFixed(value == value.roundToDouble() ? 0 : 2);
   }
+
   Widget _statusIndicator() {
     final connected = _service.isConnected;
     final color = connected ? _green : _red;
@@ -72,6 +73,7 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
   Widget build(BuildContext context) {
     final gold = _service.quotes['XUL10'];
     final hkk = _service.quotes['HKK50_BBJ'];
+    final jpk = _service.quotes['JPK50_BBJ'];
 
     return Container(
       width: double.infinity,
@@ -113,7 +115,7 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Market quotes for XUL and HKK',
+            'Market quotes for XUL, HKK and JPK',
             style: TextStyle(fontSize: 11, color: _secondary),
           ),
           const SizedBox(height: 8),
@@ -155,6 +157,7 @@ class _LiveQuotesTableState extends State<LiveQuotesTable> {
               rows: [
                 _row('XUL', 'Loco London Gold', gold),
                 _row('HKK', 'Hang Seng Index Futures', hkk),
+                _row('JPK', 'Nikkei 225 Futures (IDR)', jpk),
               ],
             ),
           ),

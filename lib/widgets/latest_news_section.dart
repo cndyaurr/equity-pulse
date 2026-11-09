@@ -18,9 +18,11 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
   static const Color _dark = Color(0xFF1F2937);
   static const Color _muted = Color(0xFF64748B);
 
+  static const String _apiUrl = 'http://10.0.2.2:8000/api/news';
+
   List<Map<String, dynamic>> _news = [];
   bool _loading = true;
-  bool _failed = false;
+  String? _error;
 
   @override
   void initState() {
@@ -29,89 +31,138 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
   }
 
   Future<void> _loadNews() async {
+    if (!mounted) return;
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
     try {
       final response = await http
-          .get(Uri.parse('http://10.0.2.2:8000/api/news'))
-          .timeout(const Duration(seconds: 12));
+          .get(
+            Uri.parse(_apiUrl),
+            headers: {'Accept': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 20));
+
+      debugPrint('[LATEST NEWS] Status: ${response.statusCode}');
+      debugPrint('[LATEST NEWS] Response: ${response.body}');
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to load news');
+        throw Exception('HTTP ${response.statusCode}');
       }
 
       final decoded = jsonDecode(response.body);
-      if (decoded is! List) {
-        throw const FormatException('Invalid news response');
+
+      dynamic rawData = decoded;
+
+      // Mendukung respons List maupun object dengan key data.
+      if (rawData is Map) {
+        rawData = rawData['data'] ?? rawData['news'] ?? [];
       }
 
-      final items = decoded
-          .map<Map<String, dynamic>>((item) {
-            final publishedAt = (item['published_at'] ?? '').toString();
+      // Mendukung pagination Laravel: data.data.
+      if (rawData is Map) {
+        rawData = rawData['data'] ?? [];
+      }
 
-            return {
-              'image': item['image']?.toString() ?? '',
-              'category': item['category']?.toString() ?? 'Market News',
-              'source': item['source']?.toString() ?? 'Equity Pulse',
-              'date': _formatDate(publishedAt),
-              'title': item['title']?.toString() ?? '',
-              'url': item['url']?.toString() ?? '',
-              'description': item['content']?.toString() ?? '',
-              'metric': '-',
-              'metric1Value': '-',
-              'metric2Value': '-',
-            };
+      if (rawData is! List) {
+        throw const FormatException(
+          'Format respons API berita tidak sesuai.',
+        );
+      }
+
+      final items = rawData
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .where((item) {
+            return (item['title'] ?? '').toString().trim().isNotEmpty;
           })
-          .where((item) => (item['title'] as String).trim().isNotEmpty)
-          .take(4)
           .toList();
 
-      if (!mounted) return;
-      setState(() {
-        _news = items;
-        _loading = false;
-        _failed = false;
+      // Urutkan berita terbaru terlebih dahulu.
+      items.sort((a, b) {
+        final dateA = DateTime.tryParse(
+          (a['published_at'] ?? '').toString(),
+        );
+
+        final dateB = DateTime.tryParse(
+          (b['published_at'] ?? '').toString(),
+        );
+
+        if (dateA == null) return 1;
+        if (dateB == null) return -1;
+
+        return dateB.compareTo(dateA);
       });
-    } catch (_) {
+
+      final formattedNews = items.take(4).map((item) {
+        return {
+          'image': item['image']?.toString() ?? '',
+          'category': item['category']?.toString() ?? 'Market News',
+          'source': item['source']?.toString() ?? 'Equityworld Futures',
+          'date': _formatDate(
+            (item['published_at'] ?? '').toString(),
+          ),
+          'title': item['title']?.toString() ?? '',
+          'url': item['url']?.toString() ?? '',
+          'slug': item['slug']?.toString() ?? '',
+          'description': item['content']?.toString() ?? '',
+          'content': item['content']?.toString() ?? '',
+        };
+      }).toList();
+
       if (!mounted) return;
+
+      setState(() {
+        _news = formattedNews;
+        _loading = false;
+      });
+
+      debugPrint('[LATEST NEWS] Berhasil memuat ${_news.length} berita.');
+    } catch (e) {
+      debugPrint('[LATEST NEWS] ERROR: $e');
+
+      if (!mounted) return;
+
       setState(() {
         _loading = false;
-        _failed = true;
+        _error = e.toString();
       });
     }
   }
 
   String _formatDate(String raw) {
     final date = DateTime.tryParse(raw);
-    if (date == null) return raw.isEmpty ? 'Latest update' : raw;
+
+    if (date == null) return 'Latest update';
 
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
 
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    final local = date.toLocal();
+
+    return '${local.day} ${months[local.month - 1]} ${local.year}';
   }
 
   void _openAllNews() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const BeritaPage()),
+      MaterialPageRoute(
+        builder: (_) => const BeritaPage(),
+      ),
     );
   }
 
   void _openArticle(Map<String, dynamic> item) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => BeritaDetailPage(article: item)),
+      MaterialPageRoute(
+        builder: (_) => BeritaDetailPage(article: item),
+      ),
     );
   }
 
@@ -145,23 +196,27 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
             ),
           ],
         ),
+
         const SizedBox(height: 4),
+
         const Text(
           'Latest updates from the market',
-          style: TextStyle(fontSize: 12, color: _muted),
+          style: TextStyle(
+            fontSize: 12,
+            color: _muted,
+          ),
         ),
+
         const SizedBox(height: 12),
 
-        if (!_loading && !_failed && _news.isNotEmpty) ...[
-          _NewsTicker(news: _news, onTap: _openArticle),
-          const SizedBox(height: 12),
-        ],
         if (_loading)
           const SizedBox(
             height: 190,
-            child: Center(child: CircularProgressIndicator(color: _orange)),
+            child: Center(
+              child: CircularProgressIndicator(color: _orange),
+            ),
           )
-        else if (_failed)
+        else if (_error != null)
           _buildMessage(
             icon: Icons.wifi_off_outlined,
             message: 'News could not be loaded.',
@@ -172,8 +227,8 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
           _buildMessage(
             icon: Icons.newspaper_outlined,
             message: 'No news available yet.',
-            buttonLabel: 'View All News',
-            onPressed: _openAllNews,
+            buttonLabel: 'Refresh',
+            onPressed: _loadNews,
           )
         else
           SizedBox(
@@ -183,11 +238,12 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
               itemCount: _news.length,
               separatorBuilder: (_, _) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
-                final item = _news[index];
-                return _buildNewsCard(item);
+                return _buildNewsCard(_news[index]);
               },
             ),
           ),
+
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -210,8 +266,17 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
         children: [
           Icon(icon, size: 28, color: _muted),
           const SizedBox(height: 8),
-          Text(message, style: const TextStyle(color: _muted, fontSize: 12)),
-          TextButton(onPressed: onPressed, child: Text(buttonLabel)),
+          Text(
+            message,
+            style: const TextStyle(
+              color: _muted,
+              fontSize: 12,
+            ),
+          ),
+          TextButton(
+            onPressed: onPressed,
+            child: Text(buttonLabel),
+          ),
         ],
       ),
     );
@@ -231,7 +296,9 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFFFE5CC)),
+              border: Border.all(
+                color: const Color(0xFFFFE5CC),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,6 +314,7 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
                         )
                       : _imagePlaceholder(),
                 ),
+
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -266,7 +334,9 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
                             letterSpacing: 0.5,
                           ),
                         ),
+
                         const SizedBox(height: 6),
+
                         Expanded(
                           child: Text(
                             (item['title'] ?? '').toString(),
@@ -280,12 +350,17 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 5),
+
                         Text(
                           '${item['source']} · ${item['date']}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: _muted, fontSize: 9),
+                          style: const TextStyle(
+                            color: _muted,
+                            fontSize: 9,
+                          ),
                         ),
                       ],
                     ),
@@ -303,174 +378,10 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
     return Container(
       color: const Color(0xFFFFF3E8),
       alignment: Alignment.center,
-      child: const Icon(Icons.newspaper_outlined, size: 36, color: _orange),
-    );
-  }
-}
-
-class _NewsTicker extends StatefulWidget {
-  final List<Map<String, dynamic>> news;
-  final ValueChanged<Map<String, dynamic>> onTap;
-
-  const _NewsTicker({required this.news, required this.onTap});
-
-  @override
-  State<_NewsTicker> createState() => _NewsTickerState();
-}
-
-class _NewsTickerState extends State<_NewsTicker>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _animationController;
-  double _contentWidth = 0;
-  final GlobalKey _tickerContentKey = GlobalKey();
-
-  static const double _speed = 45;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant _NewsTicker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.news != widget.news) {
-      _animationController.stop();
-      _contentWidth = 0;
-    }
-  }
-
-  void _startAnimation(double width) {
-    if (!mounted || width <= 0) return;
-
-    if ((_contentWidth - width).abs() < 1 && _animationController.isAnimating) {
-      return;
-    }
-
-    _contentWidth = width;
-
-    _animationController.duration = Duration(
-      milliseconds: (width / _speed * 1000).round().clamp(1000, 3600000),
-    );
-
-    _animationController.repeat();
-  }
-
-  Widget _buildNewsItems() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: widget.news.map((item) {
-        return InkWell(
-          onTap: () => widget.onTap(item),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.circle, size: 7, color: Color(0xFFF58220)),
-                const SizedBox(width: 8),
-                Text(
-                  (item['title'] ?? '').toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.news.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Container(
-      height: 40,
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1F2937),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 40,
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            color: const Color(0xFFF58220),
-            child: const Text(
-              'TOP NEWS',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-
-          Expanded(
-            child: ClipRect(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (!mounted) return;
-
-                    final keyContext = _tickerContentKey.currentContext;
-                    final renderObject = keyContext?.findRenderObject();
-
-                    if (renderObject is RenderBox && renderObject.hasSize) {
-                      final measuredWidth = renderObject.size.width / 2;
-
-                      if (measuredWidth > 0 &&
-                          (_contentWidth - measuredWidth).abs() >= 1) {
-                        _startAnimation(measuredWidth);
-                      } else if (measuredWidth > 0 &&
-                          !_animationController.isAnimating) {
-                        _startAnimation(measuredWidth);
-                      }
-                    }
-                  });
-
-                  return OverflowBox(
-                    alignment: Alignment.centerLeft,
-                    minWidth: 0,
-                    maxWidth: double.infinity,
-                    child: AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(
-                            -_animationController.value * _contentWidth,
-                            0,
-                          ),
-                          child: child,
-                        );
-                      },
-                      child: Row(
-                        key: _tickerContentKey,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [_buildNewsItems(), _buildNewsItems()],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
+      child: const Icon(
+        Icons.newspaper_outlined,
+        size: 36,
+        color: _orange,
       ),
     );
   }

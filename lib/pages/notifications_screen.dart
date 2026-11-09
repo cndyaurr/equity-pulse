@@ -223,6 +223,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     }
 
+    // Harga pembukaan JPK dari Live Quotes.
+    final jpkQuote = _liveQuoteService.quotes['JPK50_BBJ'];
+
+    if (jpkQuote?.open != null) {
+      notifications.add({
+        'category': 'HARGA PEMBUKAAN',
+        'title': 'Harga Pembukaan JPK Hari Ini',
+        'description':
+            'Harga pembukaan tercatat sebesar ${_formatPrice(jpkQuote!.open)} INDEX.',
+        'time': _formatTime(jpkQuote.sourceTime),
+        'icon': Icons.trending_up_rounded,
+        'color': const Color(0xFF059669),
+        'background': const Color(0xFFE1F3E8),
+        'highlight': true,
+      });
+    }
     // Berita terbaru hari ini.
     if (_latestNews != null) {
       final news = _latestNews!;

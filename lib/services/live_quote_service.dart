@@ -72,11 +72,13 @@ class LiveQuoteService extends ChangeNotifier {
   final Map<String, List<double>> priceHistory = {
     'XUL10': <double>[],
     'HKK50_BBJ': <double>[],
+    'JPK50_BBJ': <double>[],
   };
 
   final Map<String, List<PriceCandle>> candleHistory = {
     'XUL10': <PriceCandle>[],
     'HKK50_BBJ': <PriceCandle>[],
+    'JPK50_BBJ': <PriceCandle>[],
   };
 
   static const int maxCandles = 100;
@@ -142,6 +144,8 @@ class LiveQuoteService extends ChangeNotifier {
   bool get hasFreshGoldPrice => _isFresh(quotes['XUL10']);
 
   bool get hasFreshHkkPrice => _isFresh(quotes['HKK50_BBJ']);
+
+  bool get hasFreshJpkPrice => _isFresh(quotes['JPK50_BBJ']);
 
   bool _isFresh(LiveQuote? quote) {
     final sourceTime = quote?.sourceTime;
@@ -223,7 +227,14 @@ class LiveQuoteService extends ChangeNotifier {
       // Sumber mengirim kumpulan simbol dalam satu objek JSON.
       for (final entry in decoded.entries) {
         final symbol = entry.key.toString().toUpperCase();
-        if (symbol != 'XUL10' && symbol != 'HKK50_BBJ') continue;
+        const supportedSymbols = {
+          'XUL10',
+          'HKK50_BBJ',
+          'JPK50_BBJ',
+          'JPK5U_BBJ',
+        };
+
+        if (!supportedSymbols.contains(symbol)) continue;
         if (entry.value is! Map) continue;
 
         final data = Map<String, dynamic>.from(entry.value as Map);
