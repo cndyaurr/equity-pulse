@@ -18,7 +18,7 @@ class _LatestNewsSectionState extends State<LatestNewsSection> {
   static const Color _dark = Color(0xFF1F2937);
   static const Color _muted = Color(0xFF64748B);
 
-  static const String _apiUrl = 'http://10.0.2.2:8000/api/news';
+  static const String _apiUrl = 'http://127.0.0.1:8000/api/news';
 
   List<Map<String, dynamic>> _news = [];
   bool _loading = true;

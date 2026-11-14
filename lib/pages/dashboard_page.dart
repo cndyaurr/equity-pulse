@@ -10,6 +10,7 @@ import 'informasi_pt_page.dart';
 import 'notifications_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/live_quotes_table.dart';
+import '../widgets/latest_news_section.dart';
 import 'login.dart';
 import '../widgets/profile_avatar.dart';
 
@@ -64,6 +65,13 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  TextStyle mono({
+    double size = 13,
+    FontWeight weight = FontWeight.w500,
+    Color color = textPrimary,
+  }) {
+    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,63 +165,71 @@ class _DashboardPageState extends State<DashboardPage> {
       // ============================================================
       // BODY
       // ============================================================
-     
-body: SafeArea(
-  child: SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildWelcome(),
-        const SizedBox(height: 16),
-
-        // Grafik XUL dan HKK secara horizontal
-        SizedBox(
-          height: 430,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildWelcome(),
+              const SizedBox(height: 16),
+
+              // Grafik dan tabel khusus instrumen XUL dan HKK
+
+              // Grafik XUL dan HKK secara horizontal
               SizedBox(
-                width: MediaQuery.of(context).size.width - 64,
-                child: _buildLiveChart(
-                  title: 'XUL',
-                  subtitle: 'Loco London Gold',
-                  color: primary,
+                height: 470,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 64,
+                      child: _buildLiveChart(
+                        title: 'XUL',
+                        subtitle: 'Loco London Gold',
+                        color: primary,
+                        symbol: 'OANDA:XAUUSD',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 64,
+                      child: _buildLiveChart(
+                        title: 'HKK',
+                        subtitle: 'Hang Seng Index Futures',
+                        color: primary,
+                        symbol: 'INDEX:HSI',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 64,
+                      child: _buildLiveChart(
+                        title: 'JPK',
+                        subtitle: 'Nikkei 225 Japan',
+                        color: primary,
+                        symbol: 'SPREADEX:NIKKEI',
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: MediaQuery.of(context).size.width - 64,
-                child: _buildLiveChart(
-                  title: 'HKK',
-                  subtitle: 'Hang Seng Index Futures',
-                  color: primary,
-                ),
-              ),
+
+              const SizedBox(height: 20),
+              _buildLiveQuotesTable(),
+              const SizedBox(height: 16),
+              _buildQuickMenu(context),
+              const SizedBox(height: 20),
+              const LatestNewsSection(),
             ],
           ),
         ),
+      ),
 
-        const SizedBox(height: 20),
-
-        // Tabel Live Quotes
-        _buildLiveQuotesTable(),
-
-        const SizedBox(height: 16),
-
-        // Akses Cepat
-        _buildQuickMenu(context),
-
-        const SizedBox(height: 20),
-
-      ],
-    ),
-  ),
-),
-
-// BOTTOM NAVIGATION
-bottomNavigationBar: _buildBottomNavigation(context),
-
+      // ============================================================
+      // BOTTOM NAVIGATION
+      // ============================================================
+      bottomNavigationBar: _buildBottomNavigation(context),
     );
   }
   // ============================================================
@@ -578,6 +594,7 @@ bottomNavigationBar: _buildBottomNavigation(context),
     required String title,
     required String subtitle,
     required Color color,
+    required String symbol,
   }) {
     final bool isGold = title.toUpperCase().contains('XUL');
     return Container(
@@ -638,19 +655,9 @@ bottomNavigationBar: _buildBottomNavigation(context),
           ),
           const SizedBox(height: 16),
 
-          SizedBox(
-            height: 320,
-            child: isGold
-                ? const _TradingViewChart(symbol: 'OANDA:XAUUSD')
-                : const _TradingViewChart(symbol: 'INDEX:HSI'),
-          ),
+          SizedBox(height: 320, child: _TradingViewChart(symbol: symbol)),
           const SizedBox(height: 8),
-          Text(
-            isGold
-                ? 'Grafik XAUUSD dari TradingView.'
-                : 'Grafik indeks Hang Seng dari TradingView; bukan harga kontrak HKK50_BBJ.',
-            style: jakarta(size: 10, color: textSecondary),
-          ),
+          
         ],
       ),
     );
@@ -726,21 +733,12 @@ bottomNavigationBar: _buildBottomNavigation(context),
   // QUICK BUTTON
   // ============================================================
 
-
-
-  Widget _quickButton(
-    IconData icon,
-    String title, {
-    VoidCallback? onTap,
-  }) {
+  Widget _quickButton(IconData icon, String title, {VoidCallback? onTap}) {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 8,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
           color: white,
           borderRadius: BorderRadius.circular(8),
@@ -753,20 +751,15 @@ bottomNavigationBar: _buildBottomNavigation(context),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: jakarta(
-                size: 11,
-                weight: FontWeight.w600,
-              ),
+              style: jakarta(size: 11, weight: FontWeight.w600),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-} // Tutup class _DashboardPageState di sini!
-
-// Class TradingView berada di luar _DashboardPageState.
 class _TradingViewChart extends StatefulWidget {
   final String symbol;
 
@@ -789,7 +782,8 @@ class _TradingViewChartState extends State<_TradingViewChart> {
       ..loadHtmlString(_html);
   }
 
-  String get _html => '''
+  String get _html =>
+      '''
 <!DOCTYPE html>
 <html>
 <head>
