@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'notifications_screen.dart';
-import 'profile_screen.dart';
-import '../widgets/profile_avatar.dart';
 
 class InformasiPtPage extends StatefulWidget {
   const InformasiPtPage({super.key});
@@ -195,190 +192,89 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return DefaultTextStyle.merge(
-      style: GoogleFonts.roboto(),
-      child: Scaffold(
-        backgroundColor: surface,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  child: Column(
-                    children: [
-                      _buildHero(),
-                      const SizedBox(height: 14),
-                      _buildTabSwitcher(),
-                      const SizedBox(height: 16),
-                      if (selectedTab == 0) _buildLegalitas(),
-                      if (selectedTab == 1) _buildNetwork(),
-                      if (selectedTab == 2) _buildCustomerCare(),
-                      const SizedBox(height: 16),
-                      _buildRiskNotice(),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+Widget build(BuildContext context) {
+  return DefaultTextStyle.merge(
+    style: GoogleFonts.roboto(),
+    child: Scaffold(
+      backgroundColor: surface,
+
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        automaticallyImplyLeading: true,
+        centerTitle: true,
+        leadingWidth: 56,
+        iconTheme: const IconThemeData(
+          color: Color(0xFF1F2937),
+          size: 26,
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(color: Colors.white),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back,
-              size: 24,
-              color: Color(0xFF1F2937),
-            ),
-            tooltip: 'Kembali',
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 40),
-          ),
-          const SizedBox(width: 4),
-          // LOGO PERUSAHAAN
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Colors.white,
+        titleSpacing: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
               borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/logo_perusahaan.png',
+                width: 38,
+                height: 38,
+                fit: BoxFit.contain,
+              ),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: Image.asset(
-              'assets/images/logo_perusahaan.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.trending_up, color: Color(0xFFD96812));
-              },
-            ),
-          ),
-
-          const SizedBox(width: 10),
-
-          // NAMA DAN SUBTITLE
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(width: 10),
+            Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'EQUICKLY',
-                        style: GoogleFonts.roboto(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                    ],
+                Text(
+                  'EQUICKLY',
+                  style: GoogleFonts.roboto(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFFF9800),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-
-                const Text(
+                Text(
                   'MARKET INTELLIGENCE',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
+                  style: GoogleFonts.roboto(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    color: const Color(0xFF64748B),
                   ),
                 ),
               ],
             ),
-          ),
-
-          // NOTIFIKASI
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsScreen(),
-                ),
-              );
-            },
-            icon: const Icon(
-              Icons.notifications_none,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-
-          // PROFIL
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(30),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileScreen(),
-                  ),
-                );
-              },
-              child: const ProfileAvatar(),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
 
-  Widget _buildHero() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF58220),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: CustomPaint(
-        painter: _HeroPatternPainter(primary: primary),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'PT Equityworld Futures',
-              style: GoogleFonts.roboto(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                child: Column(
+                  children: [
+                    _buildTabSwitcher(),
+                    const SizedBox(height: 16),
+                    if (selectedTab == 0) _buildLegalitas(),
+                    if (selectedTab == 1) _buildNetwork(),
+                    if (selectedTab == 2) _buildCustomerCare(),
+                    const SizedBox(height: 16),
+                    _buildRiskNotice(),
+                  ],
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTabSwitcher() {
   return Container(
@@ -1270,50 +1166,5 @@ Row(
       ),
       child: Icon(icon, color: primary, size: 21),
     );
-  }
-}
-
-class _HeroPatternPainter extends CustomPainter {
-  final Color primary;
-
-  _HeroPatternPainter({required this.primary});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = primary.withValues(alpha: 0.20);
-
-    for (int i = 0; i < 7; i++) {
-      final x = size.width * (0.12 + i * 0.14);
-
-      canvas.drawLine(
-        Offset(x, size.height * 0.05),
-        Offset(x + size.width * 0.08, size.height),
-        paint,
-      );
-    }
-
-    final fillPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.035)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(
-      Offset(size.width * 0.82, size.height * 0.28),
-      size.height * 0.28,
-      fillPaint,
-    );
-
-    canvas.drawCircle(
-      Offset(size.width * 0.91, size.height * 0.58),
-      size.height * 0.18,
-      fillPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _HeroPatternPainter oldDelegate) {
-    return oldDelegate.primary != primary;
   }
 }

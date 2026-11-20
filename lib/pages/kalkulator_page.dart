@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'berita_page.dart';
-import 'harga_emas_page.dart';
-import 'pivot_point_page.dart';
 import 'notifications_screen.dart';
-import 'profile_screen.dart';
-import '../widgets/profile_avatar.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -91,18 +86,17 @@ String _formatRupiahRate(double rate) {
   bool _isLoadingRate = false;
   String _rateStatus = 'Menyiapkan kurs USD/IDR...';
   String? _rateLastUpdatedText;
-  final TextEditingController fisikKursController = TextEditingController(
-    text: '16250',
-  );
-  final TextEditingController fisikModalController = TextEditingController(
-    text: '100000000',
-  );
-  final TextEditingController fisikBeliController = TextEditingController(
-    text: '2380',
-  );
-  final TextEditingController fisikJualController = TextEditingController(
-    text: '2410',
-  );
+  final TextEditingController fisikKursController =
+    TextEditingController(text: '16250');
+
+final TextEditingController fisikModalController =
+    TextEditingController();
+
+final TextEditingController fisikBeliController =
+    TextEditingController();
+
+final TextEditingController fisikJualController =
+    TextEditingController();
 
   double fisikBeliPerGram = 0;
   double fisikJualPerGram = 0;
@@ -421,139 +415,24 @@ String _formatRupiahRate(double rate) {
   }
 
   void resetCalculator() {
-    digitalBeliController.text = '1450000';
-    digitalJualController.text = '1465000';
-    digitalLotController.text = '5';
+  digitalBeliController.text = '1450000';
+  digitalJualController.text = '1465000';
+  digitalLotController.text = '5';
 
-    _loadUsdIdrRate();
-    fisikModalController.text = '100000000';
-    fisikBeliController.text = '2380';
-    fisikJualController.text = '2410';
+  fisikModalController.clear();
+  fisikBeliController.clear();
+  fisikJualController.clear();
 
-    calculateDigital();
-    calculateFisik();
-  }
+  _loadUsdIdrRate();
+
+  calculateDigital();
+  calculateFisik();
+}
 
   void setDigitalLot(int value) {
     digitalLotController.text = value.toString();
   }
 
-  Widget _buildBottomNavigation(BuildContext context) {
-    final items = [
-      (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
-      (
-        icon: Icons.newspaper_outlined,
-        activeIcon: Icons.newspaper,
-        label: 'Berita',
-      ),
-      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Data'),
-      (
-        icon: Icons.table_chart_outlined,
-        activeIcon: Icons.table_chart,
-        label: 'Pivot',
-      ),
-      (
-        icon: Icons.calculate_outlined,
-        activeIcon: Icons.calculate,
-        label: 'Kalkulator',
-      ),
-    ];
-
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(items.length, (index) {
-              final active = index == 4;
-
-              return SizedBox(
-                width: 82,
-                child: InkWell(
-                  onTap: () {
-                    switch (index) {
-                      case 0:
-                        Navigator.of(
-                          context,
-                        ).popUntil((route) => route.isFirst);
-                        break;
-
-                      case 1:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const BeritaPage()),
-                        );
-                        break;
-
-                      case 2:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HargaEmasPage(),
-                          ),
-                        );
-                        break;
-
-                      case 3:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PivotPointPage(),
-                          ),
-                        );
-                        break;
-
-                      case 4:
-                        // Sudah berada di halaman Kalkulator.
-                        break;
-                    }
-                  },
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        active ? items[index].activeIcon : items[index].icon,
-                        size: 27,
-                        color: active
-                            ? const Color(0xFFF58220)
-                            : const Color(0xFF9CA3AF),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        items[index].label,
-                        style: GoogleFonts.roboto(
-                          fontSize: 11,
-                          fontWeight: active
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: active
-                              ? const Color(0xFFF58220)
-                              : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -563,10 +442,7 @@ String _formatRupiahRate(double rate) {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const PivotPointPage()),
-        );
+Navigator.of(context).pop();
       },
       child: Theme(
         data: baseTheme.copyWith(
@@ -611,7 +487,6 @@ String _formatRupiahRate(double rate) {
               ],
             ),
           ),
-          bottomNavigationBar: _buildBottomNavigation(context),
         ),
       ),
     );
@@ -619,82 +494,79 @@ String _formatRupiahRate(double rate) {
 
   // HEADER: disamakan dengan Dashboard.
 
-  PreferredSizeWidget _buildHeader() {
-    return AppBar(
-      backgroundColor: _white,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      titleSpacing: 16,
-      title: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/images/logo_perusahaan.png',
-              width: 38,
-              height: 38,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Roboto',
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
-                  ),
-                  children: [
-                    TextSpan(
-                      text: 'EQUICKLY',
-                      style: TextStyle(color: Color(0xFFFF9800)),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                'MARKET INTELLIGENCE',
-                style: GoogleFonts.roboto(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: _textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
+PreferredSizeWidget _buildHeader() {
+  return AppBar(
+    backgroundColor: _white,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    automaticallyImplyLeading: false,
+    leading: IconButton(
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+      icon: const Icon(
+        Icons.arrow_back,
+        color: Color(0xFF1F2937),
+        size: 24,
       ),
-      actions: [
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-            );
-          },
-          icon: const Icon(Icons.notifications_none, color: _textPrimary),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
-            child: const ProfileAvatar(),
+    ),
+    titleSpacing: 0,
+    centerTitle: true,
+    title: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            'assets/images/logo_perusahaan.png',
+            width: 38,
+            height: 38,
+            fit: BoxFit.contain,
           ),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'EQUICKLY',
+              style: GoogleFonts.roboto(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFFF9800),
+              ),
+            ),
+            Text(
+              'MARKET INTELLIGENCE',
+              style: GoogleFonts.roboto(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _textSecondary,
+              ),
+            ),
+          ],
         ),
       ],
-    );
-  }
+    ),
+    actions: [
+      IconButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const NotificationsScreen(),
+            ),
+          );
+        },
+        icon: const Icon(
+          Icons.notifications_none,
+          color: _textPrimary,
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildTabs() {
     return Container(

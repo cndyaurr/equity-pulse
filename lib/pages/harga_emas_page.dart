@@ -1,19 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'profile_screen.dart';
 import '../models/gold_price.dart';
 import '../services/api_service.dart';
 import 'notifications_screen.dart';
-import 'dashboard_page.dart';
-import 'berita_page.dart';
-import 'pivot_point_page.dart';
-import 'kalkulator_page.dart';
-import '../widgets/profile_avatar.dart';
 
 class HargaEmasPage extends StatefulWidget {
   const HargaEmasPage({super.key});
@@ -417,55 +411,42 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
           backgroundColor: Colors.white,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
-          titleSpacing: 16,
+          automaticallyImplyLeading: true,
+          centerTitle: true,
+          leadingWidth: 56,
+          iconTheme: const IconThemeData(color: Color(0xFF1F2937), size: 26),
+          titleSpacing: 0,
           title: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                clipBehavior: Clip.antiAlias,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
                   'assets/images/logo_perusahaan.png',
+                  width: 38,
+                  height: 38,
                   fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.trending_up,
-                      color: Color(0xFFD96812),
-                    );
-                  },
                 ),
               ),
               const SizedBox(width: 10),
               Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'EQUICKLY',
-                          style: TextStyle(color: Color(0xFFFF9800)),
-                        ),
-                      ],
+                  Text(
+                    'EQUICKLY',
+                    style: GoogleFonts.roboto(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFFF9800),
                     ),
                   ),
-                  const Text(
+                  Text(
                     'MARKET INTELLIGENCE',
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
+                    style: GoogleFonts.roboto(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
+                      color: const Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -478,28 +459,13 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const NotificationsScreen(),
+                    builder: (_) => const NotificationsScreen(),
                   ),
                 );
               },
               icon: const Icon(
                 Icons.notifications_none,
                 color: Color(0xFF1F2937),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(30),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
-                    ),
-                  );
-                },
-                child: const ProfileAvatar(),
               ),
             ),
           ],
@@ -510,20 +476,29 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildPageTitle(),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
+
                       _buildAssetTabs(),
                       const SizedBox(height: 18),
+
+                      _buildSelectedTradingViewChart(),
+                      const SizedBox(height: 18),
+
                       _buildSettlementCard(),
                       const SizedBox(height: 18),
+
                       _buildFilterCard(),
                       const SizedBox(height: 18),
+
                       _buildOhlcCard(),
                       const SizedBox(height: 18),
+
                       _buildPagination(),
                     ],
                   ),
@@ -532,11 +507,9 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             ],
           ),
         ),
-        bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
   }
-
   // ============================================================
   // PAGE TITLE
   // ============================================================
@@ -546,9 +519,8 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       'Data Harga Emas',
       style: GoogleFonts.roboto(
         fontSize: 22,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: const Color(0xFF1F2937),
-        height: 1.2,
       ),
     );
   }
@@ -614,6 +586,106 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     );
   }
 
+  Widget _buildSelectedTradingViewChart() {
+    late String title;
+    late String subtitle;
+    late String symbol;
+
+    switch (_selectedAsset) {
+      case 1:
+        title = 'HKK';
+        subtitle = 'Hang Seng Index Futures';
+        symbol = 'INDEX:HSI';
+        break;
+
+      case 2:
+        title = 'JPK';
+        subtitle = 'Nikkei 225 Japan';
+        symbol = 'SPREADEX:NIKKEI';
+        break;
+
+      default:
+        title = 'XUL';
+        subtitle = 'Loco London Gold';
+        symbol = 'OANDA:XAUUSD';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFE5CC)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: primaryLight,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.show_chart, color: primary, size: 23),
+              ),
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Text(
+                'TRADINGVIEW',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2962FF),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          SizedBox(
+            height: 320,
+            child: _TradingViewChart(key: ValueKey(symbol), symbol: symbol),
+          ),
+        ],
+      ),
+    );
+  }
   // ============================================================
   // LIVE SETTLEMENT CARD
   // ============================================================
@@ -1341,137 +1413,74 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       ),
     );
   }
-
-  // ============================================================
-  // BOTTOM NAVIGATION
-  // ============================================================
-
-  Widget _buildBottomNavigation() {
-    final items = [
-      _BottomNavItem(
-        icon: Icons.home_outlined,
-        activeIcon: Icons.home,
-        label: 'Dashboard',
-      ),
-      _BottomNavItem(
-        icon: Icons.newspaper_outlined,
-        activeIcon: Icons.newspaper,
-        label: 'Berita',
-      ),
-      _BottomNavItem(
-        icon: Icons.show_chart,
-        activeIcon: Icons.show_chart,
-        label: 'Data',
-      ),
-      _BottomNavItem(
-        icon: Icons.table_chart_outlined,
-        activeIcon: Icons.table_chart,
-        label: 'Pivot',
-      ),
-      _BottomNavItem(
-        icon: Icons.calculate_outlined,
-        activeIcon: Icons.calculate,
-        label: 'Kalkulator',
-      ),
-    ];
-
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(items.length, (index) {
-              final active = index == 2;
-
-              return SizedBox(
-                width: 82,
-                child: InkWell(
-                  onTap: () {
-                    switch (index) {
-                      case 0:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DashboardPage(),
-                          ),
-                        );
-                        break;
-
-                      case 1:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BeritaPage(),
-                          ),
-                        );
-                        break;
-
-                      case 2:
-                        break;
-
-                      case 3:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PivotPointPage(),
-                          ),
-                        );
-                        break;
-
-                      case 4:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const KalkulatorPage(),
-                          ),
-                        );
-                        break;
-                    }
-                  },
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        active ? items[index].activeIcon : items[index].icon,
-                        size: 27,
-                        color: active ? primary : textSecondary,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        items[index].label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: active
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          color: active ? primary : textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
+class _TradingViewChart extends StatefulWidget {
+  final String symbol;
+
+  const _TradingViewChart({super.key, required this.symbol});
+
+  @override
+  State<_TradingViewChart> createState() => _TradingViewChartState();
+}
+
+class _TradingViewChartState extends State<_TradingViewChart> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0xFFFAFBFE))
+      ..loadHtmlString(_html);
+  }
+
+  String get _html =>
+      '''
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body, #chart {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart"></div>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script>
+    new TradingView.widget({
+      autosize: true,
+      symbol: "${widget.symbol}",
+      interval: "D",
+      timezone: "Asia/Jakarta",
+      theme: "light",
+      style: "1",
+      locale: "id",
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_legend: false,
+      save_image: false,
+      container_id: "chart"
+    });
+  </script>
+</body>
+</html>
+''';
+
+  @override
+  Widget build(BuildContext context) {
+    return WebViewWidget(controller: _controller);
+  }
+}
 // ================================================================
 // MODEL CHART
 // ================================================================
@@ -1507,22 +1516,6 @@ class OhlcData {
     required this.low,
     required this.close,
     required this.change,
-  });
-}
-
-// ================================================================
-// MODEL BOTTOM NAV
-// ================================================================
-
-class _BottomNavItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
   });
 }
 

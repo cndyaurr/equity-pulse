@@ -1,5 +1,4 @@
 import 'dart:convert';
-import '../main.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
@@ -279,35 +278,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _section(
                     title: 'Pengaturan',
                     children: [
-                      _actionRow(
-                        icon: Icons.palette_outlined,
-                        title: 'Tema aplikasi',
-                        subtitle: 'Sesuaikan tampilan aplikasi',
-                        trailing: ValueListenableBuilder<ThemeMode>(
-                          valueListenable: themeModeNotifier,
-                          builder: (context, mode, child) {
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  mode == ThemeMode.dark ? 'Gelap' : 'Terang',
-                                  style: const TextStyle(
-                                    color: textSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: textSecondary,
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        onTap: _showThemeDialog,
-                      ),
                       _actionRow(
                         icon: Icons.support_agent_rounded,
                         title: 'Hubungi dukungan',
@@ -817,56 +787,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
       newPassword.dispose();
       confirmPassword.dispose();
     }
-  }
-
-  Future<void> _showThemeDialog() async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return ValueListenableBuilder<ThemeMode>(
-          valueListenable: themeModeNotifier,
-          builder: (context, currentMode, child) {
-            return AlertDialog(
-              title: const Text('Tema Aplikasi'),
-              content: RadioGroup<ThemeMode>(
-                groupValue: currentMode,
-                onChanged: (value) async {
-                  if (value == null) return;
-
-                  await changeAppTheme(value);
-
-                  if (!mounted || !dialogContext.mounted) return;
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    RadioListTile<ThemeMode>(
-                      value: ThemeMode.light,
-                      activeColor: ewfOrange,
-                      title: const Text('Terang'),
-                      subtitle: const Text('Tampilan terang'),
-                      secondary: const Icon(Icons.light_mode_outlined),
-                    ),
-                    RadioListTile<ThemeMode>(
-                      value: ThemeMode.dark,
-                      activeColor: ewfOrange,
-                      title: const Text('Gelap'),
-                      subtitle: const Text('Tampilan gelap'),
-                      secondary: const Icon(Icons.dark_mode_outlined),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Selesai'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 }

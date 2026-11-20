@@ -6,10 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'notifications_screen.dart';
 import 'berita_detail_page.dart';
-import 'dashboard_page.dart';
-import 'harga_emas_page.dart';
-import 'pivot_point_page.dart';
-import 'kalkulator_page.dart';
 import '../widgets/profile_avatar.dart';
 import 'package:marquee/marquee.dart';
 
@@ -116,16 +112,17 @@ void initState() {
   // ============================================================
 
   Future<void> _loadNews() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/api/news'),
-      );
+  try {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8000/api/news'),
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
 
+      // Pertahankan kode lanjutan yang sudah ada di file kamu.
         setState(() {
           news = data.map<Map<String, dynamic>>((item) {
             return {
@@ -193,10 +190,14 @@ void initState() {
         // APP BAR
         // ======================================================
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          titleSpacing: 16,
+  backgroundColor: Colors.white,
+  elevation: 0,
+  surfaceTintColor: Colors.transparent,
+  iconTheme: const IconThemeData(
+    color: Color(0xFF1F2937),
+    size: 26,
+  ),
+  titleSpacing: 16,
 
           title: Row(
             children: [
@@ -308,11 +309,6 @@ void initState() {
             ),
           ),
         ),
-
-        // ======================================================
-        // BOTTOM NAVIGATION
-        // ======================================================
-        bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
   }
@@ -699,132 +695,6 @@ Widget _buildNewsActions(Map<String, dynamic> item) {
     );
   }
 
-  // ============================================================
-  // BOTTOM NAVIGATION
-  // ============================================================
-
-  Widget _buildBottomNavigation() {
-    final items = [
-      (icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Dashboard'),
-      (
-        icon: Icons.newspaper_outlined,
-        activeIcon: Icons.newspaper,
-        label: 'Berita',
-      ),
-      (icon: Icons.show_chart, activeIcon: Icons.show_chart, label: 'Data'),
-      (
-        icon: Icons.table_chart_outlined,
-        activeIcon: Icons.table_chart,
-        label: 'Pivot',
-      ),
-      (
-        icon: Icons.calculate_outlined,
-        activeIcon: Icons.calculate,
-        label: 'Kalkulator',
-      ),
-    ];
-
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(items.length, (index) {
-              final active = index == 1;
-
-              return SizedBox(
-                width: 82,
-                child: InkWell(
-                  onTap: () {
-                    switch (index) {
-                      case 0:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const DashboardPage(),
-                          ),
-                        );
-                        break;
-
-                      case 1:
-                        break;
-
-                      case 2:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HargaEmasPage(),
-                          ),
-                        );
-                        break;
-
-                      case 3:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const PivotPointPage(),
-                          ),
-                        );
-                        break;
-
-                      case 4:
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const KalkulatorPage(),
-                          ),
-                        );
-                        break;
-                    }
-                  },
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        active ? items[index].activeIcon : items[index].icon,
-                        size: 27,
-                        color: active
-                            ? const Color(0xFFD96812)
-                            : const Color(0xFF9CA3AF),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Text(
-                        items[index].label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: active
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          color: active
-                              ? const Color(0xFFD96812)
-                              : const Color(0xFF9CA3AF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
 
   // ============================================================
   // IMAGE PLACEHOLDER

@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import '../models/pivot_point.dart';
 import '../services/api_service.dart';
-import 'dashboard_page.dart';
-import 'berita_page.dart';
-import 'harga_emas_page.dart';
-import 'kalkulator_page.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'notifications_screen.dart';
-import 'profile_screen.dart';
-import '../widgets/profile_avatar.dart';
 
 class PivotPointPage extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -29,116 +24,114 @@ class _PivotPointPageState extends State<PivotPointPage> {
   PivotPoint? _pivotData;
   bool _isLoading = true;
   String? _errorMessage;
-Widget _buildPivotInfoCard() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      InkWell(
-        onTap: () {
-          setState(() {
-            _isPivotInfoExpanded = !_isPivotInfoExpanded;
-          });
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: Color(0xFFD96812),
-                size: 17,
-              ),
-              const SizedBox(width: 7),
-              const Expanded(
-                child: Text(
-                  'Apa Itu Pivot Point?',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF64748B),
+  Widget _buildPivotInfoCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _isPivotInfoExpanded = !_isPivotInfoExpanded;
+            });
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.info_outline_rounded,
+                  color: Color(0xFFD96812),
+                  size: 17,
+                ),
+                const SizedBox(width: 7),
+                const Expanded(
+                  child: Text(
+                    'Apa Itu Pivot Point?',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                 ),
-              ),
-              AnimatedRotation(
-                turns: _isPivotInfoExpanded ? 0.5 : 0,
-                duration: const Duration(milliseconds: 250),
-                child: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFFD96812),
-                  size: 22,
+                AnimatedRotation(
+                  turns: _isPivotInfoExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 250),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Color(0xFFD96812),
+                    size: 22,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
 
-      AnimatedSize(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        child: _isPivotInfoExpanded
-            ? Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(top: 5, bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFFF0E2),
-                      Color(0xFFF1F3F5),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          child: _isPivotInfoExpanded
+              ? Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 5, bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF0E2), Color(0xFFF1F3F5)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF58220).withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Mengenal Pivot Point',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFD96812),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Pivot Point adalah indikator analisis teknikal '
+                        'yang digunakan untuk menentukan potensi level '
+                        'support dan resistance berdasarkan harga Open, '
+                        'High, Low, dan Close pada periode sebelumnya.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.6,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Catatan: Pivot Point merupakan alat bantu analisis, '
+                        'bukan jaminan arah pergerakan harga.',
+                        style: TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFFF58220).withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Mengenal Pivot Point',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFD96812),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Pivot Point adalah indikator analisis teknikal '
-                      'yang digunakan untuk menentukan potensi level '
-                      'support dan resistance berdasarkan harga Open, '
-                      'High, Low, dan Close pada periode sebelumnya.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        height: 1.6,
-                        color: Color(0xFF475569),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Catatan: Pivot Point merupakan alat bantu analisis, '
-                      'bukan jaminan arah pergerakan harga.',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.5,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : const SizedBox(width: double.infinity),
-      ),
-    ],
-  );
-}
+                )
+              : const SizedBox(width: double.infinity),
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -441,21 +434,21 @@ Widget _buildPivotInfoCard() {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-  'Pivot Point',
-  style: GoogleFonts.roboto(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    color: _textPrimary,
-  ),
-),
+                        'Pivot Point',
+                        style: GoogleFonts.roboto(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: _textPrimary,
+                        ),
+                      ),
 
-const SizedBox(height: 5),
+                      const SizedBox(height: 5),
 
-_buildPivotInfoCard(),
+                      _buildPivotInfoCard(),
 
-const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
-_buildAssetBar(),
+                      _buildAssetBar(),
                       const SizedBox(height: 16),
 
                       if (_isLoading)
@@ -478,89 +471,86 @@ _buildAssetBar(),
             ],
           ),
         ),
-        bottomNavigationBar: _buildBottomNavigation(),
       ),
     );
   }
 
-  PreferredSizeWidget _buildHeader() {
-    return AppBar(
-      backgroundColor: _white,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      titleSpacing: 16,
-      title: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/images/logo_perusahaan.png',
-              width: 38,
-              height: 38,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: const TextSpan(
-                      style: TextStyle(
-                        fontFamily: 'Roboto',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'EQUICKLY',
-                          style: TextStyle(color: Color(0xFFFF9800)),
-                        ),
-                      ],
-                    ),
-                  ),
-              Text(
-                'MARKET INTELLIGENCE',
-                style: GoogleFonts.roboto(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: _textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ],
+  
+PreferredSizeWidget _buildHeader() {
+  return AppBar(
+    backgroundColor: _white,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    automaticallyImplyLeading: false,
+    leading: IconButton(
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+      icon: const Icon(
+        Icons.arrow_back,
+        color: Color(0xFF1F2937),
+        size: 24,
       ),
-      actions: [
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-            );
-          },
-          icon: const Icon(Icons.notifications_none, color: _textPrimary),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfileScreen(user: widget.user),
-                ),
-              );
-            },
-            child: const ProfileAvatar(),
+    ),
+    titleSpacing: 0,
+    centerTitle: true,
+    title: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            'assets/images/logo_perusahaan.png',
+            width: 38,
+            height: 38,
+            fit: BoxFit.contain,
           ),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'EQUICKLY',
+              style: GoogleFonts.roboto(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFFF9800),
+              ),
+            ),
+            Text(
+              'MARKET INTELLIGENCE',
+              style: GoogleFonts.roboto(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _textSecondary,
+              ),
+            ),
+          ],
         ),
       ],
-    );
-  }
+    ),
+    actions: [
+      IconButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const NotificationsScreen(),
+            ),
+          );
+        },
+        icon: const Icon(
+          Icons.notifications_none,
+          color: _textPrimary,
+        ),
+      ),
+    ],
+  );
+}
+
+
 
   Widget _buildAssetBar() {
     return Container(
@@ -928,168 +918,163 @@ _buildAssetBar(),
       ),
     );
   }
+
   void _showCalculationDetail(String label) {
-  final high = _parseController(_highController);
-  final low = _parseController(_lowController);
-  final close = _parseController(_closeController);
+    final high = _parseController(_highController);
+    final low = _parseController(_lowController);
+    final close = _parseController(_closeController);
 
-  final pp = (high + low + close) / 3;
-  final range = high - low;
+    final pp = (high + low + close) / 3;
+    final range = high - low;
 
-  late String formula;
-  late String substitution;
-  late double result;
+    late String formula;
+    late String substitution;
+    late double result;
 
-  switch (label) {
-    case 'R1':
-      formula = 'R1 = (2 × PP) − Low';
-      substitution =
-          '= (2 × ${_formatPivot(pp)}) − ${_formatPivot(low)}';
-      result = (2 * pp) - low;
-      break;
+    switch (label) {
+      case 'R1':
+        formula = 'R1 = (2 × PP) − Low';
+        substitution = '= (2 × ${_formatPivot(pp)}) − ${_formatPivot(low)}';
+        result = (2 * pp) - low;
+        break;
 
-    case 'R2':
-      formula = 'R2 = PP + (High − Low)';
-      substitution =
-          '= ${_formatPivot(pp)} + (${_formatPivot(high)} − ${_formatPivot(low)})';
-      result = pp + range;
-      break;
+      case 'R2':
+        formula = 'R2 = PP + (High − Low)';
+        substitution =
+            '= ${_formatPivot(pp)} + (${_formatPivot(high)} − ${_formatPivot(low)})';
+        result = pp + range;
+        break;
 
-    case 'R3':
-      formula = 'R3 = PP + 2 × (High − Low)';
-      substitution =
-          '= ${_formatPivot(pp)} + 2 × (${_formatPivot(high)} − ${_formatPivot(low)})';
-      result = pp + (range * 2);
-      break;
+      case 'R3':
+        formula = 'R3 = PP + 2 × (High − Low)';
+        substitution =
+            '= ${_formatPivot(pp)} + 2 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+        result = pp + (range * 2);
+        break;
 
-    case 'R4':
-      formula = 'R4 = PP + 3 × (High − Low)';
-      substitution =
-          '= ${_formatPivot(pp)} + 3 × (${_formatPivot(high)} − ${_formatPivot(low)})';
-      result = pp + (range * 3);
-      break;
+      case 'R4':
+        formula = 'R4 = PP + 3 × (High − Low)';
+        substitution =
+            '= ${_formatPivot(pp)} + 3 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+        result = pp + (range * 3);
+        break;
 
-    case 'S1':
-      formula = 'S1 = (2 × PP) − High';
-      substitution =
-          '= (2 × ${_formatPivot(pp)}) − ${_formatPivot(high)}';
-      result = (2 * pp) - high;
-      break;
+      case 'S1':
+        formula = 'S1 = (2 × PP) − High';
+        substitution = '= (2 × ${_formatPivot(pp)}) − ${_formatPivot(high)}';
+        result = (2 * pp) - high;
+        break;
 
-    case 'S2':
-      formula = 'S2 = PP − (High − Low)';
-      substitution =
-          '= ${_formatPivot(pp)} − (${_formatPivot(high)} − ${_formatPivot(low)})';
-      result = pp - range;
-      break;
+      case 'S2':
+        formula = 'S2 = PP − (High − Low)';
+        substitution =
+            '= ${_formatPivot(pp)} − (${_formatPivot(high)} − ${_formatPivot(low)})';
+        result = pp - range;
+        break;
 
-    case 'S3':
-      formula = 'S3 = PP − 2 × (High − Low)';
-      substitution =
-          '= ${_formatPivot(pp)} − 2 × (${_formatPivot(high)} − ${_formatPivot(low)})';
-      result = pp - (range * 2);
-      break;
+      case 'S3':
+        formula = 'S3 = PP − 2 × (High − Low)';
+        substitution =
+            '= ${_formatPivot(pp)} − 2 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+        result = pp - (range * 2);
+        break;
 
-    case 'S4':
-      formula = 'S4 = PP − 3 × (High − Low)';
-      substitution =
-          '= ${_formatPivot(pp)} − 3 × (${_formatPivot(high)} − ${_formatPivot(low)})';
-      result = pp - (range * 3);
-      break;
+      case 'S4':
+        formula = 'S4 = PP − 3 × (High − Low)';
+        substitution =
+            '= ${_formatPivot(pp)} − 3 × (${_formatPivot(high)} − ${_formatPivot(low)})';
+        result = pp - (range * 3);
+        break;
 
-    case 'PP':
-      formula = 'PP = (High + Low + Close) ÷ 3';
-      substitution =
-          '= (${_formatPivot(high)} + ${_formatPivot(low)} + ${_formatPivot(close)}) ÷ 3';
-      result = pp;
-      break;
+      case 'PP':
+        formula = 'PP = (High + Low + Close) ÷ 3';
+        substitution =
+            '= (${_formatPivot(high)} + ${_formatPivot(low)} + ${_formatPivot(close)}) ÷ 3';
+        result = pp;
+        break;
 
-        default:
-      return;
-  }
+      default:
+        return;
+    }
 
-  // Warna berdasarkan jenis Pivot Point
-  final detailColor = label.startsWith('S')
-      ? const Color(0xFF00866A)
-      : label.startsWith('R')
-          ? const Color(0xFFD64545)
-          : const Color(0xFFD96812);
+    // Warna berdasarkan jenis Pivot Point
+    final detailColor = label.startsWith('R')
+    ? const Color(0xFF00866A)
+    : label.startsWith('S')
+    ? const Color(0xFFD64545)
+    : const Color(0xFFD96812);
 
-  final detailBackground = label.startsWith('S')
-      ? const Color(0xFFE8F5F0)
-      : label.startsWith('R')
-          ? const Color(0xFFFFF0EE)
-          : const Color(0xFFFFF3E8);
+final detailBackground = label.startsWith('R')
+    ? const Color(0xFFE8F5F0)
+    : label.startsWith('S')
+    ? const Color(0xFFFFF0EE)
+    : const Color(0xFFFFF3E8);
 
-  showDialog(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-                title: Text(
-          label,
-          style: TextStyle(
-            color: detailColor,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              formula,
-              style: const TextStyle(
-                fontSize: 18,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w600,
-              ),
+          title: Text(
+            label,
+            style: TextStyle(
+              color: detailColor,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 12),
-            Text(
-              substitution,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-            const SizedBox(height: 12),
-                        Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(13),
-              decoration: BoxDecoration(
-                color: detailBackground,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$label = ${_format(result)}',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: detailColor,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                formula,
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                substitution,
+                style: const TextStyle(fontSize: 16, color: Color(0xFF1F2937)),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(13),
+                decoration: BoxDecoration(
+                  color: detailBackground,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$label = ${_format(result)}',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: detailColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text(
+                'Tutup',
+                style: TextStyle(color: Color(0xFFD96812)),
               ),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text(
-              'Tutup',
-              style: TextStyle(color: Color(0xFFD96812)),
-            ),
-          ),
-        ],
-      );
-    },
-  );
-}
-
+        );
+      },
+    );
+  }
 
   Widget _buildPivotLadder() {
     return _card(
@@ -1151,84 +1136,74 @@ _buildAssetBar(),
     );
   }
 
-Widget _ladderRow({
-  required String label,
-  required double value,
-  required bool isResistance,
-}) {
-  final rowColor = isResistance
-      ? const Color(0xFFFFF0EE)
-      : const Color(0xFFE8F5F0);
+  Widget _ladderRow({
+    required String label,
+    required double value,
+    required bool isResistance,
+  }) {
+   final rowColor = isResistance
+    ? const Color(0xFFE8F5F0)
+    : const Color(0xFFFFF0EE);
 
-  final valueColor = isResistance
-      ? const Color(0xFFD64545)
-      : const Color(0xFF00866A);
+final valueColor = isResistance
+    ? const Color(0xFF00866A)
+    : const Color(0xFFD64545);
 
-  final formulas = {
-    'R1': '(2 × PP) − Low',
-    'R2': 'PP + Range',
-    'R3': 'PP + 2 × Range',
-    'R4': 'PP + 3 × Range',
-    'S1': '(2 × PP) − High',
-    'S2': 'PP − Range',
-    'S3': 'PP − 2 × Range',
-    'S4': 'PP − 3 × Range',
-  };
+    final formulas = {
+      'R1': '(2 × PP) − Low',
+      'R2': 'PP + Range',
+      'R3': 'PP + 2 × Range',
+      'R4': 'PP + 3 × Range',
+      'S1': '(2 × PP) − High',
+      'S2': 'PP − Range',
+      'S3': 'PP − 2 × Range',
+      'S4': 'PP − 3 × Range',
+    };
 
-  return InkWell(
-    onTap: () => _showCalculationDetail(label),
-    borderRadius: BorderRadius.circular(7),
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 10,
-      ),
-      decoration: BoxDecoration(
-        color: rowColor,
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 38,
-            child: Text(
-              label,
+    return InkWell(
+      onTap: () => _showCalculationDetail(label),
+      borderRadius: BorderRadius.circular(7),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+        decoration: BoxDecoration(
+          color: rowColor,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 38,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: valueColor,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                formulas[label]!,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+            ),
+            Text(
+              _format(value),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: valueColor,
               ),
             ),
-          ),
-          Expanded(
-            child: Text(
-              formulas[label]!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF64748B),
-              ),
-            ),
-          ),
-          Text(
-            _format(value),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: valueColor,
-            ),
-          ),
-          const SizedBox(width: 5),
-          Icon(
-            Icons.chevron_right,
-            size: 15,
-            color: valueColor,
-          ),
-        ],
+            const SizedBox(width: 5),
+            Icon(Icons.chevron_right, size: 15, color: valueColor),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _midRow({required double value}) {
     return Container(
@@ -1271,64 +1246,54 @@ Widget _ladderRow({
     );
   }
 
-Widget _pivotRow() {
-  return InkWell(
-    onTap: () => _showCalculationDetail('PP'),
-    borderRadius: BorderRadius.circular(8),
-    child: Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 13,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E8),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: const Color(0xFFF58220).withValues(alpha: 0.4),
+  Widget _pivotRow() {
+    return InkWell(
+      onTap: () => _showCalculationDetail('PP'),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 13),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3E8),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: const Color(0xFFF58220).withValues(alpha: 0.4),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 38,
-            child: Text(
-              'PP',
-              style: TextStyle(
-                fontSize: 15,
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 38,
+              child: Text(
+                'PP',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFD96812),
+                ),
+              ),
+            ),
+            const Expanded(
+              child: Text(
+                '(High + Low + Close) ÷ 3',
+                style: TextStyle(fontSize: 9, color: Color(0xFFD96812)),
+              ),
+            ),
+            Text(
+              _formatPivot(_pp),
+              style: const TextStyle(
+                fontSize: 21,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFFD96812),
               ),
             ),
-          ),
-          const Expanded(
-            child: Text(
-              '(High + Low + Close) ÷ 3',
-              style: TextStyle(
-                fontSize: 9,
-                color: Color(0xFFD96812),
-              ),
-            ),
-          ),
-          Text(
-            _formatPivot(_pp),
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFFD96812),
-            ),
-          ),
-          const SizedBox(width: 5),
-          const Icon(
-            Icons.chevron_right,
-            size: 16,
-            color: Color(0xFFD96812),
-          ),
-        ],
+            const SizedBox(width: 5),
+            const Icon(Icons.chevron_right, size: 16, color: Color(0xFFD96812)),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _card({required Widget child}) {
     return Container(
@@ -1393,143 +1358,4 @@ Widget _pivotRow() {
       ),
     );
   }
-
-  Widget _buildBottomNavigation() {
-    final items = [
-      const _BottomItem(
-        icon: Icons.home_outlined,
-        activeIcon: Icons.home_rounded,
-        label: 'Dashboard',
-      ),
-      const _BottomItem(
-        icon: Icons.newspaper_outlined,
-        activeIcon: Icons.newspaper_rounded,
-        label: 'Berita',
-      ),
-      const _BottomItem(
-        icon: Icons.show_chart_rounded,
-        activeIcon: Icons.show_chart_rounded,
-        label: 'Data',
-      ),
-      const _BottomItem(
-        icon: Icons.table_chart_outlined,
-        activeIcon: Icons.table_chart_rounded,
-        label: 'Pivot',
-      ),
-      const _BottomItem(
-        icon: Icons.calculate_outlined,
-        activeIcon: Icons.calculate_rounded,
-        label: 'Kalkulator',
-      ),
-    ];
-
-    return Container(
-      height: 72,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(items.length, (index) {
-              final active = index == 3;
-
-              return SizedBox(
-                width: 82,
-                child: InkWell(
-                  onTap: () {
-                    switch (index) {
-                      case 0:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const DashboardPage(),
-                          ),
-                        );
-                        break;
-
-                      case 1:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const BeritaPage()),
-                        );
-                        break;
-
-                      case 2:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const HargaEmasPage(),
-                          ),
-                        );
-                        break;
-
-                      case 3:
-                        break;
-
-                      case 4:
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const KalkulatorPage(),
-                          ),
-                        );
-                        break;
-                    }
-                  },
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        active ? items[index].activeIcon : items[index].icon,
-                        size: 27,
-                        color: active
-                            ? const Color(0xFFF58220)
-                            : const Color(0xFF64748B),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        items[index].label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: active
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          color: active
-                              ? const Color(0xFFD96812)
-                              : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomItem {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-
-  const _BottomItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-  });
 }

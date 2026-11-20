@@ -241,7 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                             // Ganti URL ini jika base URL API
                             // project kamu disimpan di tempat lain.
                             final uri = Uri.parse(
-                              'http://10.0.2.2:8000/api/forgot-password',
+                             'http://10.0.2.2:8000/api/forgot-password',
                             );
 
                             final response = await http.post(
@@ -402,8 +402,6 @@ class _LoginPageState extends State<LoginPage> {
                         _buildLoginCard(),
                         const SizedBox(height: 16),
                         _buildSupportCard(),
-                        const SizedBox(height: 32),
-                        _buildFooter(),
                       ],
                     ),
                   ),
@@ -555,7 +553,7 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Kata Sandi Akses',
+                        'Kata Sandi',
                         style: jakarta(size: 14, weight: FontWeight.w500),
                       ),
                     ),
@@ -881,31 +879,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        Text(
-          'Terdaftar & Diawasi oleh Bappebti • Anggota ICDX & ICH',
-          textAlign: TextAlign.center,
-          style: jakarta(
-            size: 12,
-            weight: FontWeight.w600,
-            color: const Color.fromARGB(255, 18, 19, 21),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '© 2025 PT Equityworld Futures. Hak Cipta Dilindungi Undang-Undang.',
-          textAlign: TextAlign.center,
-          style: jakarta(
-            size: 12,
-            color: const Color.fromARGB(255, 18, 19, 21),
-          ),
-        ),
-      ],
     );
   }
 }
