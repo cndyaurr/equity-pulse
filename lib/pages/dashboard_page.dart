@@ -271,7 +271,7 @@ class _DashboardPageState extends State<DashboardPage> {
       (
         icon: Icons.grid_view_outlined,
         activeIcon: Icons.grid_view_rounded,
-        label: 'Konset',
+        label: 'Konsep',
       ),
       (icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profil'),
     ];

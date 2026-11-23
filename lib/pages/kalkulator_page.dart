@@ -6,6 +6,11 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
 
 class KalkulatorPage extends StatefulWidget {
   const KalkulatorPage({super.key});
@@ -80,8 +85,7 @@ String _formatRupiahRate(double rate) {
 
   // Penyimpanan kurs USD/IDR otomatis
   static const String _rateCacheKey = 'usd_idr_rate';
-  static const String _rateLastUpdateKey = 'usd_idr_last_update';
-  static const String _rateNextUpdateKey = 'usd_idr_next_update';
+static const String _rateDateCacheKey = 'usd_idr_date';
 
   bool _isLoadingRate = false;
   String _rateStatus = 'Menyiapkan kurs USD/IDR...';
@@ -206,127 +210,92 @@ final TextEditingController fisikJualController =
     });
   }
 
-  String _formatRateUpdate(DateTime dateTime) {
-    final local = dateTime.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
 
-    return '$day/$month/${local.year} $hour:$minute';
+
+Future<void> _loadUsdIdrRate() async {
+  if (!mounted) return;
+
+  setState(() {
+    _isLoadingRate = true;
+    _rateStatus = 'Memeriksa kurs JISDOR terbaru...';
+  });
+
+  final prefs = await SharedPreferences.getInstance();
+
+  // Ambil kurs dan tanggal yang pernah tersimpan.
+  final cachedRate = prefs.getDouble(_rateCacheKey);
+  final cachedDate = prefs.getString(_rateDateCacheKey);
+
+  // Tampilkan kurs tersimpan terlebih dahulu.
+  if (cachedRate != null && cachedRate > 0) {
+    fisikKursController.text = _formatRupiahRate(cachedRate);
+    calculateFisik();
+
+    if (mounted) {
+      setState(() {
+        _rateLastUpdatedText = cachedDate;
+        _rateStatus = 'Menggunakan kurs tersimpan';
+      });
+    }
   }
 
-  Future<void> _loadUsdIdrRate() async {
+  try {
+    final response = await http
+        .get(
+          Uri.parse('http://127.0.0.1:8000/api/kurs/jisdor'),
+          headers: {
+            'Accept': 'application/json',
+          },
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal mengambil data JISDOR');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (data['success'] != true) {
+      throw Exception('API JISDOR tidak berhasil');
+    }
+
+    final rate = (data['rate'] as num?)?.toDouble();
+    final date = data['date']?.toString();
+
+    if (rate == null || rate <= 0 || date == null || date.isEmpty) {
+      throw Exception('Data kurs JISDOR tidak valid');
+    }
+
+    // Masukkan kurs terbaru ke kalkulator.
+    fisikKursController.text = _formatRupiahRate(rate);
+
+    // Hitung ulang hasil kalkulator.
+    calculateFisik();
+
+    // Simpan kurs dan tanggal JISDOR.
+    await prefs.setDouble(_rateCacheKey, rate);
+    await prefs.setString(_rateDateCacheKey, date);
+
     if (!mounted) return;
 
     setState(() {
-      _isLoadingRate = true;
-      _rateStatus = 'Memeriksa kurs USD/IDR terbaru...';
+      _rateLastUpdatedText = date;
+      _rateStatus = 'Kurs JISDOR berhasil diperbarui';
+      _isLoadingRate = false;
     });
+  } catch (e) {
+    if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isLoadingRate = false;
 
-    // Mengambil kurs yang sudah tersimpan.
-    final cachedRate = prefs.getDouble(_rateCacheKey);
-    final cachedLastUpdate = prefs.getInt(_rateLastUpdateKey);
-    final cachedNextUpdate = prefs.getInt(_rateNextUpdateKey);
-
-    // Menggunakan kurs tersimpan terlebih dahulu.
-    if (cachedRate != null && cachedRate > 0) {
-     fisikKursController.text = _formatRupiahRate(cachedRate);
-      calculateFisik();
-
-      if (cachedLastUpdate != null && mounted) {
-        setState(() {
-          _rateLastUpdatedText = _formatRateUpdate(
-            DateTime.fromMillisecondsSinceEpoch(
-              cachedLastUpdate * 1000,
-              isUtc: true,
-            ),
-          );
-
-          _rateStatus = 'Menggunakan kurs tersimpan';
-        });
-      }
-
-      // Jika belum waktunya pembaruan, gunakan kurs tersimpan.
-      if (cachedNextUpdate != null &&
-          DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000 <
-              cachedNextUpdate) {
-        if (mounted) {
-          setState(() {
-            _isLoadingRate = false;
-            _rateStatus = 'Kurs terbaru sudah tersimpan';
-          });
-        }
-        return;
-      }
-    }
-
-    try {
-      final response = await http
-          .get(Uri.parse('https://open.er-api.com/v6/latest/USD'))
-          .timeout(const Duration(seconds: 15));
-
-      if (response.statusCode != 200) {
-        throw Exception('Gagal mengambil data kurs');
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (data['result'] != 'success') {
-        throw Exception('API kurs tidak berhasil');
-      }
-
-      final rates = data['rates'] as Map<String, dynamic>;
-
-      final rate = (rates['IDR'] as num?)?.toDouble();
-      final lastUpdateUnix = data['time_last_update_unix'] as int?;
-      final nextUpdateUnix = data['time_next_update_unix'] as int?;
-
-      if (rate == null || rate <= 0 || lastUpdateUnix == null) {
-        throw Exception('Data kurs tidak tersedia');
-      }
-
-      // Memasukkan kurs terbaru ke kalkulator.
-    fisikKursController.text = _formatRupiahRate(rate);
-
-      // Menghitung ulang hasil kalkulator.
-      calculateFisik();
-
-      // Menyimpan kurs ke SharedPreferences.
-      await prefs.setDouble(_rateCacheKey, rate);
-      await prefs.setInt(_rateLastUpdateKey, lastUpdateUnix);
-
-      if (nextUpdateUnix != null) {
-        await prefs.setInt(_rateNextUpdateKey, nextUpdateUnix);
-      }
-
-      if (!mounted) return;
-
-      setState(() {
-        _rateLastUpdatedText = _formatRateUpdate(
-          DateTime.fromMillisecondsSinceEpoch(
-            lastUpdateUnix * 1000,
-            isUtc: true,
-          ),
-        );
-
-        _rateStatus = 'Kurs berhasil diperbarui';
-        _isLoadingRate = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-
-      setState(() {
-        _isLoadingRate = false;
-
-        _rateStatus = cachedRate != null
-            ? 'Internet/API tidak tersedia. Memakai kurs tersimpan.'
-            : 'Gagal mengambil kurs. Periksa koneksi internet.';
-      });
-    }
+      _rateStatus = cachedRate != null
+          ? 'Koneksi gagal. Menggunakan kurs JISDOR tersimpan.'
+          : 'Gagal mengambil kurs JISDOR. Periksa koneksi.';
+    });
   }
+}
+
 
   Widget _buildRateStatus() {
     return Padding(
@@ -355,7 +324,7 @@ final TextEditingController fisikJualController =
           Expanded(
             child: Text(
               '$_rateStatus${_rateLastUpdatedText == null ? '' : ' • Update: $_rateLastUpdatedText'}\n'
-              'Sumber: ExchangeRate-API (open.er-api.com)',
+            'Sumber: Bank Indonesia - JISDOR (USD/IDR)',
               style: GoogleFonts.roboto(
                 fontSize: 9,
                 height: 1.4,
@@ -429,6 +398,544 @@ final TextEditingController fisikJualController =
   calculateFisik();
 }
 
+Future<void> _exportCalculationPdf() async {
+  try {
+    // PDF hanya memuat jenis kalkulator yang sedang dibuka.
+    final isDigital = selectedTab == 0;
+    final reportType = isDigital ? 'Emas Digital' : 'Emas Fisik';
+
+    final now = DateTime.now();
+
+    final stamp =
+        '${now.year}${now.month.toString().padLeft(2, '0')}'
+        '${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}'
+        '${now.minute.toString().padLeft(2, '0')}';
+
+    // Memuat logo EQUICKLY untuk header dan watermark.
+    final logoData = await rootBundle.load(
+      'assets/images/logo_perusahaan.png',
+    );
+
+    final logoImage = pw.MemoryImage(
+      logoData.buffer.asUint8List(),
+    );
+
+    final pdf = pw.Document();
+
+    final orange = PdfColor.fromHex('#F58220');
+    final dark = PdfColor.fromHex('#1F2937');
+    final grey = PdfColor.fromHex('#64748B');
+    final lightOrange = PdfColor.fromHex('#FFF3E8');
+    final borderColor = PdfColor.fromHex('#E2E8F0');
+
+    // Membuat baris informasi PDF.
+    pw.Widget infoRow(String label, String value) {
+      return pw.Container(
+        padding: const pw.EdgeInsets.symmetric(vertical: 6),
+        decoration: pw.BoxDecoration(
+          border: pw.Border(
+            bottom: pw.BorderSide(
+              color: borderColor,
+              width: 0.5,
+            ),
+          ),
+        ),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Expanded(
+              flex: 4,
+              child: pw.Text(
+                label,
+                style: pw.TextStyle(
+                  fontSize: 9,
+                  color: grey,
+                ),
+              ),
+            ),
+            pw.SizedBox(width: 8),
+            pw.Expanded(
+              flex: 5,
+              child: pw.Text(
+                value,
+                textAlign: pw.TextAlign.right,
+                style: pw.TextStyle(
+                  fontSize: 9,
+                  fontWeight: pw.FontWeight.bold,
+                  color: dark,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Judul setiap bagian laporan.
+    pw.Widget sectionTitle(String title) {
+      return pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 9,
+        ),
+        decoration: pw.BoxDecoration(
+          color: lightOrange,
+          borderRadius: pw.BorderRadius.circular(5),
+        ),
+        child: pw.Text(
+          title,
+          style: pw.TextStyle(
+            fontSize: 12,
+            fontWeight: pw.FontWeight.bold,
+            color: orange,
+          ),
+        ),
+      );
+    }
+
+    final pageTheme = pw.PageTheme(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(32),
+      buildBackground: (context) {
+        return pw.Center(
+          child: pw.Opacity(
+            opacity: 0.10,
+            child: pw.Image(
+              logoImage,
+              width: 280,
+              height: 280,
+              fit: pw.BoxFit.contain,
+            ),
+          ),
+        );
+      },
+    );
+
+    final kursDate = _rateLastUpdatedText ?? 'Tidak tersedia';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: pageTheme,
+        header: (context) {
+          return pw.Column(
+            children: [
+              pw.Row(
+                children: [
+                  pw.Image(
+                    logoImage,
+                    width: 48,
+                    height: 48,
+                  ),
+                  pw.SizedBox(width: 10),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'EQUICKLY',
+                        style: pw.TextStyle(
+                          fontSize: 18,
+                          fontWeight: pw.FontWeight.bold,
+                          color: orange,
+                        ),
+                      ),
+                      pw.Text(
+                        'MARKET INTELLIGENCE',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          color: grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  pw.Spacer(),
+                  pw.Text(
+                    'LAPORAN KALKULATOR',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: dark,
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 8),
+              pw.Divider(color: orange, thickness: 1.2),
+              pw.SizedBox(height: 8),
+            ],
+          );
+        },
+        footer: (context) {
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(top: 15),
+            child: pw.Column(
+              children: [
+                pw.Divider(color: borderColor),
+                pw.Row(
+                  mainAxisAlignment:
+                      pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text(
+                      'EQUICKLY - MARKET INTELLIGENCE',
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        color: grey,
+                      ),
+                    ),
+                    pw.Text(
+                      'Halaman ${context.pageNumber} '
+                      'dari ${context.pagesCount}',
+                      style: pw.TextStyle(
+                        fontSize: 8,
+                        color: grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            // INFORMASI LAPORAN
+            pw.Text(
+              'LAPORAN HASIL PERHITUNGAN ${reportType.toUpperCase()}',
+              style: pw.TextStyle(
+                fontSize: 15,
+                fontWeight: pw.FontWeight.bold,
+                color: dark,
+              ),
+            ),
+            pw.SizedBox(height: 5),
+            pw.Text(
+              'Dokumen hasil simulasi perhitungan $reportType.',
+              style: pw.TextStyle(
+                fontSize: 9,
+                color: grey,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            infoRow(
+              'Tanggal laporan',
+              DateFormat('dd MMMM yyyy, HH:mm', 'id_ID').format(now),
+            ),
+            infoRow('Jenis laporan', reportType),
+            pw.SizedBox(height: 18),
+
+            // =================================================
+            // EMAS DIGITAL
+            // =================================================
+            if (isDigital) ...[
+            sectionTitle('PERHITUNGAN EMAS DIGITAL'),
+            pw.SizedBox(height: 8),
+
+            infoRow(
+              'Harga beli per unit',
+              formatRupiah(parseNumber(digitalBeliController.text)),
+            ),
+            infoRow(
+              'Harga jual per unit',
+              formatRupiah(parseNumber(digitalJualController.text)),
+            ),
+            infoRow(
+              'Volume kontrak',
+              '${parseNumber(digitalLotController.text)} Lot',
+            ),
+            infoRow(
+              'Selisih harga',
+              formatRupiah(digitalSelisih),
+            ),
+            infoRow(
+              'Hasil kotor',
+              formatRupiah(digitalKotor),
+            ),
+            infoRow(
+              'Broker fee',
+              formatRupiah(digitalFee),
+            ),
+            infoRow(
+              'PPN 11%',
+              formatRupiah(digitalPajak),
+            ),
+
+            pw.SizedBox(height: 10),
+
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: lightOrange,
+                borderRadius: pw.BorderRadius.circular(7),
+                border: pw.Border.all(color: orange),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'HASIL AKHIR BERSIH (NET PROFIT)',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: orange,
+                    ),
+                  ),
+                  pw.SizedBox(height: 5),
+                  pw.Text(
+                    formatRupiah(digitalNet),
+                    style: pw.TextStyle(
+                      fontSize: 19,
+                      fontWeight: pw.FontWeight.bold,
+                      color: dark,
+                    ),
+                  ),
+                  pw.SizedBox(height: 3),
+                  pw.Text(
+                    '${digitalNetPercentage >= 0 ? '+' : ''}'
+                    '${digitalNetPercentage.toStringAsFixed(2)}% Net',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      color: grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 8),
+            pw.Text(
+              'Formula Perhitungan Digital',
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+                color: dark,
+              ),
+            ),
+            pw.SizedBox(height: 5),
+            infoRow(
+              'Selisih point',
+              'Harga jual - Harga beli',
+            ),
+            infoRow(
+              'Hasil kotor',
+              'Lot x Selisih x Rp10.000.000',
+            ),
+            infoRow(
+              'Broker fee',
+              'Rp300.000 x Lot',
+            ),
+            infoRow(
+              'PPN',
+              '11% x Total Broker Fee',
+            ),
+            infoRow(
+              'Net profit',
+              'Hasil kotor - Fee - PPN',
+            ),
+
+            pw.SizedBox(height: 20),
+            ],
+
+            // =================================================
+            // EMAS FISIK
+            // =================================================
+            if (!isDigital) ...[
+            sectionTitle('PERHITUNGAN EMAS FISIK'),
+            pw.SizedBox(height: 8),
+
+            infoRow(
+              'Kurs USD/IDR',
+              'Rp ${_formatRupiahRate(parseNumber(fisikKursController.text))}',
+            ),
+            infoRow(
+              'Tanggal kurs JISDOR',
+              kursDate,
+            ),
+            infoRow(
+              'Modal alokasi tunai',
+              formatRupiah(parseNumber(fisikModalController.text)),
+            ),
+            infoRow(
+              'Harga beli spot',
+              '\$${parseNumber(fisikBeliController.text).toStringAsFixed(2)} / oz',
+            ),
+            infoRow(
+              'Harga jual spot',
+              '\$${parseNumber(fisikJualController.text).toStringAsFixed(2)} / oz',
+            ),
+            infoRow(
+              'Standar Troy Ounce',
+              '31,10 Gram',
+            ),
+
+            pw.SizedBox(height: 8),
+            pw.Text(
+              'Hasil Konversi dan Perhitungan',
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+                color: dark,
+              ),
+            ),
+            pw.SizedBox(height: 5),
+
+            infoRow(
+              'Harga beli per gram',
+              formatRupiah(fisikBeliPerGram),
+            ),
+            infoRow(
+              'Harga jual per gram',
+              formatRupiah(fisikJualPerGram),
+            ),
+            infoRow(
+              'Selisih per gram',
+              formatRupiah(fisikSelisihPerGram),
+            ),
+            infoRow(
+              'Total gram diperoleh',
+              '${fisikJumlahGram.toStringAsFixed(4)} Gram',
+            ),
+
+            pw.SizedBox(height: 10),
+
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: lightOrange,
+                borderRadius: pw.BorderRadius.circular(7),
+                border: pw.Border.all(color: orange),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'ESTIMASI KEUNTUNGAN (NET PROFIT)',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      fontWeight: pw.FontWeight.bold,
+                      color: orange,
+                    ),
+                  ),
+                  pw.SizedBox(height: 5),
+                  pw.Text(
+                    formatRupiah(fisikCuan),
+                    style: pw.TextStyle(
+                      fontSize: 19,
+                      fontWeight: pw.FontWeight.bold,
+                      color: dark,
+                    ),
+                  ),
+                  pw.SizedBox(height: 3),
+                  pw.Text(
+                    '${fisikRoi >= 0 ? '+' : ''}'
+                    '${fisikRoi.toStringAsFixed(2)}% ROI',
+                    style: pw.TextStyle(
+                      fontSize: 9,
+                      color: grey,
+                    ),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Divider(color: orange),
+                  infoRow(
+                    'Total valuasi penjualan',
+                    formatRupiah(fisikTotalNilai),
+                  ),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 8),
+            pw.Text(
+              'Formula Perhitungan Fisik',
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+                color: dark,
+              ),
+            ),
+            pw.SizedBox(height: 5),
+            infoRow(
+              'Harga beli per gram',
+              '(Harga beli USD x Kurs) / 31,10',
+            ),
+            infoRow(
+              'Harga jual per gram',
+              '(Harga jual USD x Kurs) / 31,10',
+            ),
+            infoRow(
+              'Jumlah gram',
+              'Modal / Harga beli per gram',
+            ),
+            infoRow(
+              'Keuntungan',
+              'Selisih per gram x Jumlah gram',
+            ),
+            infoRow(
+              'ROI',
+              '(Keuntungan / Modal) x 100%',
+            ),
+
+            ],
+            pw.SizedBox(height: 18),
+            pw.Text(
+              'Catatan: Laporan ini merupakan hasil simulasi '
+              'berdasarkan parameter yang dimasukkan pada kalkulator. '
+              'Nilai hasil perhitungan bukan merupakan jaminan '
+              'keuntungan transaksi.',
+              style: pw.TextStyle(
+                fontSize: 8,
+                color: grey,
+              ),
+            ),
+            if (!isDigital) ...[
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'Kurs USD/IDR menggunakan sumber Bank Indonesia - JISDOR. '
+                'Tanggal kurs mengikuti tanggal publikasi data yang tersedia.',
+                style: pw.TextStyle(
+                  fontSize: 8,
+                  color: grey,
+                ),
+              ),
+            ],
+          ];
+        },
+      ),
+    );
+
+    // Simpan PDF sementara lalu buka menu berbagi.
+    final directory = await getTemporaryDirectory();
+
+    final file = File(
+      '${directory.path}/laporan_kalkulator_${isDigital ? 'digital' : 'fisik'}_$stamp.pdf',
+    );
+
+    await file.writeAsBytes(
+      await pdf.save(),
+      flush: true,
+    );
+
+    if (!mounted) return;
+
+    await SharePlus.instance.share(
+  ShareParams(
+    files: [XFile(file.path)],
+    text: 'Laporan hasil perhitungan EQUICKLY',
+  ),
+);
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Gagal membuat PDF: $e'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
   void setDigitalLot(int value) {
     digitalLotController.text = value.toString();
   }
@@ -479,6 +986,36 @@ Navigator.of(context).pop();
                               : _buildFisikSection(),
                         ),
                         const SizedBox(height: 16),
+
+Align(
+  alignment: Alignment.centerRight,
+  child: ElevatedButton.icon(
+    onPressed: _exportCalculationPdf,
+    icon: const Icon(
+      Icons.save_alt_rounded,
+      size: 18,
+    ),
+    label: const Text('Export'),
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFFF58220),
+      foregroundColor: Colors.white,
+      elevation: 0,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      textStyle: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  ),
+),
+
+const SizedBox(height: 16),
                         _buildHistorySection(),
                       ],
                     ),

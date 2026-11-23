@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Verified;
 
 use App\Models\User;
@@ -13,14 +14,15 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoldPriceController;
 use App\Http\Controllers\Api\PivotPointController;
 use App\Http\Controllers\Api\NewsController;
-
+use App\Http\Controllers\PasswordChangeOtpController;
+use App\Http\Controllers\Api\JisdorController;
 // ==========================================
 // GOLD PRICE
 // ==========================================
 
 Route::get('/gold-prices', [GoldPriceController::class, 'index']);
 Route::get('/gold-prices/latest', [GoldPriceController::class, 'latest']);
-
+Route::get('/kurs/jisdor', [JisdorController::class, 'index']);
 // ==========================================
 // NEWS
 // ==========================================
@@ -52,9 +54,30 @@ Route::middleware('auth:sanctum')->group(function () {
     // Memperbarui profil pengguna
     Route::put('/profile', [AuthController::class, 'updateProfile']);
 
-    // Memperbarui kata sandi pengguna
+    // Password lama (sementara dipertahankan)
     Route::put('/change-password', [AuthController::class, 'changePassword']);
 
+    // ==========================================
+    // PASSWORD CHANGE OTP
+    // ==========================================
+
+    // Meminta OTP melalui Email atau WhatsApp
+    Route::post('/profile/password/request-otp', [
+        PasswordChangeOtpController::class,
+        'requestOtp',
+    ]);
+
+    // Memverifikasi OTP
+    Route::post('/profile/password/verify-otp', [
+        PasswordChangeOtpController::class,
+        'verifyOtp',
+    ]);
+
+    // Mengubah password setelah OTP terverifikasi
+    Route::put('/profile/password/confirm', [
+        PasswordChangeOtpController::class,
+        'changePassword',
+    ]);
 });
 
 // ==========================================
@@ -66,6 +89,7 @@ Route::get('/email/verify/{id}/{hash}', function (
     $id,
     $hash
 ) {
+
     if (!URL::hasValidSignature($request)) {
         return response()->json([
             'success' => false,
@@ -94,6 +118,7 @@ Route::get('/email/verify/{id}/{hash}', function (
         'success' => true,
         'message' => 'Email berhasil diverifikasi. Silakan login.',
     ]);
+
 })->name('verification.verify');
 
 // Mengirim ulang email verifikasi
@@ -151,7 +176,7 @@ Route::post('/reset-password', function (Request $request) {
         function ($user, $password) {
 
             $user->forceFill([
-                'password' => \Illuminate\Support\Facades\Hash::make($password),
+                'password' => Hash::make($password),
             ])->save();
 
         }

@@ -158,6 +158,91 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
     );
   }
 
+// ==========================================
+// REQUEST PASSWORD OTP
+// ==========================================
+
+static Future<Map<String, dynamic>> requestPasswordOtp({
+  required String token,
+  required String method,
+}) async {
+  try {
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/profile/password/request-otp'),
+          headers: _headers(token: token),
+          body: jsonEncode({'method': method}),
+        )
+        .timeout(timeoutDuration);
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is Map<String, dynamic>) {
+      return {
+        'success': response.statusCode == 200 &&
+            decoded['success'] == true,
+        'message': decoded['message'] ??
+            'Gagal mengirim kode OTP.',
+      };
+    }
+
+    return {
+      'success': false,
+      'message': 'Format respons server tidak sesuai.',
+    };
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Tidak dapat terhubung ke server: $e',
+    };
+  }
+}
+
+// ==========================================
+// VERIFY PASSWORD OTP
+// ==========================================
+
+static Future<Map<String, dynamic>> verifyPasswordOtp({
+  required String token,
+  required String method,
+  required String otp,
+}) async {
+  try {
+    final response = await http
+        .post(
+          Uri.parse('$baseUrl/profile/password/verify-otp'),
+          headers: _headers(token: token),
+          body: jsonEncode({
+            'method': method,
+            'otp': otp,
+          }),
+        )
+        .timeout(timeoutDuration);
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is Map<String, dynamic>) {
+      return {
+        'success': response.statusCode == 200 &&
+            decoded['success'] == true,
+        'message': decoded['message'] ??
+            'Verifikasi OTP gagal.',
+        'verification_token':
+            decoded['verification_token'],
+      };
+    }
+
+    return {
+      'success': false,
+      'message': 'Format respons server tidak sesuai.',
+    };
+  } catch (e) {
+    return {
+      'success': false,
+      'message': 'Tidak dapat terhubung ke server: $e',
+    };
+  }
+}
   // ==========================================
   // CHANGE PASSWORD
   // ==========================================

@@ -5,6 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/pivot_point.dart';
 import '../services/api_service.dart';
 import 'notifications_screen.dart';
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class PivotPointPage extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -101,26 +107,13 @@ class _PivotPointPageState extends State<PivotPointPage> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Pivot Point adalah indikator analisis teknikal '
-                        'yang digunakan untuk menentukan potensi level '
-                        'support dan resistance berdasarkan harga Open, '
-                        'High, Low, dan Close pada periode sebelumnya.',
+                        'Pivot Point : harga wajar atau harga pasaran, untuk menentukan aksi beli dan jual yang mengacu pada harga pembukaan(open)\n'
+                        'Open < pivot point (buy)\n'
+                        'Open > pivot point (sell) \n',
                         style: TextStyle(
                           fontSize: 11,
                           height: 1.6,
                           color: Color(0xFF475569),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Catatan: Pivot Point merupakan alat bantu analisis, '
-                        'bukan jaminan arah pergerakan harga.',
-                        style: TextStyle(
-                          fontSize: 10,
-                          height: 1.5,
-                          fontStyle: FontStyle.italic,
-                          color: Color(0xFF64748B),
                         ),
                       ),
                     ],
@@ -392,6 +385,378 @@ class _PivotPointPageState extends State<PivotPointPage> {
     });
   }
 
+
+Future<void> _exportPivotPdf() async {
+  try {
+    // Memuat logo perusahaan
+    final logoData = await rootBundle.load(
+      'assets/images/logo_perusahaan.png',
+    );
+
+    final logo = pw.MemoryImage(
+      logoData.buffer.asUint8List(),
+    );
+
+    final pdf = pw.Document();
+
+    // Mengambil nilai OHLC
+    final open = _parseController(_openController);
+    final high = _parseController(_highController);
+    final low = _parseController(_lowController);
+    final close = _parseController(_closeController);
+
+    final range = high - low;
+    final pp = (high + low + close) / 3;
+
+    // Data resistance dan support
+    final resistanceSupport = <Map<String, String>>[
+      {'label': 'R4', 'value': _format(_r4)},
+      {'label': 'R3', 'value': _format(_r3)},
+      {'label': 'R2', 'value': _format(_r2)},
+      {'label': 'R1', 'value': _format(_r1)},
+      {'label': 'S1', 'value': _format(_s1)},
+      {'label': 'S2', 'value': _format(_s2)},
+      {'label': 'S3', 'value': _format(_s3)},
+      {'label': 'S4', 'value': _format(_s4)},
+    ];
+
+    // Data mid level
+    final midLevels = <Map<String, String>>[
+      {'label': 'M7', 'value': _format(_m7)},
+      {'label': 'M6', 'value': _format(_m6)},
+      {'label': 'M5', 'value': _format(_m5)},
+      {'label': 'M4', 'value': _format(_m4)},
+      {'label': 'M3', 'value': _format(_m3)},
+      {'label': 'M2', 'value': _format(_m2)},
+      {'label': 'M1', 'value': _format(_m1)},
+      {'label': 'M0', 'value': _format(_m0)},
+    ];
+
+    // Membuat tabel sederhana untuk level R, S, dan M
+    pw.Widget buildValueTable(
+      String title,
+      List<Map<String, String>> rows,
+    ) {
+      return pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Table(
+            border: pw.TableBorder.all(
+              color: PdfColor.fromHex('#E2E8F0'),
+              width: 0.5,
+            ),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(1),
+              1: const pw.FlexColumnWidth(2),
+            },
+            children: [
+              pw.TableRow(
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#F58220'),
+                ),
+                children: [
+                  'LEVEL',
+                  'HASIL',
+                ].map((text) {
+                  return pw.Padding(
+                    padding: const pw.EdgeInsets.all(7),
+                    child: pw.Text(
+                      text,
+                      style: pw.TextStyle(
+                        color: PdfColors.white,
+                        fontSize: 9,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              ...rows.map((item) {
+                final label = item['label']!;
+                final isResistance = label.startsWith('R');
+                final isSupport = label.startsWith('S');
+
+                final rowColor = isResistance
+                    ? PdfColor.fromHex('#E8F5F0')
+                    : isSupport
+                        ? PdfColor.fromHex('#FFF0EE')
+                        : PdfColor.fromHex('#F8FAFC');
+
+                return pw.TableRow(
+                  decoration: pw.BoxDecoration(color: rowColor),
+                  children: [
+                    item['label']!,
+                    item['value']!,
+                  ].map((text) {
+                    return pw.Padding(
+                      padding: const pw.EdgeInsets.all(7),
+                      child: pw.Text(
+                        text,
+                        style: const pw.TextStyle(fontSize: 9),
+                      ),
+                    );
+                  }).toList(),
+                );
+              }),
+            ],
+          ),
+        ],
+      );
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        build: (context) {
+          return [
+            // HEADER
+            pw.Row(
+              children: [
+                pw.Image(logo, width: 48, height: 48),
+                pw.SizedBox(width: 12),
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'EQUICKLY',
+                      style: pw.TextStyle(
+                        fontSize: 20,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromHex('#F58220'),
+                      ),
+                    ),
+                    pw.Text(
+                      'MARKET INTELLIGENCE',
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            pw.SizedBox(height: 14),
+
+            pw.Center(
+              child: pw.Text(
+                'PIVOT POINT ANALYSIS',
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            ),
+
+            pw.SizedBox(height: 14),
+
+            // PARAMETER OHLC
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex('#FFF3E8'),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'Parameter OHLC - $_currentAsset',
+                    style: pw.TextStyle(
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                  pw.SizedBox(height: 6),
+                  pw.Text('Open: ${_format(open)}'),
+                  pw.Text('High: ${_format(high)}'),
+                  pw.Text('Low: ${_format(low)}'),
+                  pw.Text('Close: ${_format(close)}'),
+                  pw.Text('Range: ${_formatPivot(range)}'),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 14),
+
+            // DETAIL PERHITUNGAN PP SAJA
+            pw.Text(
+              'DETAIL PERHITUNGAN PIVOT POINT',
+              style: pw.TextStyle(
+                fontSize: 12,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColor.fromHex('#D96812'),
+              ),
+            ),
+
+            pw.SizedBox(height: 8),
+
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex('#FFF3E8'),
+                borderRadius: pw.BorderRadius.circular(8),
+                border: pw.Border.all(
+                  color: PdfColor.fromHex('#F58220'),
+                  width: 0.8,
+                ),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'PP (Pivot Point)',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColor.fromHex('#D96812'),
+                    ),
+                  ),
+
+                  pw.SizedBox(height: 10),
+
+                  pw.Text(
+                    'PP = (High + Low + Close) ÷ 3',
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColor.fromHex('#64748B'),
+                    ),
+                  ),
+
+                  pw.SizedBox(height: 8),
+
+                  pw.Text(
+                    '= (${_formatPivot(high)} + ${_formatPivot(low)} + ${_formatPivot(close)}) ÷ 3',
+                    style: const pw.TextStyle(
+                      fontSize: 10,
+                    ),
+                  ),
+
+                  pw.SizedBox(height: 12),
+
+                  pw.Container(
+                    width: double.infinity,
+                    padding: const pw.EdgeInsets.all(11),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColor.fromHex('#FFE5CC'),
+                      borderRadius: pw.BorderRadius.circular(7),
+                    ),
+                    child: pw.Text(
+                      'PP = ${_formatPivot(pp)}',
+                      style: pw.TextStyle(
+                        fontSize: 13,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColor.fromHex('#D96812'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 14),
+
+            // RESISTANCE DAN SUPPORT
+            buildValueTable(
+              'RESISTANCE & SUPPORT LEVEL',
+              resistanceSupport,
+            ),
+
+            pw.SizedBox(height: 14),
+
+            // MID LEVEL
+            buildValueTable(
+              'MID LEVEL',
+              midLevels,
+            ),
+
+            pw.SizedBox(height: 14),
+
+            // SIGNAL
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex(
+                  _signal == 'BUY' ? '#E8F5F0' : '#FFF0EE',
+                ),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'SIGNAL: $_signal',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    _signalLogic,
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                  pw.SizedBox(height: 3),
+                  pw.Text(
+                    _ruleExplanation,
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 16),
+            pw.Divider(),
+
+            pw.Text(
+              'Generated by EQUICKLY | Market Intelligence',
+              style: const pw.TextStyle(fontSize: 8),
+            ),
+          ];
+        },
+      ),
+    );
+
+    // SIMPAN PDF
+    final bytes = await pdf.save();
+    final directory = await getTemporaryDirectory();
+
+    final file = File(
+      '${directory.path}/Pivot_$_currentAsset.pdf',
+    );
+
+    await file.writeAsBytes(bytes);
+
+    // BAGIKAN PDF
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        subject: 'Pivot Point $_currentAsset',
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Gagal membuat PDF: $e'),
+      ),
+    );
+  }
+}
+
+
   Future<void> _switchAsset(String asset) async {
     setState(() {
       _currentAsset = asset;
@@ -404,17 +769,6 @@ class _PivotPointPageState extends State<PivotPointPage> {
 
   void _resetValues() {
     _switchAsset(_currentAsset);
-  }
-
-  void _copyPivot() {
-    Clipboard.setData(ClipboardData(text: 'PP: ${_formatPivot(_pp)}'));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Hasil PP berhasil disalin'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
@@ -475,82 +829,70 @@ class _PivotPointPageState extends State<PivotPointPage> {
     );
   }
 
-  
-PreferredSizeWidget _buildHeader() {
-  return AppBar(
-    backgroundColor: _white,
-    elevation: 0,
-    scrolledUnderElevation: 0,
-    automaticallyImplyLeading: false,
-    leading: IconButton(
-      onPressed: () {
-        Navigator.of(context).pop();
-      },
-      icon: const Icon(
-        Icons.arrow_back,
-        color: Color(0xFF1F2937),
-        size: 24,
+  PreferredSizeWidget _buildHeader() {
+    return AppBar(
+      backgroundColor: _white,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      automaticallyImplyLeading: false,
+      leading: IconButton(
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+        icon: const Icon(Icons.arrow_back, color: Color(0xFF1F2937), size: 24),
       ),
-    ),
-    titleSpacing: 0,
-    centerTitle: true,
-    title: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Image.asset(
-            'assets/images/logo_perusahaan.png',
-            width: 38,
-            height: 38,
-            fit: BoxFit.contain,
+      titleSpacing: 0,
+      centerTitle: true,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset(
+              'assets/images/logo_perusahaan.png',
+              width: 38,
+              height: 38,
+              fit: BoxFit.contain,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'EQUICKLY',
-              style: GoogleFonts.roboto(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFFFF9800),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'EQUICKLY',
+                style: GoogleFonts.roboto(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFFF9800),
+                ),
               ),
-            ),
-            Text(
-              'MARKET INTELLIGENCE',
-              style: GoogleFonts.roboto(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: _textSecondary,
+              Text(
+                'MARKET INTELLIGENCE',
+                style: GoogleFonts.roboto(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _textSecondary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            );
+          },
+          icon: const Icon(Icons.notifications_none, color: _textPrimary),
         ),
       ],
-    ),
-    actions: [
-      IconButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const NotificationsScreen(),
-            ),
-          );
-        },
-        icon: const Icon(
-          Icons.notifications_none,
-          color: _textPrimary,
-        ),
-      ),
-    ],
-  );
-}
-
-
+    );
+  }
 
   Widget _buildAssetBar() {
     return Container(
@@ -999,16 +1341,16 @@ PreferredSizeWidget _buildHeader() {
 
     // Warna berdasarkan jenis Pivot Point
     final detailColor = label.startsWith('R')
-    ? const Color(0xFF00866A)
-    : label.startsWith('S')
-    ? const Color(0xFFD64545)
-    : const Color(0xFFD96812);
+        ? const Color(0xFF00866A)
+        : label.startsWith('S')
+        ? const Color(0xFFD64545)
+        : const Color(0xFFD96812);
 
-final detailBackground = label.startsWith('R')
-    ? const Color(0xFFE8F5F0)
-    : label.startsWith('S')
-    ? const Color(0xFFFFF0EE)
-    : const Color(0xFFFFF3E8);
+    final detailBackground = label.startsWith('R')
+        ? const Color(0xFFE8F5F0)
+        : label.startsWith('S')
+        ? const Color(0xFFFFF0EE)
+        : const Color(0xFFFFF3E8);
 
     showDialog(
       context: context,
@@ -1077,62 +1419,84 @@ final detailBackground = label.startsWith('R')
   }
 
   Widget _buildPivotLadder() {
-    return _card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        _card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.bar_chart_rounded, color: Color(0xFFF58220), size: 21),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Hasil Pivot Point',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.bar_chart_rounded,
+                    color: Color(0xFFF58220),
+                    size: 21,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Hasil Pivot Point',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              _ladderRow(label: 'R4', value: _r4, isResistance: true),
+              _midRow(value: _m7),
+              _ladderRow(label: 'R3', value: _r3, isResistance: true),
+              _midRow(value: _m6),
+              _ladderRow(label: 'R2', value: _r2, isResistance: true),
+              _midRow(value: _m5),
+              _ladderRow(label: 'R1', value: _r1, isResistance: true),
+              _midRow(value: _m4),
+              _pivotRow(),
+              _midRow(value: _m3),
+              _ladderRow(label: 'S1', value: _s1, isResistance: false),
+              _midRow(value: _m2),
+              _ladderRow(label: 'S2', value: _s2, isResistance: false),
+              _midRow(value: _m1),
+              _ladderRow(label: 'S3', value: _s3, isResistance: false),
+              _midRow(value: _m0),
+              _ladderRow(label: 'S4', value: _s4, isResistance: false),
+
+              const SizedBox(height: 12),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: _exportPivotPdf,
+                  icon: const Icon(Icons.save_alt_rounded, size: 18),
+                  label: const Text('Export'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF58220),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          _ladderRow(label: 'R4', value: _r4, isResistance: true),
-          _midRow(value: _m7),
-          _ladderRow(label: 'R3', value: _r3, isResistance: true),
-          _midRow(value: _m6),
-          _ladderRow(label: 'R2', value: _r2, isResistance: true),
-          _midRow(value: _m5),
-          _ladderRow(label: 'R1', value: _r1, isResistance: true),
-          _midRow(value: _m4),
-          _pivotRow(),
-          _midRow(value: _m3),
-          _ladderRow(label: 'S1', value: _s1, isResistance: false),
-          _midRow(value: _m2),
-          _ladderRow(label: 'S2', value: _s2, isResistance: false),
-          _midRow(value: _m1),
-          _ladderRow(label: 'S3', value: _s3, isResistance: false),
-          _midRow(value: _m0),
-          _ladderRow(label: 'S4', value: _s4, isResistance: false),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: _copyPivot,
-              icon: const Icon(Icons.content_copy_rounded, size: 15),
-              label: const Text('Salin Nilai PP'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFD96812),
-                textStyle: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -1141,13 +1505,13 @@ final detailBackground = label.startsWith('R')
     required double value,
     required bool isResistance,
   }) {
-   final rowColor = isResistance
-    ? const Color(0xFFE8F5F0)
-    : const Color(0xFFFFF0EE);
+    final rowColor = isResistance
+        ? const Color(0xFFE8F5F0)
+        : const Color(0xFFFFF0EE);
 
-final valueColor = isResistance
-    ? const Color(0xFF00866A)
-    : const Color(0xFFD64545);
+    final valueColor = isResistance
+        ? const Color(0xFF00866A)
+        : const Color(0xFFD64545);
 
     final formulas = {
       'R1': '(2 × PP) − Low',

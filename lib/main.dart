@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:intl/date_symbol_data_local.dart';
 import 'pages/login.dart';
 
 final GlobalKey<NavigatorState> navigatorKey =
@@ -38,9 +38,13 @@ Future<void> changeAppTheme(ThemeMode mode) async {
   );
 }
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Inisialisasi format tanggal Bahasa Indonesia untuk PDF.
+  await initializeDateFormatting('id_ID', null);
+
+  // Memuat pengaturan tema yang tersimpan.
   await loadSavedTheme();
 
   runApp(const EwfGoldHubApp());

@@ -1,10 +1,14 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:webview_flutter/webview_flutter.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
 import '../models/gold_price.dart';
 import '../services/api_service.dart';
 import 'notifications_screen.dart';
@@ -18,6 +22,7 @@ class HargaEmasPage extends StatefulWidget {
 
 class _HargaEmasPageState extends State<HargaEmasPage> {
   // Palet warna standar EWF Gold Hub
+
   static const Color background = Color(0xFFF8FAFC);
   static const Color primary = Color(0xFFF58220);
   static const Color primaryDark = Color(0xFFD96812);
@@ -109,7 +114,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   int _selectedAsset = 0;
   int _selectedPeriod = 1;
   int _currentPage = 1;
-
+  bool _isNestInfoExpanded = false;
   DateTime _startDate = DateTime(2026, 9, 24);
   DateTime _endDate = DateTime(2026, 10, 1);
 
@@ -337,51 +342,266 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     }
 
     try {
-      String csvCell(String value) {
-        return '"${value.replaceAll('"', '""')}"';
+      // Memuat logo watermark
+      final logoData = await rootBundle.load(
+        'assets/images/logo_perusahaan.png',
+      );
+
+      final logoImage = pw.MemoryImage(logoData.buffer.asUint8List());
+
+      // Membuat dokumen PDF
+      final pdf = pw.Document();
+
+      final assetName = _assets[_selectedAsset];
+
+      String periodName = _periods[_selectedPeriod];
+
+      if (_selectedPeriod == 3) {
+        periodName = '${_formatDate(_startDate)} - ${_formatDate(_endDate)}';
       }
 
-      final rows = <String>[
-        [
-          'Tanggal',
-          'Open',
-          'High',
-          'Low',
-          'Close',
-          'Perubahan (%)',
-        ].map(csvCell).join(','),
-        ...data.map(
-          (item) => [
-            item.date,
-            item.open.toStringAsFixed(2),
-            item.high.toStringAsFixed(2),
-            item.low.toStringAsFixed(2),
-            item.close.toStringAsFixed(2),
-            item.change.toStringAsFixed(2),
-          ].map(csvCell).join(','),
-        ),
-      ];
-
-      final csvContent = '\uFEFF${rows.join('\r\n')}';
       final now = DateTime.now();
+
       final stamp =
           '${now.year}${now.month.toString().padLeft(2, '0')}'
           '${now.day.toString().padLeft(2, '0')}_'
           '${now.hour.toString().padLeft(2, '0')}'
           '${now.minute.toString().padLeft(2, '0')}';
 
-      final directory = await getTemporaryDirectory();
-      final file = File('${directory.path}/historis_harga_emas_$stamp.csv');
+      // Watermark untuk setiap halaman
+      final pageTheme = pw.PageTheme(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        buildBackground: (context) {
+          return pw.Center(
+            child: pw.Opacity(
+              opacity: 0.10,
+              child: pw.Image(
+                logoImage,
+                width: 280,
+                height: 280,
+                fit: pw.BoxFit.contain,
+              ),
+            ),
+          );
+        },
+      );
 
-      await file.writeAsBytes(utf8.encode(csvContent), flush: true);
+      pdf.addPage(
+        pw.MultiPage(
+          pageTheme: pageTheme,
+          footer: (context) {
+            return pw.Container(
+              margin: const pw.EdgeInsets.only(top: 15),
+              child: pw.Column(
+                children: [
+                  pw.Divider(color: PdfColor.fromHex('#E2E8F0')),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'EQUICKLY - MARKET INTELLIGENCE',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          color: PdfColor.fromHex('#64748B'),
+                        ),
+                      ),
+                      pw.Text(
+                        'Halaman ${context.pageNumber} '
+                        'dari ${context.pagesCount}',
+                        style: pw.TextStyle(
+                          fontSize: 8,
+                          color: PdfColor.fromHex('#64748B'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+          build: (context) {
+            return [
+              // HEADER
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  pw.Image(
+                    logoImage,
+                    width: 55,
+                    height: 55,
+                    fit: pw.BoxFit.contain,
+                  ),
+                  pw.SizedBox(width: 12),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'EQUICKLY',
+                        style: pw.TextStyle(
+                          fontSize: 22,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColor.fromHex('#F58220'),
+                        ),
+                      ),
+                      pw.Text(
+                        'MARKET INTELLIGENCE',
+                        style: pw.TextStyle(
+                          fontSize: 9,
+                          color: PdfColor.fromHex('#64748B'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              pw.SizedBox(height: 22),
+
+              // JUDUL
+              pw.Center(
+                child: pw.Text(
+                  'HISTORIS DATA HARGA',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromHex('#1F2937'),
+                  ),
+                ),
+              ),
+
+              pw.SizedBox(height: 5),
+
+              pw.Center(
+                child: pw.Text(
+                  'Data Open, High, Low, Close dan Perubahan',
+                  style: pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColor.fromHex('#64748B'),
+                  ),
+                ),
+              ),
+
+              pw.SizedBox(height: 20),
+
+              // INFORMASI DATA
+              pw.Container(
+                padding: const pw.EdgeInsets.all(12),
+                decoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#FFF3E8'),
+                  borderRadius: pw.BorderRadius.circular(8),
+                ),
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      'Instrumen: $assetName',
+                      style: pw.TextStyle(
+                        fontSize: 11,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'Periode: $periodName',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'Total data: ${data.length} baris',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'Tanggal ekspor: '
+                      '${now.day.toString().padLeft(2, '0')}/'
+                      '${now.month.toString().padLeft(2, '0')}/'
+                      '${now.year} '
+                      '${now.hour.toString().padLeft(2, '0')}:'
+                      '${now.minute.toString().padLeft(2, '0')}',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+
+              pw.SizedBox(height: 18),
+
+              // TABEL OHLC
+              pw.TableHelper.fromTextArray(
+                headers: [
+                  'Tanggal',
+                  'Open',
+                  'High',
+                  'Low',
+                  'Close',
+                  'Perubahan (%)',
+                ],
+                data: data.map((item) {
+                  return [
+                    item.date,
+                    item.open.toStringAsFixed(2),
+                    item.high.toStringAsFixed(2),
+                    item.low.toStringAsFixed(2),
+                    item.close.toStringAsFixed(2),
+                    item.change.toStringAsFixed(2),
+                  ];
+                }).toList(),
+                headerStyle: pw.TextStyle(
+                  fontSize: 8,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                ),
+                cellStyle: const pw.TextStyle(fontSize: 7),
+                headerDecoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#F58220'),
+                ),
+                cellAlignment: pw.Alignment.center,
+                cellPadding: const pw.EdgeInsets.symmetric(
+                  horizontal: 5,
+                  vertical: 6,
+                ),
+                border: pw.TableBorder.all(
+                  color: PdfColor.fromHex('#E2E8F0'),
+                  width: 0.5,
+                ),
+                oddRowDecoration: pw.BoxDecoration(
+                  color: PdfColor.fromHex('#FFF9F4'),
+                ),
+              ),
+
+              pw.SizedBox(height: 15),
+
+              pw.Text(
+                'Dokumen ini dihasilkan secara otomatis '
+                'oleh EQUICKLY Market Intelligence.',
+                style: pw.TextStyle(
+                  fontSize: 8,
+                  color: PdfColor.fromHex('#64748B'),
+                ),
+              ),
+            ];
+          },
+        ),
+      );
+
+      // Simpan PDF ke direktori sementara
+      final directory = await getTemporaryDirectory();
+
+      final file = File('${directory.path}/historis_${assetName}_$stamp.pdf');
+
+      await file.writeAsBytes(await pdf.save(), flush: true);
 
       if (!mounted) return;
 
+      // Bagikan PDF
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path, mimeType: 'text/csv')],
-          subject: 'Export Data OHLC Harga Emas',
-          text: 'Data OHLC berisi ${data.length} baris.',
+          files: [XFile(file.path, mimeType: 'application/pdf')],
+          subject: 'Histori Data Harga $assetName',
+          text:
+              'Laporan histori data $assetName '
+              'periode $periodName.',
         ),
       );
     } catch (e) {
@@ -389,7 +609,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Export gagal: $e'),
+          content: Text('Export PDF gagal: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -586,109 +806,111 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
     );
   }
 
-  Widget _buildSelectedTradingViewChart() {
-    late String title;
-    late String subtitle;
-    late String symbol;
+Widget _buildSelectedTradingViewChart() {
+  late String title;
+  late String subtitle;
+  late String symbol;
 
-    switch (_selectedAsset) {
-      case 1:
-        title = 'HKK';
-        subtitle = 'Hang Seng Index Futures';
-        symbol = 'INDEX:HSI';
-        break;
+  switch (_selectedAsset) {
+    case 1:
+      title = 'HKK';
+      subtitle = 'Hang Seng Index Futures';
+      symbol = 'INDEX:HSI';
+      break;
 
-      case 2:
-        title = 'JPK';
-        subtitle = 'Nikkei 225 Japan';
-        symbol = 'SPREADEX:NIKKEI';
-        break;
+    case 2:
+      title = 'JPK';
+      subtitle = 'Nikkei 225 Japan';
+      symbol = 'SPREADEX:NIKKEI';
+      break;
 
-      default:
-        title = 'XUL';
-        subtitle = 'Loco London Gold';
-        symbol = 'OANDA:XAUUSD';
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFFE5CC)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: primaryLight,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: const Icon(Icons.show_chart, color: primary, size: 23),
-              ),
-              const SizedBox(width: 10),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Text(
-                'TRADINGVIEW',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF2962FF),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          SizedBox(
-            height: 320,
-            child: _TradingViewChart(key: ValueKey(symbol), symbol: symbol),
-          ),
-        ],
-      ),
-    );
+    default:
+      title = 'XUL';
+      subtitle = 'Loco London Gold';
+      symbol = 'OANDA:XAUUSD';
   }
-  // ============================================================
-  // LIVE SETTLEMENT CARD
-  // ============================================================
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFFFE5CC)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x08000000),
+          blurRadius: 10,
+          offset: Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: primaryLight,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(
+                Icons.show_chart,
+                color: primary,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Text(
+              'TRADINGVIEW',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2962FF),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 320,
+          child: _TradingViewChart(
+            key: ValueKey(symbol),
+            symbol: symbol,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
 
   Widget _buildSettlementCard() {
     final commodity = switch (_selectedAsset) {
@@ -697,33 +919,30 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       _ => 'LGD',
     };
 
-    // Ambil data OHLC terbaru yang tersedia dari tabel.
     final latestPrice = _latestPriceForCommodity(commodity);
 
-    // Gunakan fallback yang sama seperti tabel OHLC.
     final openYesterday = latestPrice?.open ?? latestPrice?.price;
     final closeYesterday = latestPrice?.close ?? latestPrice?.price;
 
-    // Rumus sinyal berdasarkan Open dan Close Kemarin.
     final signal = openYesterday == null || closeYesterday == null
         ? 'MENUNGGU DATA'
         : closeYesterday > openYesterday
-        ? 'BUY'
-        : closeYesterday < openYesterday
-        ? 'SELL'
-        : 'NETRAL';
+            ? 'BUY'
+            : closeYesterday < openYesterday
+                ? 'SELL'
+                : 'NETRAL';
 
     final signalColor = signal == 'BUY'
         ? const Color(0xFF00866A)
         : signal == 'SELL'
-        ? const Color(0xFFD64545)
-        : const Color(0xFFB7791F);
+            ? const Color(0xFFD64545)
+            : const Color(0xFFB7791F);
 
     final signalBg = signal == 'BUY'
         ? const Color(0xFFE7F7EF)
         : signal == 'SELL'
-        ? const Color(0xFFFFEEEE)
-        : const Color(0xFFFFF4DF);
+            ? const Color(0xFFFFEEEE)
+            : const Color(0xFFFFF4DF);
 
     Widget priceRow({required String label, required double? value}) {
       return Column(
@@ -768,7 +987,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header NEST
+          // HEADER NEST
           Row(
             children: [
               Container(
@@ -798,9 +1017,112 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             ],
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
 
-          // CK dan OH di kiri, sinyal di kanan
+          // DROPDOWN PENJELASAN NEST
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isNestInfoExpanded = !_isNestInfoExpanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline_rounded,
+                    color: Color(0xFFD97732),
+                    size: 17,
+                  ),
+                  const SizedBox(width: 7),
+                  const Expanded(
+                    child: Text(
+                      'Apa Itu NEST?',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _isNestInfoExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFFD97732),
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ISI PENJELASAN
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: _isNestInfoExpanded
+                ? Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(top: 5, bottom: 12),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFFFF0E2),
+                          Color(0xFFF1F3F5),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(
+                          0xFFF58220,
+                        ).withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Mengenal NEST',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFD96812),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'NEST merupakan konsep Follow the Trend yang mengacu pada harga penutupan (Close).\n\n'
+                          '• Close > Open = BUY\n'
+                          '• Close < Open = SELL',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF475569),
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(
+              height: 1,
+              color: Color(0xFFE9DCCB),
+            ),
+          ),
+
+          // DATA OPEN, CLOSE, DAN SINYAL
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -808,9 +1130,15 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    priceRow(label: 'Open Kemarin', value: openYesterday),
+                    priceRow(
+                      label: 'Open Kemarin',
+                      value: openYesterday,
+                    ),
                     const SizedBox(height: 14),
-                    priceRow(label: 'Close Kemarin', value: closeYesterday),
+                    priceRow(
+                      label: 'Close Kemarin',
+                      value: closeYesterday,
+                    ),
                   ],
                 ),
               ),
@@ -824,7 +1152,9 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
                 decoration: BoxDecoration(
                   color: signalBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: signalColor.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: signalColor.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Text(
                   signal,
@@ -839,43 +1169,14 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
             ],
           ),
 
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Divider(height: 1, color: Color(0xFFE9DCCB)),
-          ),
-
-          // Penjelasan NEST
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.info_outline_rounded,
-                color: Color(0xFFD97732),
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  signal == 'MENUNGGU DATA'
-                      ? ' NEST adalah indikator untuk membantu membaca peluang arah pergerakan harga berdasarkan perbandingan Close Kemarin (CK) dan Open Hari Ini (OH).'
-                      : signal == 'NETRAL'
-                      ? 'Penjelasan NEST: Close Kemarin sama dengan Open Hari Ini, sehingga belum ada perbedaan harga untuk menentukan sinyal.'
-                      : 'Penjelasan NEST: sinyal $signal ditentukan dari perbandingan Close Kemarin dengan Open Hari Ini. Ini merupakan indikator awal, bukan jaminan arah harga.',
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 11,
-                    height: 1.45,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
           if (priceError != null) ...[
             const SizedBox(height: 10),
             Text(
               priceError!,
-              style: const TextStyle(color: Color(0xFFD64545), fontSize: 10),
+              style: const TextStyle(
+                color: Color(0xFFD64545),
+                fontSize: 10,
+              ),
             ),
           ],
 
@@ -891,6 +1192,7 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
       ),
     );
   }
+
 
   // ============================================================
   // FILTER CARD
