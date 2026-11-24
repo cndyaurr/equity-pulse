@@ -1,10 +1,11 @@
+
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import '../services/live_quote_service.dart';
+
 import '../models/gold_price.dart';
-import '../models/pivot_point.dart';
 import '../services/api_service.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -29,18 +30,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String? _errorMessage;
 
   List<GoldPrice> _prices = [];
-  List<PivotPoint> _pivotPoints = [];
   Map<String, dynamic>? _latestNews;
-  late final LiveQuoteService _liveQuoteService;
-
-  DateTime get _today {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
-  }
-
-  String _dateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
 
   String _formatPrice(num? value) {
     if (value == null) return '-';
@@ -57,8 +47,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return '$formattedInteger,$decimal';
   }
 
+  String _formatDate(DateTime? date) {
+    if (date == null) return '-';
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+
   String _formatTime(DateTime? date) {
-    if (date == null) return '--:-- WIB';
+    if (date == null) return 'Waktu tidak tersedia';
 
     final local = date.toLocal();
     final hour = local.hour.toString().padLeft(2, '0');
@@ -72,12 +70,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return DateTime.tryParse(value.toString());
   }
 
-  Future<Map<String, dynamic>?> _getLatestNewsToday() async {
+  // Mengambil berita terbaru dari backend.
+  Future<Map<String, dynamic>?> _getLatestNews() async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiService.baseUrl}/news?per_page=50'),
-        headers: {'Accept': 'application/json'},
-      );
+      final response = await http
+          .get(
+            Uri.parse('${ApiService.baseUrl}/news?per_page=50'),
+            headers: {'Accept': 'application/json'},
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode != 200) return null;
 
@@ -85,45 +86,31 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
       if (decoded is! List) return null;
 
-      final todayNews = decoded
+      final newsList = decoded
           .whereType<Map>()
           .map((item) => Map<String, dynamic>.from(item))
-          .where((item) {
-            final date = _parseNewsDate(item['published_at']);
-            return date != null && _dateKey(date.toLocal()) == _dateKey(_today);
-          })
           .toList();
 
-      todayNews.sort((a, b) {
+      if (newsList.isEmpty) return null;
+
+      newsList.sort((a, b) {
         final dateA = _parseNewsDate(a['published_at']);
         final dateB = _parseNewsDate(b['published_at']);
 
-        if (dateA == null || dateB == null) return 0;
+        if (dateA == null && dateB == null) return 0;
+        if (dateA == null) return 1;
+        if (dateB == null) return -1;
+
         return dateB.compareTo(dateA);
       });
 
-      return todayNews.isEmpty ? null : todayNews.first;
+      return newsList.first;
     } catch (_) {
       return null;
     }
   }
 
-  Future<PivotPoint?> _getPivotSafely(String commodity) async {
-    try {
-      final pivot = await ApiService.getPivotPoint(commodity);
-
-      final pivotDate = DateTime.tryParse(pivot.date.substring(0, 10));
-
-      if (pivotDate == null || _dateKey(pivotDate) != _dateKey(_today)) {
-        return null;
-      }
-
-      return pivot;
-    } catch (_) {
-      return null;
-    }
-  }
-
+  // Memuat data harga harian dan berita terbaru.
   Future<void> _loadNotifications() async {
     if (mounted) {
       setState(() {
@@ -135,23 +122,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final results = await Future.wait([
         ApiService.getGoldPrices(),
-        _getLatestNewsToday(),
-      ]);
-
-      final prices = results[0] as List<GoldPrice>;
-      final news = results[1] as Map<String, dynamic>?;
-
-      final pivotResults = await Future.wait([
-        _getPivotSafely('LGD'),
-        _getPivotSafely('HSI'),
+        _getLatestNews(),
       ]);
 
       if (!mounted) return;
 
       setState(() {
-        _prices = prices;
-        _latestNews = news;
-        _pivotPoints = pivotResults.whereType<PivotPoint>().toList();
+        _prices = results[0] as List<GoldPrice>;
+        _latestNews = results[1] as Map<String, dynamic>?;
         _isLoading = false;
       });
     } catch (e) {
@@ -165,88 +143,82 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  List<String> get _commodities {
-    return ['LGD', 'SNI', 'HSI'];
-  }
-
-  GoldPrice? _findPreviousPrice(String commodity) {
+  // Mengambil satu data harian terbaru untuk setiap komoditas.
+  GoldPrice? _findLatestPrice(String commodity) {
     final matches = _prices.where((price) {
-      final date = price.recordedAt;
-
       return price.commodity.toUpperCase() == commodity.toUpperCase() &&
-          date != null &&
-          date.isBefore(_today);
+          price.recordedAt != null;
     }).toList();
 
     if (matches.isEmpty) return null;
 
-    matches.sort((a, b) => b.recordedAt!.compareTo(a.recordedAt!));
+    matches.sort(
+      (a, b) => b.recordedAt!.compareTo(a.recordedAt!),
+    );
 
     return matches.first;
   }
 
-  List<Map<String, dynamic>> _buildTodayNotifications() {
+  // Membuat notifikasi harga pembukaan dan penutupan.
+  List<Map<String, dynamic>> _buildPriceNotifications() {
     final notifications = <Map<String, dynamic>>[];
 
-    // Harga pembukaan XUL dari Live Quotes.
-    final goldQuote = _liveQuoteService.quotes['XUL10'];
+    for (final commodity in ['LGD', 'SNI', 'HSI']) {
+      final price = _findLatestPrice(commodity);
 
-    if (_liveQuoteService.hasFreshGoldPrice && goldQuote?.open != null) {
-      notifications.add({
-        'category': 'HARGA PEMBUKAAN',
-        'title': 'Harga Pembukaan XUL Hari Ini',
-        'description':
-            'Harga pembukaan tercatat sebesar ${_formatPrice(goldQuote!.open)} USD / t.oz.',
-        'time': _formatTime(goldQuote.sourceTime),
-        'icon': Icons.trending_up_rounded,
-        'color': const Color(0xFF059669),
-        'background': const Color(0xFFE1F3E8),
-        'highlight': true,
-      });
+      if (price == null) continue;
+
+      final unit = commodity == 'LGD' ? 'USD / t.oz.' : 'INDEX';
+      final date = _formatDate(price.recordedAt);
+
+      if (price.open != null) {
+        notifications.add({
+          'category': 'HARGA PEMBUKAAN',
+          'title': 'Harga Pembukaan $commodity',
+          'description':
+              'Harga pembukaan: ${_formatPrice(price.open)} $unit. '
+                  'Tanggal data: $date.',
+          'time': date,
+          'icon': Icons.trending_up_rounded,
+          'color': const Color(0xFF059669),
+          'background': const Color(0xFFE1F3E8),
+          'highlight': true,
+        });
+      }
+
+      if (price.close != null) {
+        notifications.add({
+          'category': 'HARGA PENUTUPAN',
+          'title': 'Harga Penutupan $commodity',
+          'description':
+              'Harga penutupan: ${_formatPrice(price.close)} $unit. '
+                  'Tanggal data: $date.',
+          'time': date,
+          'icon': Icons.trending_down_rounded,
+          'color': const Color(0xFFDC2626),
+          'background': const Color(0xFFFFDEDE),
+          'highlight': false,
+        });
+      }
     }
 
-    // Harga pembukaan HKK dari Live Quotes.
-    final hkkQuote = _liveQuoteService.quotes['HKK50_BBJ'];
+    return notifications;
+  }
 
-    if (_liveQuoteService.hasFreshHkkPrice && hkkQuote?.open != null) {
-      notifications.add({
-        'category': 'HARGA PEMBUKAAN',
-        'title': 'Harga Pembukaan HKK Hari Ini',
-        'description':
-            'Harga pembukaan tercatat sebesar ${_formatPrice(hkkQuote!.open)} INDEX.',
-        'time': _formatTime(hkkQuote.sourceTime),
-        'icon': Icons.trending_up_rounded,
-        'color': const Color(0xFF059669),
-        'background': const Color(0xFFE1F3E8),
-        'highlight': true,
-      });
-    }
+  // Membuat notifikasi berita terbaru.
+  List<Map<String, dynamic>> _buildNewsNotifications() {
+    final notifications = <Map<String, dynamic>>[];
 
-    // Harga pembukaan JPK dari Live Quotes.
-    final jpkQuote = _liveQuoteService.quotes['JPK50_BBJ'];
-
-    if (jpkQuote?.open != null) {
-      notifications.add({
-        'category': 'HARGA PEMBUKAAN',
-        'title': 'Harga Pembukaan JPK Hari Ini',
-        'description':
-            'Harga pembukaan tercatat sebesar ${_formatPrice(jpkQuote!.open)} INDEX.',
-        'time': _formatTime(jpkQuote.sourceTime),
-        'icon': Icons.trending_up_rounded,
-        'color': const Color(0xFF059669),
-        'background': const Color(0xFFE1F3E8),
-        'highlight': true,
-      });
-    }
-    // Berita terbaru hari ini.
     if (_latestNews != null) {
       final news = _latestNews!;
       final publishedAt = _parseNewsDate(news['published_at']);
 
       notifications.add({
         'category': 'BERITA TERBARU',
-        'title': news['title'] ?? 'Berita Pasar Terbaru',
-        'description': 'Sumber: ${news['source'] ?? 'Equityworld Futures'}',
+        'title': news['title']?.toString() ??
+            'Berita Terbaru Equityworld Futures',
+        'description':
+            'Sumber: ${news['source'] ?? 'Equityworld Futures'}',
         'time': _formatTime(publishedAt),
         'icon': Icons.newspaper_rounded,
         'color': const Color(0xFF1976D2),
@@ -255,80 +227,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     }
 
-    // Pivot Point hari ini.
-    for (final pivot in _pivotPoints) {
-      final commodity = pivot.commodity;
-      final unit = pivot.unit;
-
-      notifications.add({
-        'category': 'PIVOT POINT',
-        'title': 'Pivot Point $commodity Hari Ini',
-        'description': 'Pivot: ${_formatPrice(pivot.pivot)} $unit.',
-        'time': '07:30 WIB',
-        'icon': Icons.analytics_outlined,
-        'color': const Color(0xFFD18A00),
-        'background': const Color(0xFFFFEDC7),
-        'highlight': true,
-      });
-    }
-
     return notifications;
-  }
-
-  List<Map<String, dynamic>> _buildYesterdayNotifications() {
-    final notifications = <Map<String, dynamic>>[];
-
-    for (final commodity in _commodities) {
-      final price = _findPreviousPrice(commodity);
-
-      if (price == null || price.close == null) continue;
-
-      notifications.add({
-        'category': 'HARGA PENUTUPAN',
-        'title': 'Harga Penutupan $commodity',
-        'description':
-            'Harga penutupan tercatat sebesar ${_formatPrice(price.close)} ${commodity.toUpperCase() == 'LGD' ? 'USD / t.oz.' : 'INDEX'}.',
-        'time': _formatTime(price.recordedAt),
-        'icon': Icons.trending_down_rounded,
-        'color': const Color(0xFFDC2626),
-        'background': const Color(0xFFFFDEDE),
-        'highlight': false,
-      });
-    }
-
-    return notifications;
-  }
-
-  void _onLiveQuoteChanged() {
-    if (!mounted) return;
-    setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
-
-    _liveQuoteService = LiveQuoteService();
-    _liveQuoteService.addListener(_onLiveQuoteChanged);
-    _liveQuoteService.start();
-
     _loadNotifications();
   }
 
   @override
-  void dispose() {
-    _liveQuoteService.removeListener(_onLiveQuoteChanged);
-    _liveQuoteService.dispose();
-
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final todayNotifications = _buildTodayNotifications();
-    final yesterdayNotifications = _buildYesterdayNotifications();
+    final priceNotifications = _buildPriceNotifications();
+    final newsNotifications = _buildNewsNotifications();
 
-    final newCount = _allRead ? 0 : todayNotifications.length;
+    final newCount = _allRead
+        ? 0
+        : priceNotifications.length + newsNotifications.length;
 
     return Scaffold(
       backgroundColor: background,
@@ -338,7 +253,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           onPressed: () => Navigator.maybePop(context),
-          icon: const Icon(Icons.arrow_back_rounded, color: textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            color: textPrimary,
+          ),
         ),
         title: Text(
           'Notifikasi',
@@ -384,55 +302,76 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [
                   SizedBox(height: 260),
-                  Center(child: CircularProgressIndicator(color: primary)),
+                  Center(
+                    child: CircularProgressIndicator(color: primary),
+                  ),
                 ],
               )
             : _errorMessage != null
-            ? _buildErrorState()
-            : ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
-                children: [
-                  _buildSectionHeader('HARI INI', showMarkRead: true),
-                  const SizedBox(height: 14),
+                ? _buildErrorState()
+                : ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(18, 20, 18, 28),
+                    children: [
+                      _buildSectionHeader(
+                        'HARGA PEMBUKAAN & PENUTUPAN',
+                        showMarkRead: true,
+                      ),
+                      const SizedBox(height: 14),
 
-                  if (todayNotifications.isEmpty)
-                    _buildEmptyMessage('Belum ada notifikasi hari ini.')
-                  else
-                    ...todayNotifications.map(
-                      (item) => _NotificationCard(item: item, isRead: _allRead),
-                    ),
+                      if (priceNotifications.isEmpty)
+                        _buildEmptyMessage(
+                          'Belum ada data harga dari News Maker.',
+                        )
+                      else
+                        ...priceNotifications.map(
+                          (item) => _NotificationCard(
+                            item: item,
+                            isRead: _allRead,
+                          ),
+                        ),
 
-                  const SizedBox(height: 30),
+                      const SizedBox(height: 30),
 
-                  _buildSectionHeader('KEMARIN', showMarkRead: false),
-                  const SizedBox(height: 14),
+                      _buildSectionHeader(
+                        'BERITA TERBARU',
+                        showMarkRead: false,
+                      ),
+                      const SizedBox(height: 14),
 
-                  if (yesterdayNotifications.isEmpty)
-                    _buildEmptyMessage('Belum ada data notifikasi kemarin.')
-                  else
-                    ...yesterdayNotifications.map(
-                      (item) => _NotificationCard(item: item, isRead: true),
-                    ),
+                      if (newsNotifications.isEmpty)
+                        _buildEmptyMessage('Belum ada berita terbaru.')
+                      else
+                        ...newsNotifications.map(
+                          (item) => _NotificationCard(
+                            item: item,
+                            isRead: _allRead,
+                          ),
+                        ),
 
-                  const SizedBox(height: 28),
-                ],
-              ),
+                      const SizedBox(height: 28),
+                    ],
+                  ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title, {required bool showMarkRead}) {
+  Widget _buildSectionHeader(
+    String title, {
+    required bool showMarkRead,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.roboto(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: textSecondary,
-            letterSpacing: 0.5,
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: textSecondary,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
         if (showMarkRead)
@@ -482,13 +421,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const SizedBox(height: 180),
-        const Icon(Icons.wifi_off_rounded, size: 45, color: textSecondary),
+        const Icon(
+          Icons.wifi_off_rounded,
+          size: 45,
+          color: textSecondary,
+        ),
         const SizedBox(height: 14),
         Center(
           child: Text(
             _errorMessage ?? 'Terjadi kesalahan.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.roboto(color: textSecondary, fontSize: 15),
+            style: GoogleFonts.roboto(
+              color: textSecondary,
+              fontSize: 15,
+            ),
           ),
         ),
         const SizedBox(height: 18),
@@ -512,13 +458,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ],
     );
   }
-} // Penutup class _NotificationsScreenState
+}
 
 class _NotificationCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isRead;
 
-  const _NotificationCard({required this.item, required this.isRead});
+  const _NotificationCard({
+    required this.item,
+    required this.isRead,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -557,7 +506,11 @@ class _NotificationCard extends StatelessWidget {
               color: iconBackground,
               shape: BoxShape.circle,
             ),
-            child: Icon(item['icon'] as IconData, color: color, size: 27),
+            child: Icon(
+              item['icon'] as IconData,
+              color: color,
+              size: 27,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(

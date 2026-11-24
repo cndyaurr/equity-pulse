@@ -9,13 +9,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Verified;
 
 use App\Models\User;
-
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoldPriceController;
 use App\Http\Controllers\Api\PivotPointController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\PasswordChangeOtpController;
 use App\Http\Controllers\Api\JisdorController;
+use App\Http\Controllers\Api\ForgotPasswordOtpController;
 // ==========================================
 // GOLD PRICE
 // ==========================================
@@ -47,7 +48,9 @@ Route::post('/login', [AuthController::class, 'login']);
 // ==========================================
 
 Route::middleware('auth:sanctum')->group(function () {
-
+// FCM DEVICE TOKEN
+Route::post('/device-token', [DeviceTokenController::class, 'store']);
+Route::delete('/device-token', [DeviceTokenController::class, 'destroy']);
     // Mengambil informasi profil
     Route::get('/profile', [AuthController::class, 'profile']);
 
@@ -126,6 +129,25 @@ Route::post(
     '/email/resend-verification',
     [AuthController::class, 'resendVerificationEmail']
 )->middleware('throttle:6,1');
+
+// ==========================================
+// FORGOT PASSWORD OTP
+// ==========================================
+
+Route::post('/forgot-password/request-otp', [
+    ForgotPasswordOtpController::class,
+    'requestOtp',
+])->middleware('throttle:5,1');
+
+Route::post('/forgot-password/verify-otp', [
+    ForgotPasswordOtpController::class,
+    'verifyOtp',
+])->middleware('throttle:10,1');
+
+Route::post('/forgot-password/reset', [
+    ForgotPasswordOtpController::class,
+    'resetPassword',
+])->middleware('throttle:5,1');
 
 // ==========================================
 // FORGOT PASSWORD

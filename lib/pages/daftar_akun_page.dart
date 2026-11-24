@@ -1,8 +1,10 @@
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'login.dart';
+import '../services/api_service.dart';
 
 class DaftarAkunPage extends StatefulWidget {
   const DaftarAkunPage({super.key});
@@ -15,6 +17,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   final namaController = TextEditingController();
   final unitKantorController = TextEditingController();
   final emailController = TextEditingController();
+  final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final konfirmasiController = TextEditingController();
 
@@ -42,8 +45,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   @override
   void dispose() {
     namaController.dispose();
-    emailController.dispose();
     unitKantorController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
     passwordController.dispose();
     konfirmasiController.dispose();
     super.dispose();
@@ -54,7 +58,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.roboto(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
   }
 
   TextStyle mono({
@@ -62,7 +70,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     FontWeight weight = FontWeight.w400,
     Color color = onSurface,
   }) {
-    return GoogleFonts.roboto(fontSize: size, fontWeight: weight, color: color);
+    return GoogleFonts.roboto(
+      fontSize: size,
+      fontWeight: weight,
+      color: color,
+    );
   }
 
   InputDecoration inputDecoration({
@@ -72,8 +84,16 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: jakarta(size: 12, weight: FontWeight.w400, color: secondary),
-      prefixIcon: Icon(icon, color: secondary, size: 20),
+      hintStyle: jakarta(
+        size: 12,
+        weight: FontWeight.w400,
+        color: secondary,
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: secondary,
+        size: 20,
+      ),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: surfaceContainerLow,
@@ -87,14 +107,26 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: primary, width: 1.2),
+        borderSide: const BorderSide(
+          color: primary,
+          width: 1.2,
+        ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
     );
   }
 
   Widget fieldLabel(String text) {
-    return Text(text, style: jakarta(size: 11, weight: FontWeight.w500));
+    return Text(
+      text,
+      style: jakarta(
+        size: 11,
+        weight: FontWeight.w500,
+      ),
+    );
   }
 
   Widget buildTextField({
@@ -152,36 +184,62 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
     final nama = namaController.text.trim();
     final email = emailController.text.trim();
+    final phone = phoneController.text.trim();
     final unitKantor = unitKantorController.text.trim();
     final password = passwordController.text;
     final konfirmasi = konfirmasiController.text;
 
+    // Validasi data wajib
     if (nama.isEmpty ||
         email.isEmpty ||
+        phone.isEmpty ||
         unitKantor.isEmpty ||
         password.isEmpty ||
         konfirmasi.isEmpty) {
-      showStatus('Harap lengkapi seluruh data pendaftaran.', error: true);
+      showStatus(
+        'Harap lengkapi seluruh data pendaftaran.',
+        error: true,
+      );
       return;
     }
 
+    // Validasi email
     final emailValid = RegExp(
       r'^[A-Z0-9._%+-]+@gmail\.com$',
       caseSensitive: false,
     ).hasMatch(email);
 
     if (!emailValid) {
-      showStatus('Gunakan email dengan domain @gmail.com', error: true);
+      showStatus(
+        'Gunakan email dengan domain @gmail.com',
+        error: true,
+      );
       return;
     }
 
+    // Validasi nomor HP Indonesia
+    if (!RegExp(r'^08[0-9]{8,11}$').hasMatch(phone)) {
+      showStatus(
+        'Nomor HP harus diawali 08 dan terdiri dari 10–13 digit.',
+        error: true,
+      );
+      return;
+    }
+
+    // Validasi password
     if (password.length < 8) {
-      showStatus('Kata sandi minimal terdiri dari 8 karakter.', error: true);
+      showStatus(
+        'Kata sandi minimal terdiri dari 8 karakter.',
+        error: true,
+      );
       return;
     }
 
     if (password != konfirmasi) {
-      showStatus('Konfirmasi kata sandi tidak sesuai.', error: true);
+      showStatus(
+        'Konfirmasi kata sandi tidak sesuai.',
+        error: true,
+      );
       return;
     }
 
@@ -199,8 +257,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     });
 
     try {
-      // Alamat API untuk emulator Android.
-     const baseUrl = 'http://10.0.2.2:8000/api';
+      final baseUrl = ApiService.baseUrl;
 
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
@@ -209,29 +266,33 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'name': namaController.text.trim(),
-          'email': emailController.text.trim(),
-          'work_location': unitKantorController.text.trim(),
-          'password': passwordController.text,
-          'password_confirmation': konfirmasiController.text,
+          'name': nama,
+          'email': email,
+          'phone': phone,
+          'work_location': unitKantor,
+          'password': password,
+          'password_confirmation': konfirmasi,
         }),
-      );
+      ).timeout(const Duration(seconds: 20));
 
       debugPrint('URL REGISTER: ${response.request?.url}');
       debugPrint('STATUS REGISTER: ${response.statusCode}');
       debugPrint('BODY REGISTER: ${response.body}');
 
-      final Map<String, dynamic> data = jsonDecode(response.body);
+      final Map<String, dynamic> data =
+          jsonDecode(response.body) as Map<String, dynamic>;
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
+      if (response.statusCode == 201 ||
+          response.statusCode == 200) {
         showStatus(
           data['message'] ??
               'Pendaftaran berhasil. Silakan cek email untuk verifikasi akun.',
         );
 
-        // Kosongkan form setelah pendaftaran berhasil.
+        // Kosongkan form setelah berhasil
         namaController.clear();
         emailController.clear();
+        phoneController.clear();
         unitKantorController.clear();
         passwordController.clear();
         konfirmasiController.clear();
@@ -241,13 +302,16 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         });
       } else {
         String message =
-            data['message'] ?? 'Pendaftaran gagal. Silakan coba kembali.';
+            data['message'] ??
+                'Pendaftaran gagal. Silakan coba kembali.';
 
-        // Tampilkan detail validasi dari Laravel jika tersedia.
+        // Ambil pesan validasi dari Laravel
         if (data['errors'] is Map) {
           final errors = data['errors'] as Map;
+
           if (errors.isNotEmpty) {
             final firstError = errors.values.first;
+
             if (firstError is List && firstError.isNotEmpty) {
               message = firstError.first.toString();
             }
@@ -260,7 +324,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
       debugPrint('ERROR DAFTAR AKUN: $e');
       debugPrint('DETAIL ERROR: $stackTrace');
 
-      showStatus('Terjadi error: $e', error: true);
+      showStatus(
+        'Terjadi kesalahan saat menghubungi server: $e',
+        error: true,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -276,7 +343,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
 
     return Theme(
       data: baseTheme.copyWith(
-        textTheme: GoogleFonts.robotoTextTheme(baseTheme.textTheme),
+        textTheme: GoogleFonts.robotoTextTheme(
+          baseTheme.textTheme,
+        ),
       ),
       child: Scaffold(
         backgroundColor: surface,
@@ -290,7 +359,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
             ),
 
             // Lapisan putih transparan
-            Container(color: Colors.white.withValues(alpha: 0.40)),
+            Container(
+              color: Colors.white.withValues(alpha: 0.40),
+            ),
 
             // Konten pendaftaran
             SafeArea(
@@ -301,7 +372,9 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                     vertical: 12,
                   ),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
+                    constraints: const BoxConstraints(
+                      maxWidth: 520,
+                    ),
                     child: Column(
                       children: [
                         _buildBranding(),
@@ -327,7 +400,6 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
     return Column(
       children: [
         const SizedBox(height: 4),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -339,7 +411,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                 'assets/images/logo_perusahaan.png',
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.business, color: primary, size: 28);
+                  return const Icon(
+                    Icons.business,
+                    color: primary,
+                    size: 28,
+                  );
                 },
               ),
             ),
@@ -402,10 +478,15 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
             height: 6,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [primaryContainer, primary, primaryFixed],
+                colors: [
+                  primaryContainer,
+                  primary,
+                  primaryFixed,
+                ],
               ),
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -416,7 +497,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                     Expanded(
                       child: Text(
                         'Daftar Akun',
-                        style: jakarta(size: 20, weight: FontWeight.w700),
+                        style: jakarta(
+                          size: 20,
+                          weight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     Container(
@@ -430,16 +514,25 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                       ),
                       child: Text(
                         'v4.8.2',
-                        style: mono(size: 11, color: onSurfaceVariant),
+                        style: mono(
+                          size: 11,
+                          color: onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 2),
+
                 Text(
                   'Registrasi Internal PT Equityworld Futures',
-                  style: jakarta(size: 13, color: onSurfaceVariant),
+                  style: jakarta(
+                    size: 13,
+                    color: onSurfaceVariant,
+                  ),
                 ),
+
                 const SizedBox(height: 20),
 
                 buildTextField(
@@ -448,6 +541,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                   icon: Icons.person_outline,
                   controller: namaController,
                 ),
+
                 const SizedBox(height: 16),
 
                 buildTextField(
@@ -457,7 +551,16 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
                 ),
+
                 const SizedBox(height: 16),
+
+                buildTextField(
+                  label: 'Nomor HP',
+                  hint: 'Contoh: 081234567890',
+                  icon: Icons.phone_android_outlined,
+                  controller: phoneController,
+                  keyboardType: TextInputType.phone,
+                ),
 
                 const SizedBox(height: 16),
 
@@ -483,6 +586,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                     });
                   },
                 ),
+
                 const SizedBox(height: 16),
 
                 buildTextField(
@@ -498,6 +602,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                     });
                   },
                 ),
+
                 const SizedBox(height: 12),
 
                 Row(
@@ -524,12 +629,16 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                           'Saya menyatakan bahwa data yang diisi '
                           'benar dan bersedia mengikuti proses '
                           'verifikasi akun.',
-                          style: jakarta(size: 12, color: onSurface),
+                          style: jakarta(
+                            size: 12,
+                            color: onSurface,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
 
                 SizedBox(
@@ -538,7 +647,11 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [primaryContainer, primary, primaryContainer],
+                        colors: [
+                          primaryContainer,
+                          primary,
+                          primaryContainer,
+                        ],
                       ),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -559,7 +672,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(
                                   Colors.white,
                                 ),
                               ),
@@ -567,7 +681,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                           : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.person_add_alt_1, size: 20),
+                                const Icon(
+                                  Icons.person_add_alt_1,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Ajukan Pendaftaran',
@@ -624,6 +741,7 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                 ],
 
                 const SizedBox(height: 20),
+
                 Center(
                   child: Wrap(
                     alignment: WrapAlignment.center,
@@ -631,7 +749,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                     children: [
                       Text(
                         'Sudah memiliki akun? ',
-                        style: jakarta(size: 12, color: secondary),
+                        style: jakarta(
+                          size: 12,
+                          color: secondary,
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
@@ -645,7 +766,8 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(0, 0),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          tapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
                           'Masuk di sini',
@@ -679,7 +801,10 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: jakarta(size: 10, color: onSurfaceVariant),
+                      style: jakarta(
+                        size: 10,
+                        color: onSurfaceVariant,
+                      ),
                       children: const [
                         TextSpan(
                           text: 'Verifikasi Akses Internal',
@@ -726,10 +851,15 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               'assets/images/logo_perusahaan.png',
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.business, color: primary, size: 28);
+                return const Icon(
+                  Icons.business,
+                  color: primary,
+                  size: 28,
+                );
               },
             ),
           ),
+
           const SizedBox(width: 8),
 
           Expanded(
@@ -738,11 +868,17 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
               children: [
                 Text(
                   'IT Desk Support',
-                  style: jakarta(size: 10, weight: FontWeight.w600),
+                  style: jakarta(
+                    size: 10,
+                    weight: FontWeight.w600,
+                  ),
                 ),
                 Text(
                   'Ext. 4410 (Equity Tower LT. 22)',
-                  style: jakarta(size: 11, color: secondary),
+                  style: jakarta(
+                    size: 11,
+                    color: secondary,
+                  ),
                 ),
               ],
             ),
@@ -758,14 +894,20 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
             style: TextButton.styleFrom(
               backgroundColor: surfaceContainer,
               foregroundColor: primary,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
             child: Text(
               'Bantuan',
-              style: jakarta(size: 10, weight: FontWeight.w600),
+              style: jakarta(
+                size: 10,
+                weight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -779,14 +921,21 @@ class _DaftarAkunPageState extends State<DaftarAkunPage> {
         Text(
           'Terdaftar & Diawasi oleh Bappebti • Anggota ICDX & ICH',
           textAlign: TextAlign.center,
-          style: jakarta(size: 10, weight: FontWeight.w600, color: onSurface),
+          style: jakarta(
+            size: 10,
+            weight: FontWeight.w600,
+            color: onSurface,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           '© 2025 PT Equityworld Futures. '
           'Hak Cipta Dilindungi Undang-Undang.',
           textAlign: TextAlign.center,
-          style: jakarta(size: 10, color: secondary),
+          style: jakarta(
+            size: 10,
+            color: secondary,
+          ),
         ),
       ],
     );

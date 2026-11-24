@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860950936560",
+    "project_id": "equickly-bfe74",
+    "storage_bucket": "equickly-bfe74.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860950936560:android:f51dff6083e5fff934bb35",
+        "android_client_info": {
+          "package_name": "com.example.ewf_gold_hub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2whrdbuERTbhBDVQ2Ta5ZpXazFk22IoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

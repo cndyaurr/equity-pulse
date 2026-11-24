@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,14 +34,19 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   GoldPrice? hsiPrice;
   GoldPrice? sniPrice;
 
-  bool isLoadingPrices = false;
-  String? priceError;
+bool isLoadingPrices = false;
+String? priceError;
+
+// Timer untuk memperbarui harga secara otomatis setiap 1 menit.
+Timer? _priceRefreshTimer;
 
   Future<void> loadGoldPrices() async {
-    setState(() {
-      isLoadingPrices = true;
-      priceError = null;
-    });
+  if (!mounted || isLoadingPrices) return;
+
+  setState(() {
+    isLoadingPrices = true;
+    priceError = null;
+  });
 
     try {
       final prices = await ApiService.getGoldPrices();
@@ -103,10 +108,37 @@ class _HargaEmasPageState extends State<HargaEmasPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    loadGoldPrices();
-  }
+void initState() {
+  super.initState();
+
+  // Ambil data saat halaman pertama kali dibuka.
+  loadGoldPrices();
+
+  // Periksa data terbaru setiap 1 menit.
+  _priceRefreshTimer = Timer.periodic(
+    const Duration(minutes: 1),
+    (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      // Hindari permintaan API yang bertumpuk.
+      if (!isLoadingPrices) {
+        loadGoldPrices();
+      }
+    },
+  );
+}
+
+@override
+void dispose() {
+  // Hentikan timer ketika halaman ditutup.
+  _priceRefreshTimer?.cancel();
+  _priceRefreshTimer = null;
+
+  super.dispose();
+}
   // ============================================================
   // STATE
   // ============================================================

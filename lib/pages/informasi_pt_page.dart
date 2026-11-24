@@ -19,48 +19,82 @@ class _InformasiPtPageState extends State<InformasiPtPage> {
   final Color textSecondary = const Color(0xFF4F4535);
   final Color tertiary = const Color(0xFF006947);
 
-  Future<void> _callNumber(String number) async {
-  final uri = Uri(scheme: 'tel', path: number);
 
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(
+Future<void> _callNumber(String number) async {
+  final uri = Uri(
+    scheme: 'tel',
+    path: number,
+  );
+
+  try {
+    final launched = await launchUrl(
       uri,
       mode: LaunchMode.externalApplication,
     );
-  } else {
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak dapat membuka aplikasi telepon.'),
+          backgroundColor: Color(0xFFF58220),
+        ),
+      );
+    }
+  } catch (e) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Aplikasi telepon tidak tersedia.'),
+        content: Text('Tidak dapat membuka aplikasi telepon.'),
         backgroundColor: Color(0xFFF58220),
       ),
     );
   }
 }
 
-  Future<void> _sendEmail(String email) async {
+Future<void> _sendEmail(String email) async {
   final uri = Uri(
     scheme: 'mailto',
     path: email,
+    queryParameters: {
+      'subject': 'Permintaan Informasi Layanan PT Equityworld Futures',
+      'body': 'Yth. Customer Care PT Equityworld Futures,\n\n'
+          'Saya ingin memperoleh informasi lebih lanjut mengenai layanan '
+          'PT Equityworld Futures.\n\n'
+          'Berikut pesan saya:\n\n'
+          '[Tuliskan pesan Anda di sini]\n\n'
+          'Terima kasih.\n\n'
+          'Hormat saya,',
+    },
   );
 
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(
+  try {
+    final launched = await launchUrl(
       uri,
       mode: LaunchMode.externalApplication,
     );
-  } else {
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak dapat membuka aplikasi email.'),
+          backgroundColor: Color(0xFFF58220),
+        ),
+      );
+    }
+  } catch (e) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Aplikasi email tidak tersedia.'),
+        content: Text('Tidak dapat membuka aplikasi email.'),
         backgroundColor: Color(0xFFF58220),
       ),
     );
   }
 }
+
+
 
   void _showLegalitas(String regulator) {
     String title = '';

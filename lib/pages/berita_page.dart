@@ -1,12 +1,10 @@
 import 'dart:convert';
-import 'profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'notifications_screen.dart';
 import 'berita_detail_page.dart';
-import '../widgets/profile_avatar.dart';
 import 'package:marquee/marquee.dart';
 
 class BeritaPage extends StatefulWidget {
@@ -114,7 +112,8 @@ void initState() {
   Future<void> _loadNews() async {
   try {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/news'),
+      Uri.parse('http://127.0.0.1:8000/api/news'),
+      
     );
 
     if (!mounted) return;
@@ -258,42 +257,25 @@ void initState() {
           ),
 
           actions: [
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationsScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.notifications_none,
-                color: Color(0xFF1F2937),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(30),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
-                    ),
-                  );
-                },
-                child: const ProfileAvatar(),
-              ),
-            ),
-          ],
+  IconButton(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const NotificationsScreen(),
+        ),
+      );
+    },
+    icon: const Icon(
+      Icons.notifications_none,
+      color: Color(0xFF1F2937),
+    ),
+  ),
+],
         ),
 
         // ======================================================
         // BODY
-        // ======================================================
         body: SafeArea(
           top: false,
           bottom: false,
@@ -666,10 +648,10 @@ Widget _buildNewsActions(Map<String, dynamic> item) {
             children: [
               Flexible(
                 child: Text(
-                  'Baca Selengkapnya',
+                  'Selengkapnya',
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
