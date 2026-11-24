@@ -22,7 +22,7 @@ class PasswordChangeOtpController extends Controller
         ]);
 
         $user = $request->user();
-      $method = $request->input('method');
+        $method = $request->input('method');
 
         // Rate limit permintaan OTP per user dan channel.
         $limitKey = 'password-otp-request:' . $user->id . ':' . $method;
@@ -48,14 +48,17 @@ class PasswordChangeOtpController extends Controller
 
         $otp = (string) random_int(100000, 999999);
 
-        // Menghapus OTP sebelumnya untuk user dan channel yang sama.
+        // Hapus OTP profil sebelumnya untuk user dan channel yang sama.
         PasswordChangeOtp::where('user_id', $user->id)
+            ->where('purpose', 'profile')
             ->where('method', $method)
             ->delete();
 
+        // Simpan OTP baru.
         $otpRecord = PasswordChangeOtp::create([
             'user_id' => $user->id,
             'method' => $method,
+            'purpose' => 'profile',
             'otp_hash' => Hash::make($otp),
             'expires_at' => now()->addMinutes(5),
             'attempts' => 0,
@@ -72,6 +75,8 @@ class PasswordChangeOtpController extends Controller
             );
         } catch (\Throwable $e) {
             $otpRecord->delete();
+
+            report($e);
 
             return response()->json([
                 'message' => 'Gagal mengirim OTP email. Silakan coba lagi.',
@@ -96,9 +101,11 @@ class PasswordChangeOtpController extends Controller
         ]);
 
         $user = $request->user();
-     $method = $request->input('method');
+        $method = $request->input('method');
 
+        // Ambil OTP khusus untuk perubahan password profil.
         $otpRecord = PasswordChangeOtp::where('user_id', $user->id)
+            ->where('purpose', 'profile')
             ->where('method', $method)
             ->first();
 
@@ -130,18 +137,16 @@ class PasswordChangeOtpController extends Controller
             ], 429);
         }
 
-       if (!Hash::check(
-    $request->input('otp'),
-    $otpRecord->otp_hash
-)) {
-    $otpRecord->increment('attempts');
+        // Periksa OTP yang dimasukkan pengguna.
+        if (!Hash::check($request->input('otp'), $otpRecord->otp_hash)) {
+            $otpRecord->increment('attempts');
 
-    return response()->json([
-        'message' => 'OTP yang Anda masukkan salah.',
-    ], 422);
-}
+            return response()->json([
+                'message' => 'OTP yang Anda masukkan salah.',
+            ], 422);
+        }
 
-        // Token acak yang hanya dikirim ke client saat verifikasi berhasil.
+        // Buat token acak setelah OTP berhasil diverifikasi.
         $verificationToken = Str::random(64);
 
         $otpRecord->update([
@@ -172,9 +177,12 @@ class PasswordChangeOtpController extends Controller
         ]);
 
         $user = $request->user();
+        $method = $request->input('method');
 
+        // Ambil token verifikasi khusus perubahan password profil.
         $otpRecord = PasswordChangeOtp::where('user_id', $user->id)
-          ->where('method', $request->input('method'))
+            ->where('purpose', 'profile')
+            ->where('method', $method)
             ->whereNotNull('verified_at')
             ->first();
 
@@ -195,24 +203,23 @@ class PasswordChangeOtpController extends Controller
             ], 422);
         }
 
-       $verificationToken = $request->input('verification_token');
-$storedHash = $otpRecord->verification_token_hash;
+        $verificationToken = $request->input('verification_token');
+        $storedHash = $otpRecord->verification_token_hash;
 
-if (
-    empty($storedHash) ||
-    empty($verificationToken) ||
-    !Hash::check($verificationToken, $storedHash)
-) {
-    return response()->json([
-        'message' => 'Token verifikasi tidak valid.',
-    ], 422);
-}
+        if (
+            empty($storedHash) ||
+            !Hash::check($verificationToken, $storedHash)
+        ) {
+            return response()->json([
+                'message' => 'Token verifikasi tidak valid.',
+            ], 422);
+        }
 
-        // Memperbarui password akun.
+        // Perbarui password akun.
         $user->password = Hash::make($request->password);
         $user->save();
 
-        // Menghapus OTP dan token setelah berhasil digunakan.
+        // Hapus OTP dan token setelah berhasil digunakan.
         $otpRecord->delete();
 
         return response()->json([

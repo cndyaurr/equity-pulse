@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/profile_avatar.dart';
 import 'login.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -26,8 +28,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const Color textSecondary = Color(0xFF737373);
 
   late final TextEditingController name;
-  late final TextEditingController email;
-  late final TextEditingController unit;
+late final TextEditingController phone;
+late final TextEditingController email;
+late final TextEditingController unit;
   bool isLoadingProfile = true;
   bool isSavingProfile = false;
 
@@ -69,10 +72,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (!mounted) return false;
 
         setState(() {
-          name.text = updatedUser['name']?.toString() ?? '';
-          email.text = updatedUser['email']?.toString() ?? '';
-          unit.text = updatedUser['work_location']?.toString() ?? '';
-        });
+  name.text = updatedUser['name']?.toString() ?? '';
+  phone.text = updatedUser['phone']?.toString() ?? '';
+  email.text = updatedUser['email']?.toString() ?? '';
+  unit.text = updatedUser['work_location']?.toString() ?? '';
+});
 
         return true;
       }
@@ -106,7 +110,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = widget.user;
 
     name = TextEditingController(text: user?['name']?.toString() ?? '');
-
+phone = TextEditingController(
+  text: user?['phone']?.toString() ?? '',
+);
     email = TextEditingController(text: user?['email']?.toString() ?? '');
 
     unit = TextEditingController(
@@ -148,11 +154,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (!mounted) return;
 
-        setState(() {
-          name.text = user['name']?.toString() ?? '';
-          email.text = user['email']?.toString() ?? '';
-          unit.text = user['work_location']?.toString() ?? '';
-        });
+      setState(() {
+  name.text = user['name']?.toString() ?? '';
+  phone.text = user['phone']?.toString() ?? '';
+  email.text = user['email']?.toString() ?? '';
+  unit.text = user['work_location']?.toString() ?? '';
+});
       } else if (response.statusCode == 401) {
         throw Exception('Sesi login kedaluwarsa. Silakan login kembali.');
       } else {
@@ -177,13 +184,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    name.dispose();
-    email.dispose();
-    unit.dispose();
-    super.dispose();
-  }
+@override
+void dispose() {
+  name.dispose();
+  phone.dispose();
+  email.dispose();
+  unit.dispose();
+  super.dispose();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +234,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Nama lengkap',
                         value: name.text,
                       ),
+                      _infoRow(
+  icon: Icons.phone_android_outlined,
+  title: 'Nomor telepon',
+  value: phone.text.isEmpty ? '-' : phone.text,
+),
                       _infoRow(
                         icon: Icons.mail_outline_rounded,
                         title: 'Email perusahaan',
@@ -279,19 +292,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: 'Pengaturan',
                     children: [
                       _actionRow(
-                        icon: Icons.support_agent_rounded,
-                        title: 'Hubungi dukungan',
-                        subtitle: 'Bantuan untuk akun EQUICKLY',
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Fitur dukungan belum dihubungkan.',
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+      
+  icon: Icons.support_agent_rounded,
+  title: 'Hubungi dukungan',
+  subtitle: 'Email atau telepon tim dukungan EQUICKLY',
+  onTap: _showSupportOptions,
+),
                     ],
                   ),
 
@@ -300,8 +306,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   OutlinedButton.icon(
                     onPressed: () async {
                       final prefs = await SharedPreferences.getInstance();
+
+                      final authToken = prefs.getString('auth_token');
+
+                      // Hapus FCM token dari Laravel sebelum logout.
+                      if (authToken != null && authToken.isNotEmpty) {
+                        try {
+                          final fcmToken =
+                              await NotificationService.getDeviceToken();
+
+                          if (fcmToken != null && fcmToken.isNotEmpty) {
+                            await ApiService.removeDeviceToken(
+                              authToken: authToken,
+                              fcmToken: fcmToken,
+                            );
+                          }
+                        } catch (e) {
+                          debugPrint('Gagal menghapus FCM token: $e');
+                        }
+                      }
+
+                      // Tetap lanjutkan logout meskipun penghapusan FCM gagal.
                       await prefs.remove('auth_token');
-                      await prefs.remove('user_data');
+await prefs.remove('user_data');
+await prefs.remove('remember_session');
 
                       if (!context.mounted) return;
 
@@ -475,6 +503,116 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const Icon(Icons.chevron_right_rounded, color: textSecondary),
   );
 
+
+Future<void> _showSupportOptions() async {
+  await showModalBottomSheet<void>(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(20),
+      ),
+    ),
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 16,
+            horizontal: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Hubungi dukungan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Pilih cara menghubungi tim dukungan EQUICKLY.',
+                style: TextStyle(color: textSecondary),
+              ),
+              const SizedBox(height: 16),
+
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFE5CC),
+                  child: Icon(Icons.email_outlined, color: orange),
+                ),
+                title: const Text('Email'),
+                subtitle: const Text(
+                  'itsupport.equicklye@gmail.com',
+                ),
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+
+                  final uri = Uri(
+                    scheme: 'mailto',
+                    path: 'itsupport.equicklye@gmail.com',
+                    queryParameters: {
+                      'subject': 'Permintaan Bantuan EQUICKLY',
+                    },
+                  );
+
+                  final opened = await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
+
+                  if (!opened && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tidak dapat membuka aplikasi email.'),
+                      ),
+                    );
+                  }
+                },
+              ),
+
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFE5CC),
+                  child: Icon(Icons.phone_outlined, color: orange),
+                ),
+                title: const Text('Telepon'),
+                subtitle: const Text('+62 857-4996-3720'),
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+
+                  final uri = Uri(
+                    scheme: 'tel',
+                    path: '+6285749963720',
+                  );
+
+                  final opened = await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
+
+                  if (!opened && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tidak dapat membuka aplikasi telepon.'),
+                      ),
+                    );
+                  }
+                },
+              ),
+
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+
   Future<void> _showEditProfileDialog() async {
     final nameController = TextEditingController(text: name.text);
     final unitController = TextEditingController(text: unit.text);
@@ -596,173 +734,430 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Future<void> _showPasswordDialog() async {
-    final currentPassword = TextEditingController();
-    final newPassword = TextEditingController();
-    final confirmPassword = TextEditingController();
-    final formKey = GlobalKey<FormState>();
 
-    bool isChangingPassword = false;
+Future<void> _showPasswordDialog() async {
+  final otpController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
-    try {
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, setDialogState) {
-              return AlertDialog(
-                title: const Text('Perbarui kata sandi'),
-                content: Form(
-                  key: formKey,
-                  child: SingleChildScrollView(
+  final messenger = ScaffoldMessenger.of(context);
+
+  final otpFormKey = GlobalKey<FormState>();
+  final passwordFormKey = GlobalKey<FormState>();
+  int step = 0;
+  bool isLoading = false;
+  String verificationToken = '';
+
+  String maskEmail(String value) {
+    final parts = value.split('@');
+    if (parts.length != 2) return value;
+
+    final username = parts[0];
+    final visible = username.length <= 2
+        ? username[0]
+        : username.substring(0, 2);
+
+    return '$visible${'*' * (username.length - visible.length)}@${parts[1]}';
+  }
+
+  try {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> sendOtp() async {
+              if (email.text.trim().isEmpty) {
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Email akun tidak ditemukan.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              setDialogState(() => isLoading = true);
+
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                final token = prefs.getString('auth_token');
+
+                if (token == null || token.isEmpty) {
+                  throw Exception('Sesi login tidak ditemukan.');
+                }
+
+                final result = await ApiService.requestPasswordOtp(
+                  token: token,
+                  method: 'email',
+                );
+
+                if (!dialogContext.mounted) return;
+
+                if (result['success'] == true) {
+                  setDialogState(() {
+                    step = 1;
+                    isLoading = false;
+                  });
+                } else {
+                  setDialogState(() => isLoading = false);
+
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        result['message'] ?? 'Gagal mengirim OTP.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (!dialogContext.mounted) return;
+
+                setDialogState(() => isLoading = false);
+
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal mengirim OTP: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+
+            Future<void> verifyOtp() async {
+              if (!(otpFormKey.currentState?.validate() ?? false)) {
+                return;
+              }
+
+              setDialogState(() => isLoading = true);
+
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                final token = prefs.getString('auth_token');
+
+                if (token == null || token.isEmpty) {
+                  throw Exception('Sesi login tidak ditemukan.');
+                }
+
+                final result = await ApiService.verifyPasswordOtp(
+                  token: token,
+                  method: 'email',
+                  otp: otpController.text.trim(),
+                );
+
+                if (!dialogContext.mounted) return;
+
+                if (result['success'] == true &&
+                    result['verification_token'] != null) {
+                  setDialogState(() {
+                    verificationToken =
+                        result['verification_token'].toString();
+                    step = 2;
+                    isLoading = false;
+                  });
+                } else {
+                  setDialogState(() => isLoading = false);
+
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        result['message'] ?? 'OTP tidak valid.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (!dialogContext.mounted) return;
+
+                setDialogState(() => isLoading = false);
+
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Verifikasi OTP gagal: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+
+            Future<void> savePassword() async {
+              if (!(passwordFormKey.currentState?.validate() ?? false)) {
+                return;
+              }
+
+              setDialogState(() => isLoading = true);
+
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                final token = prefs.getString('auth_token');
+
+                if (token == null || token.isEmpty) {
+                  throw Exception('Sesi login tidak ditemukan.');
+                }
+
+                final result = await ApiService.confirmPasswordChange(
+                  token: token,
+                  verificationToken: verificationToken,
+                  newPassword: newPasswordController.text,
+                  confirmPassword: confirmPasswordController.text,
+                  method: 'email',
+                );
+
+                if (!dialogContext.mounted) return;
+
+                if (result['success'] == true) {
+                  Navigator.pop(dialogContext);
+
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        result['message'] ??
+                            'Kata sandi berhasil diperbarui.',
+                      ),
+                      backgroundColor: orange,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                } else {
+                  setDialogState(() => isLoading = false);
+
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        result['message'] ??
+                            'Gagal memperbarui kata sandi.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (!dialogContext.mounted) return;
+
+                setDialogState(() => isLoading = false);
+
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal memperbarui kata sandi: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+
+            return PopScope(
+              canPop: !isLoading,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Text(
+                  step == 0
+                      ? 'Verifikasi Identitas'
+                      : step == 1
+                          ? 'Verifikasi Kode OTP'
+                          : 'Perbarui Kata Sandi',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 19,
+                  ),
+                ),
+                content: SingleChildScrollView(
+                  child: SizedBox(
+                    width: 360,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        TextFormField(
-                          controller: currentPassword,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Kata sandi saat ini',
+                        if (step == 0) ...[
+                          const Icon(
+                            Icons.mark_email_read_outlined,
+                            color: orange,
+                            size: 55,
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Kata sandi saat ini wajib diisi';
-                            }
-                            return null;
-                          },
-                        ),
-                        TextFormField(
-                          controller: newPassword,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Kata sandi baru',
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Untuk keamanan akun, kami akan mengirimkan '
+                            'kode OTP ke email yang terdaftar.',
+                            textAlign: TextAlign.center,
                           ),
-                          validator: (value) {
-                            if (value == null || value.length < 8) {
-                              return 'Minimal 8 karakter';
-                            }
-
-                            if (value == currentPassword.text) {
-                              return 'Kata sandi baru harus berbeda';
-                            }
-
-                            return null;
-                          },
-                        ),
-                        TextFormField(
-                          controller: confirmPassword,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Konfirmasi kata sandi baru',
+                          const SizedBox(height: 16),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3E8),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                const Text(
+                                  'Email tujuan',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  maskEmail(email.text.trim()),
+                                  style: const TextStyle(
+                                    color: orangeDark,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Konfirmasi kata sandi wajib diisi';
-                            }
+                        ],
 
-                            if (value != newPassword.text) {
-                              return 'Kata sandi belum cocok';
-                            }
+                        if (step == 1) ...[
+                          const Icon(
+                            Icons.mark_email_read_outlined,
+                            color: orange,
+                            size: 50,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Masukkan kode OTP 6 digit yang telah dikirim '
+                            'ke email Anda.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 18),
+                          Form(
+                            key: otpFormKey,
+                            child: TextFormField(
+                              controller: otpController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 6,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                letterSpacing: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: 'Kode OTP',
+                                hintText: '000000',
+                                counterText: '',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: orange,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null ||
+                                    !RegExp(r'^\d{6}$').hasMatch(value)) {
+                                  return 'Masukkan OTP 6 digit.';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: isLoading
+                                ? null
+                                : () {
+                                    otpController.clear();
+                                    setDialogState(() => step = 0);
+                                  },
+                            child: const Text(
+                              'Kembali',
+                              style: TextStyle(color: orange),
+                            ),
+                          ),
+                        ],
 
-                            return null;
-                          },
-                        ),
+                        if (step == 2) ...[
+                          const Icon(
+                            Icons.lock_reset_rounded,
+                            color: orange,
+                            size: 50,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Verifikasi berhasil. Silakan buat kata sandi baru.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 18),
+                          Form(
+                            key: passwordFormKey,
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: newPasswordController,
+                                  obscureText: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Kata sandi baru',
+                                    prefixIcon: Icon(Icons.lock_outline),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.length < 8) {
+                                      return 'Minimal 8 karakter.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 14),
+                                TextFormField(
+                                  controller: confirmPasswordController,
+                                  obscureText: true,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Konfirmasi kata sandi',
+                                    prefixIcon: Icon(Icons.lock_reset),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Konfirmasi kata sandi wajib diisi.';
+                                    }
+                                    if (value != newPasswordController.text) {
+                                      return 'Kata sandi belum cocok.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
                 actions: [
                   TextButton(
-                    onPressed: isChangingPassword
+                    onPressed: isLoading
                         ? null
                         : () => Navigator.pop(dialogContext),
-                    child: const Text('Batal'),
+                    child: const Text(
+                      'Batal',
+                      style: TextStyle(color: textSecondary),
+                    ),
                   ),
                   FilledButton(
-                    style: FilledButton.styleFrom(backgroundColor: orange),
-                    onPressed: isChangingPassword
+                    style: FilledButton.styleFrom(
+                      backgroundColor: orange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: isLoading
                         ? null
-                        : () async {
-                            if (!(formKey.currentState?.validate() ?? false)) {
-                              return;
-                            }
-
-                            setDialogState(() {
-                              isChangingPassword = true;
-                            });
-
-                            try {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-
-                              final token = prefs.getString('auth_token');
-
-                              if (token == null || token.isEmpty) {
-                                throw Exception(
-                                  'Sesi login tidak ditemukan. Silakan login kembali.',
-                                );
-                              }
-
-                              final result = await ApiService.changePassword(
-                                token: token,
-                                currentPassword: currentPassword.text,
-                                newPassword: newPassword.text,
-                                confirmPassword: confirmPassword.text,
-                              );
-
-                              if (!mounted || !dialogContext.mounted) {
-                                return;
-                              }
-
-                              if (result['success'] == true) {
-                                Navigator.pop(dialogContext);
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      result['message'] ??
-                                          'Kata sandi berhasil diperbarui.',
-                                    ),
-                                    backgroundColor: orange,
-                                    behavior: SnackBarBehavior.floating,
-                                    duration: const Duration(seconds: 3),
-                                  ),
-                                );
-                              } else {
-                                setDialogState(() {
-                                  isChangingPassword = false;
-                                });
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      result['message'] ??
-                                          'Gagal memperbarui kata sandi.',
-                                    ),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (!mounted || !dialogContext.mounted) {
-                                return;
-                              }
-
-                              setDialogState(() {
-                                isChangingPassword = false;
-                              });
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Gagal memperbarui kata sandi: $e',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          },
-                    child: isChangingPassword
+                        : step == 0
+                            ? sendOtp
+                            : step == 1
+                                ? verifyOtp
+                                : savePassword,
+                    child: isLoading
                         ? const SizedBox(
                             width: 18,
                             height: 18,
@@ -771,21 +1166,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Lanjutkan'),
+                        : Text(
+                            step == 0
+                                ? 'Kirim OTP'
+                                : step == 1
+                                    ? 'Verifikasi OTP'
+                                    : 'Simpan Kata Sandi',
+                          ),
                   ),
                 ],
-              );
-            },
-          );
-        },
-      );
-
-      // Tunggu animasi dialog selesai sebelum menghapus controller.
-      await Future.delayed(const Duration(milliseconds: 300));
+              ),
+            );
+          },
+        );
+      },
+    );
     } finally {
-      currentPassword.dispose();
-      newPassword.dispose();
-      confirmPassword.dispose();
-    }
+    await Future.delayed(const Duration(milliseconds: 350));
+
+    otpController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
   }
+}
+
 }

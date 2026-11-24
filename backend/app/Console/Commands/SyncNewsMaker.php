@@ -11,395 +11,199 @@ class SyncNewsMaker extends Command
 {
     protected $signature = 'newsmaker:sync';
 
-    protected $description = 'Sinkronisasi data LGD Daily dan HSI Daily dari News Maker ke database';
+    protected $description = 'Sinkronisasi data LGD, HSI, dan SNI dari News Maker';
 
     public function handle(): int
     {
         $this->info('Mengambil data dari News Maker API...');
 
-        $url = 'https://www.newsmaker.id/api/historical-data';
-
         try {
-            $response = Http::timeout(120)->get($url);
-        } catch (\Throwable $e) {
-            $this->error(
-                'Gagal mengakses News Maker: ' . $e->getMessage()
+            $response = Http::timeout(120)->get(
+                'https://www.newsmaker.id/api/historical-data'
             );
-
+        } catch (\Throwable $e) {
+            $this->error('Gagal mengakses News Maker: ' . $e->getMessage());
             return self::FAILURE;
         }
 
         if (!$response->successful()) {
-            $this->error(
-                'News Maker mengembalikan HTTP ' . $response->status()
-            );
-
+            $this->error('HTTP Error: ' . $response->status());
             return self::FAILURE;
         }
 
         $json = $response->json();
 
-        if (!is_array($json)) {
+        if (!is_array($json) || !isset($json['data']) || !is_array($json['data'])) {
             $this->error('Respons News Maker tidak valid.');
-
-            return self::FAILURE;
-        }
-
-        if (!isset($json['data']) || !is_array($json['data'])) {
-            $this->error('Data historical dari News Maker tidak ditemukan.');
-
             return self::FAILURE;
         }
 
         $rows = $json['data'];
 
-        $this->info(
-            'Total data dari API: ' . count($rows)
-        );
+        $this->info('Total data dari API: ' . count($rows));
 
-        $lgd = [];
-        $hsi = [];
-        $sni = [];
+        $commodities = [
+            'LGD Daily' => 'LGD',
+            'HSI Daily' => 'HSI',
+            'SNI Daily' => 'SNI',
+        ];
 
-        foreach ($rows as $data) {
-            if (!is_array($data)) {
+        $grouped = [
+            'LGD' => [],
+            'HSI' => [],
+            'SNI' => [],
+        ];
+
+        $skippedDates = 0;
+
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
                 continue;
             }
 
-            $category = $data['category'] ?? null;
+            $category = $row['category'] ?? null;
 
-           if (!in_array($category, [
-    'LGD Daily',
-    'HSI Daily',
-    'SNI Daily',
-], true)) {
-    continue;
-}
-
-            if (
-                !isset($data['tanggal']) ||
-                !isset($data['open']) ||
-                !isset($data['high']) ||
-                !isset($data['low']) ||
-                !isset($data['close'])
-            ) {
+            if (!isset($commodities[$category])) {
                 continue;
             }
 
-            if (
-                $data['open'] === '' ||
-                $data['high'] === '' ||
-                $data['low'] === '' ||
-                $data['close'] === ''
-            ) {
+            $commodity = $commodities[$category];
+
+            // Validasi tanggal berlaku untuk semua komoditas.
+            $rawDate = trim((string) ($row['tanggal'] ?? ''));
+
+            $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $rawDate);
+            $errors = \DateTimeImmutable::getLastErrors();
+
+            $validDate = $date !== false
+                && ($errors === false || (
+                    $errors['warning_count'] === 0
+                    && $errors['error_count'] === 0
+                ))
+                && $date->format('Y-m-d') === $rawDate
+                && preg_match('/^[1-9]\d{3}-\d{2}-\d{2}$/', $rawDate);
+
+            if (!$validDate) {
+                $this->warn(
+                    "Melewati {$category}, ID "
+                    . ($row['id'] ?? '?')
+                    . ", tanggal tidak valid: {$rawDate}"
+                );
+
+                $skippedDates++;
                 continue;
             }
 
-            if ($category === 'LGD Daily') {
-                $lgd[] = $data;
+            // Pastikan seluruh nilai OHLC tersedia dan numerik.
+            $fields = ['open', 'high', 'low', 'close'];
+
+            $validPrices = true;
+
+            foreach ($fields as $field) {
+                if (
+                    !isset($row[$field])
+                    || $row[$field] === ''
+                    || !is_numeric($row[$field])
+                ) {
+                    $validPrices = false;
+                    break;
+                }
             }
 
-            if ($category === 'HSI Daily') {
-                $hsi[] = $data;
+            if (!$validPrices) {
+                continue;
             }
 
-            if ($category === 'SNI Daily') {
-    $sni[] = $data;
-}
+            $row['_validated_date'] = $rawDate;
+
+            $grouped[$commodity][$rawDate] = $row;
         }
 
-        $uniqueLgd = [];
+        $totals = [];
 
-        foreach ($lgd as $row) {
-            $uniqueLgd[$row['tanggal']] = $row;
-        }
+        foreach ($grouped as $commodity => $items) {
+            ksort($items);
+            $grouped[$commodity] = array_values($items);
 
-        $lgd = array_values($uniqueLgd);
+            $totals[$commodity] = [
+                'inserted' => 0,
+                'updated' => 0,
+            ];
 
-        $uniqueHsi = [];
-
-        foreach ($hsi as $row) {
-            $uniqueHsi[$row['tanggal']] = $row;
-        }
-
-        $hsi = array_values($uniqueHsi);
-
-
-$uniqueSni = [];
-
-foreach ($sni as $row) {
-    $uniqueSni[$row['tanggal']] = $row;
-}
-
-$sni = array_values($uniqueSni);
-
-        usort($lgd, function ($a, $b) {
-            return strcmp($a['tanggal'], $b['tanggal']);
-        });
-
-        usort($hsi, function ($a, $b) {
-            return strcmp($a['tanggal'], $b['tanggal']);
-        });
-
-
-usort($sni, function ($a, $b) {
-    return strcmp($a['tanggal'], $b['tanggal']);
-});
-
-        $this->info(
-            'Total LGD Daily valid: ' . count($lgd)
-        );
-
-        $this->info(
-            'Total HSI Daily valid: ' . count($hsi)
-        );
-
-        if (empty($lgd) && empty($hsi) && empty($sni)) {
-            $this->error(
-                'Tidak ada data LGD Daily atau HSI Daily yang ditemukan.'
+            $this->info(
+                "Total {$commodity} Daily valid: " . count($items)
             );
+        }
 
+        if (
+            empty($grouped['LGD'])
+            && empty($grouped['HSI'])
+            && empty($grouped['SNI'])
+        ) {
+            $this->error('Tidak ada data valid untuk disinkronkan.');
             return self::FAILURE;
         }
 
-        $insertedLgd = 0;
-        $updatedLgd = 0;
+        foreach ($grouped as $commodity => $items) {
+            foreach ($items as $row) {
+                $rawDate = $row['_validated_date'];
 
-        $insertedHsi = 0;
-        $updatedHsi = 0;
+                $date = Carbon::createFromFormat(
+                    '!Y-m-d',
+                    $rawDate
+                )->endOfDay();
 
-        foreach ($lgd as $row) {
-            $date = Carbon::parse($row['tanggal'])->endOfDay();
+                $existing = GoldPrice::where('commodity', $commodity)
+                    ->whereDate('recorded_at', $rawDate)
+                    ->first();
 
-            $existing = GoldPrice::where(
-                'commodity',
-                'LGD'
-            )
-                ->whereDate(
-                    'recorded_at',
-                    $row['tanggal']
-                )
-                ->first();
+                $payload = [
+                    'commodity' => $commodity,
+                    'price' => (float) $row['close'],
+                    'open' => (float) $row['open'],
+                    'high' => (float) $row['high'],
+                    'low' => (float) $row['low'],
+                    'close' => (float) $row['close'],
+                    'recorded_at' => $date,
+                ];
 
-            $payload = [
-                'commodity' => 'LGD',
-                'price' => (float) $row['close'],
-                'open' => (float) $row['open'],
-                'high' => (float) $row['high'],
-                'low' => (float) $row['low'],
-                'close' => (float) $row['close'],
-                'recorded_at' => $date,
-            ];
-
-            if ($existing) {
-                $existing->update($payload);
-                $updatedLgd++;
-            } else {
-                GoldPrice::create($payload);
-                $insertedLgd++;
+                if ($existing) {
+                    $existing->update($payload);
+                    $totals[$commodity]['updated']++;
+                } else {
+                    GoldPrice::create($payload);
+                    $totals[$commodity]['inserted']++;
+                }
             }
         }
-
-        foreach ($hsi as $row) {
-            $date = Carbon::parse($row['tanggal'])->endOfDay();
-
-            $existing = GoldPrice::where(
-                'commodity',
-                'HSI'
-            )
-                ->whereDate(
-                    'recorded_at',
-                    $row['tanggal']
-                )
-                ->first();
-
-            $payload = [
-                'commodity' => 'HSI',
-                'price' => (float) $row['close'],
-                'open' => (float) $row['open'],
-                'high' => (float) $row['high'],
-                'low' => (float) $row['low'],
-                'close' => (float) $row['close'],
-                'recorded_at' => $date,
-            ];
-
-            if ($existing) {
-                $existing->update($payload);
-                $updatedHsi++;
-            } else {
-                GoldPrice::create($payload);
-                $insertedHsi++;
-            }
-        }
-
-
-$insertedSni = 0;
-$updatedSni = 0;
-
-foreach ($sni as $row) {
-    $rawDate = (string) ($row['tanggal'] ?? '');
-
-$date = \DateTimeImmutable::createFromFormat(
-    '!Y-m-d',
-    $rawDate
-);
-
-$errors = \DateTimeImmutable::getLastErrors();
-
-if (
-    !$date ||
-    ($errors !== false && (
-        $errors['warning_count'] > 0 ||
-        $errors['error_count'] > 0
-    )) ||
-    $date->format('Y-m-d') !== $rawDate ||
-    !preg_match('/^[1-9]\d{3}-\d{2}-\d{2}$/', $rawDate)
-) {
-    $this->warn(
-        'Melewati data SNI ID ' .
-        ($row['id'] ?? '?') .
-        ' dengan tanggal tidak valid: ' . $rawDate
-    );
-
-    continue;
-}
-
-$date = Carbon::instance(
-    \DateTime::createFromImmutable($date)
-)->endOfDay();
-    $existing = GoldPrice::where('commodity', 'SNI')
-        ->whereDate('recorded_at', $row['tanggal'])
-        ->first();
-
-    $payload = [
-        'commodity' => 'SNI',
-        'price' => (float) $row['close'],
-        'open' => (float) $row['open'],
-        'high' => (float) $row['high'],
-        'low' => (float) $row['low'],
-        'close' => (float) $row['close'],
-        'recorded_at' => $date,
-    ];
-
-    if ($existing) {
-        $existing->update($payload);
-        $updatedSni++;
-    } else {
-        GoldPrice::create($payload);
-        $insertedSni++;
-    }
-}
 
         $this->newLine();
-
         $this->info('Sinkronisasi selesai!');
 
-        $this->line(
-            'LGD baru ditambahkan : ' . $insertedLgd
-        );
-
-        $this->line(
-            'LGD diperbarui       : ' . $updatedLgd
-        );
-
-        $this->line(
-            'HSI baru ditambahkan : ' . $insertedHsi
-        );
-
-        $this->line(
-            'HSI diperbarui       : ' . $updatedHsi
-        );
-
-        $this->line(
-            'Total LGD News Maker : ' . count($lgd)
-        );
-
-        $this->line(
-            'Total HSI News Maker : ' . count($hsi)
-        );
-$this->line('SNI baru ditambahkan : ' . $insertedSni);
-$this->line('SNI diperbarui       : ' . $updatedSni);
-$this->line('Total SNI News Maker : ' . count($sni));
-        $latestLgd = GoldPrice::where(
-            'commodity',
-            'LGD'
-        )
-            ->orderBy(
-                'recorded_at',
-                'desc'
-            )
-            ->first();
-
-        if ($latestLgd) {
-            $this->newLine();
-
-            $this->info(
-                'DATA LGD TERBARU DI DATABASE:'
-            );
-
-            $this->line(
-                'Tanggal : '
-                . $latestLgd->recorded_at->format('Y-m-d')
-            );
-
-            $this->line(
-                'Open    : ' . $latestLgd->open
-            );
-
-            $this->line(
-                'High    : ' . $latestLgd->high
-            );
-
-            $this->line(
-                'Low     : ' . $latestLgd->low
-            );
-
-            $this->line(
-                'Close   : ' . $latestLgd->close
-            );
+        foreach ($totals as $commodity => $total) {
+            $this->line("{$commodity} baru ditambahkan : {$total['inserted']}");
+            $this->line("{$commodity} diperbarui       : {$total['updated']}");
+            $this->line("Total {$commodity} valid       : " . count($grouped[$commodity]));
         }
 
-        $latestHsi = GoldPrice::where(
-            'commodity',
-            'HSI'
-        )
-            ->orderBy(
-                'recorded_at',
-                'desc'
-            )
-            ->first();
+        $this->line("Tanggal dilewati             : {$skippedDates}");
 
-        if ($latestHsi) {
+        foreach (['LGD', 'HSI', 'SNI'] as $commodity) {
+            $latest = GoldPrice::where('commodity', $commodity)
+                ->orderByDesc('recorded_at')
+                ->first();
+
+            if (!$latest) {
+                continue;
+            }
+
             $this->newLine();
-
-            $this->info(
-                'DATA HSI TERBARU DI DATABASE:'
-            );
-
-            $this->line(
-                'DATA HSI TERBARU DI DATABASE:'
-            );
-
-            $this->line(
-                'Tanggal : '
-                . $latestHsi->recorded_at->format('Y-m-d')
-            );
-
-            $this->line(
-                'Open    : ' . $latestHsi->open
-            );
-
-            $this->line(
-                'High    : ' . $latestHsi->high
-            );
-
-            $this->line(
-                'Low     : ' . $latestHsi->low
-            );
-
-            $this->line(
-                'Close   : ' . $latestHsi->close
-            );
+            $this->info("DATA {$commodity} TERBARU DI DATABASE:");
+            $this->line('Tanggal : ' . $latest->recorded_at->format('Y-m-d'));
+            $this->line('Open    : ' . $latest->open);
+            $this->line('High    : ' . $latest->high);
+            $this->line('Low     : ' . $latest->low);
+            $this->line('Close   : ' . $latest->close);
         }
 
         return self::SUCCESS;

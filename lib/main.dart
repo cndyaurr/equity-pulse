@@ -1,9 +1,14 @@
-
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'pages/login.dart';
+import 'dart:convert';
+import 'pages/dashboard_page.dart';
+import 'services/api_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey =
     GlobalKey<NavigatorState>();
@@ -41,6 +46,27 @@ Future<void> changeAppTheme(ThemeMode mode) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Inisialisasi Firebase.
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Inisialisasi Firebase Cloud Messaging dan notifikasi lokal.
+  await NotificationService.initialize();
+// Mengambil token perangkat untuk Firebase Cloud Messaging.
+final fcmToken = await NotificationService.getDeviceToken();
+
+if (fcmToken != null) {
+  debugPrint('FCM TOKEN BERHASIL DIDAPATKAN');
+} else {
+  debugPrint('FCM TOKEN BELUM TERSEDIA');
+}
+
+// Memantau perubahan token perangkat.
+NotificationService.onTokenRefresh.listen((newToken) {
+  debugPrint('FCM TOKEN DIPERBARUI');
+});
+
   // Inisialisasi format tanggal Bahasa Indonesia untuk PDF.
   await initializeDateFormatting('id_ID', null);
 
@@ -48,9 +74,7 @@ Future<void> main() async {
   await loadSavedTheme();
 
   runApp(const EwfGoldHubApp());
-}
-
-class EwfGoldHubApp extends StatelessWidget {
+}class EwfGoldHubApp extends StatelessWidget {
   const EwfGoldHubApp({super.key});
 
   @override
@@ -172,9 +196,118 @@ class EwfGoldHubApp extends StatelessWidget {
           scrollBehavior: const MaterialScrollBehavior().copyWith(
             overscroll: false,
           ),
-          home: const LoginPage(),
+         home: const AuthGate(),
         );
       },
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  Widget? destination;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final rememberSession =
+        prefs.getBool('remember_session') ?? true;
+
+    if (!rememberSession) {
+      await prefs.remove('auth_token');
+      await prefs.remove('user_data');
+
+      if (!mounted) return;
+
+      setState(() {
+        destination = const LoginPage();
+      });
+      return;
+    }
+
+    final token = prefs.getString('auth_token');
+
+    if (token == null || token.isEmpty) {
+      if (!mounted) return;
+
+      setState(() {
+        destination = const LoginPage();
+      });
+      return;
+    }
+
+    Map<String, dynamic>? cachedUser;
+
+    final savedUser = prefs.getString('user_data');
+
+    if (savedUser != null && savedUser.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(savedUser);
+
+        if (decoded is Map) {
+          cachedUser = Map<String, dynamic>.from(decoded);
+        }
+      } catch (e) {
+        debugPrint('Gagal membaca data pengguna: $e');
+      }
+    }
+
+    try {
+      final user = await ApiService.getProfile(token: token);
+
+      await prefs.setString('user_data', jsonEncode(user));
+
+      if (!mounted) return;
+
+      setState(() {
+        destination = DashboardPage(user: user);
+      });
+    } on InvalidAuthTokenException {
+      await prefs.remove('auth_token');
+      await prefs.remove('user_data');
+
+      if (!mounted) return;
+
+      setState(() {
+        destination = const LoginPage();
+      });
+    } catch (e) {
+      debugPrint('Validasi sesi gagal: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        destination = cachedUser != null
+            ? DashboardPage(user: cachedUser)
+            : const LoginPage();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (destination != null) {
+      return destination!;
+    }
+
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(
+          color: ewfOrange,
+        ),
+      ),
     );
   }
 }

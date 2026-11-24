@@ -10,5 +10,5 @@ Artisan::command('inspire', function () {
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('newsmaker:sync')
-    ->dailyAt('04:00')
+    ->everyFiveMinutes()
     ->timezone('Asia/Jakarta');

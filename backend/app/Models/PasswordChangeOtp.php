@@ -9,6 +9,7 @@ class PasswordChangeOtp extends Model
     protected $fillable = [
         'user_id',
         'method',
+        'purpose',
         'otp_hash',
         'expires_at',
         'attempts',

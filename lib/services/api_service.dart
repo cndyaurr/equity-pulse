@@ -1,18 +1,19 @@
-
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-
+import 'package:flutter/foundation.dart';
 import '../models/gold_price.dart';
 import '../models/pivot_point.dart';
+
+class InvalidAuthTokenException implements Exception {
+  const InvalidAuthTokenException();
+}
 
 class ApiService {
   // ==========================================
   // BASE URL
   // ==========================================
 
-static const String baseUrl = 'http://10.0.2.2:8000/api';
-
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
   static const Duration timeoutDuration = Duration(seconds: 20);
 
   // ==========================================
@@ -23,21 +24,47 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
     return {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      if (token != null && token.isNotEmpty)
-        'Authorization': 'Bearer $token',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
   }
 
+// ==========================================
+// VALIDASI SESSION / PROFILE
+// ==========================================
+
+static Future<Map<String, dynamic>> getProfile({
+  required String token,
+}) async {
+  final response = await http
+      .get(
+        Uri.parse('$baseUrl/profile'),
+        headers: _headers(token: token),
+      )
+      .timeout(timeoutDuration);
+
+  if (response.statusCode == 401 || response.statusCode == 403) {
+    throw const InvalidAuthTokenException();
+  }
+
+  if (response.statusCode == 200) {
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is Map &&
+        decoded['success'] == true &&
+        decoded['user'] is Map) {
+      return Map<String, dynamic>.from(decoded['user'] as Map);
+    }
+  }
+
+  throw Exception('Gagal memvalidasi sesi pengguna.');
+}
   // ==========================================
   // GOLD PRICES
   // ==========================================
 
   static Future<List<GoldPrice>> getGoldPrices() async {
     final response = await http
-        .get(
-          Uri.parse('$baseUrl/gold-prices'),
-          headers: _headers(),
-        )
+        .get(Uri.parse('$baseUrl/gold-prices'), headers: _headers())
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
@@ -45,33 +72,22 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
       final List<dynamic> data = json['data'] ?? [];
 
       return data
-          .map(
-            (item) => GoldPrice.fromJson(
-              item as Map<String, dynamic>,
-            ),
-          )
+          .map((item) => GoldPrice.fromJson(item as Map<String, dynamic>))
           .toList();
     }
 
-    throw Exception(
-      'Gagal mengambil data harga emas: ${response.statusCode}',
-    );
+    throw Exception('Gagal mengambil data harga emas: ${response.statusCode}');
   }
 
   static Future<GoldPrice> getLatestGoldPrice() async {
     final response = await http
-        .get(
-          Uri.parse('$baseUrl/gold-prices/latest'),
-          headers: _headers(),
-        )
+        .get(Uri.parse('$baseUrl/gold-prices/latest'), headers: _headers())
         .timeout(timeoutDuration);
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
 
-      return GoldPrice.fromJson(
-        json['data'] as Map<String, dynamic>,
-      );
+      return GoldPrice.fromJson(json['data'] as Map<String, dynamic>);
     }
 
     throw Exception(
@@ -79,14 +95,11 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
     );
   }
 
-  static Future<GoldPrice?> getGoldPriceByCommodity(
-    String commodity,
-  ) async {
+  static Future<GoldPrice?> getGoldPriceByCommodity(String commodity) async {
     final prices = await getGoldPrices();
 
     for (final price in prices) {
-      if (price.commodity.toUpperCase() ==
-          commodity.toUpperCase()) {
+      if (price.commodity.toUpperCase() == commodity.toUpperCase()) {
         return price;
       }
     }
@@ -94,22 +107,16 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
     return null;
   }
 
-
-
-  static Future<PivotPoint> getPivotPoint(
-    String commodity,
-  ) async {
+  static Future<PivotPoint> getPivotPoint(String commodity) async {
     final symbol = commodity.toUpperCase() == 'XAUUSD'
         ? 'LGD'
         : commodity.toUpperCase();
 
     final response = await http
         .get(
-          Uri.parse('$baseUrl/pivot-points').replace(
-            queryParameters: {
-              'commodity': symbol,
-            },
-          ),
+          Uri.parse(
+            '$baseUrl/pivot-points',
+          ).replace(queryParameters: {'commodity': symbol}),
           headers: _headers(),
         )
         .timeout(timeoutDuration);
@@ -136,9 +143,7 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
     }
 
     if (decoded is List) {
-      final items = decoded
-          .whereType<Map<String, dynamic>>()
-          .toList();
+      final items = decoded.whereType<Map<String, dynamic>>().toList();
 
       final matchingItems = items.where(
         (item) =>
@@ -153,96 +158,320 @@ static const String baseUrl = 'http://10.0.2.2:8000/api';
       }
     }
 
-    throw Exception(
-      'Format respons Pivot Point tidak sesuai.',
-    );
+    throw Exception('Format respons Pivot Point tidak sesuai.');
   }
 
-// ==========================================
-// REQUEST PASSWORD OTP
-// ==========================================
+  // ==========================================
+  // REGISTER FCM DEVICE TOKEN
+  // ==========================================
 
-static Future<Map<String, dynamic>> requestPasswordOtp({
-  required String token,
-  required String method,
-}) async {
-  try {
-    final response = await http
-        .post(
-          Uri.parse('$baseUrl/profile/password/request-otp'),
-          headers: _headers(token: token),
-          body: jsonEncode({'method': method}),
-        )
-        .timeout(timeoutDuration);
+  static Future<bool> registerDeviceToken({
+    required String authToken,
+    required String fcmToken,
+    String? deviceName,
+    String platform = 'android',
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/device-token'),
+            headers: _headers(token: authToken),
+            body: jsonEncode({
+              'token': fcmToken,
+              'device_name': deviceName,
+              'platform': platform,
+            }),
+          )
+          .timeout(timeoutDuration);
 
-    final decoded = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        return decoded is Map<String, dynamic> && decoded['success'] == true;
+      }
 
-    if (decoded is Map<String, dynamic>) {
+      debugPrint(
+        'Gagal mendaftarkan FCM token: '
+        '${response.statusCode} ${response.body}',
+      );
+
+      return false;
+    } catch (e) {
+      debugPrint('Error register FCM token: $e');
+      return false;
+    }
+  }
+
+  // ==========================================
+  // REMOVE FCM DEVICE TOKEN
+  // ==========================================
+
+  static Future<bool> removeDeviceToken({
+    required String authToken,
+    required String fcmToken,
+  }) async {
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl/device-token'),
+            headers: _headers(token: authToken),
+            body: jsonEncode({'token': fcmToken}),
+          )
+          .timeout(timeoutDuration);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        return decoded is Map<String, dynamic> && decoded['success'] == true;
+      }
+
+      debugPrint(
+        'Gagal menghapus FCM token: '
+        '${response.statusCode} ${response.body}',
+      );
+
+      return false;
+    } catch (e) {
+      debugPrint('Error remove FCM token: $e');
+      return false;
+    }
+  }
+
+  // ==========================================
+  // REQUEST PASSWORD OTP
+  // ==========================================
+
+  static Future<Map<String, dynamic>> requestPasswordOtp({
+    required String token,
+    required String method,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/profile/password/request-otp'),
+            headers: _headers(token: token),
+            body: jsonEncode({'method': method}),
+          )
+          .timeout(timeoutDuration);
+
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return {
+          'success': response.statusCode == 200,
+          'message': decoded['message'] ?? 'Gagal mengirim kode OTP.',
+        };
+      }
+
       return {
-        'success': response.statusCode == 200 &&
-            decoded['success'] == true,
-        'message': decoded['message'] ??
-            'Gagal mengirim kode OTP.',
+        'success': false,
+        'message': 'Format respons server tidak sesuai.',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Tidak dapat terhubung ke server: $e',
       };
     }
-
-    return {
-      'success': false,
-      'message': 'Format respons server tidak sesuai.',
-    };
-  } catch (e) {
-    return {
-      'success': false,
-      'message': 'Tidak dapat terhubung ke server: $e',
-    };
   }
-}
 
-// ==========================================
-// VERIFY PASSWORD OTP
-// ==========================================
+  // ==========================================
+  // VERIFY PASSWORD OTP
+  // ==========================================
 
-static Future<Map<String, dynamic>> verifyPasswordOtp({
-  required String token,
-  required String method,
-  required String otp,
-}) async {
-  try {
-    final response = await http
-        .post(
-          Uri.parse('$baseUrl/profile/password/verify-otp'),
-          headers: _headers(token: token),
-          body: jsonEncode({
-            'method': method,
-            'otp': otp,
-          }),
-        )
-        .timeout(timeoutDuration);
+  static Future<Map<String, dynamic>> verifyPasswordOtp({
+    required String token,
+    required String method,
+    required String otp,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/profile/password/verify-otp'),
+            headers: _headers(token: token),
+            body: jsonEncode({'method': method, 'otp': otp}),
+          )
+          .timeout(timeoutDuration);
 
-    final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
 
-    if (decoded is Map<String, dynamic>) {
+      if (decoded is Map<String, dynamic>) {
+        return {
+          'success': response.statusCode == 200,
+          'message': decoded['message'] ?? 'Verifikasi OTP gagal.',
+          'verification_token': decoded['verification_token'],
+        };
+      }
+
       return {
-        'success': response.statusCode == 200 &&
-            decoded['success'] == true,
-        'message': decoded['message'] ??
-            'Verifikasi OTP gagal.',
-        'verification_token':
-            decoded['verification_token'],
+        'success': false,
+        'message': 'Format respons server tidak sesuai.',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Tidak dapat terhubung ke server: $e',
       };
     }
-
-    return {
-      'success': false,
-      'message': 'Format respons server tidak sesuai.',
-    };
-  } catch (e) {
-    return {
-      'success': false,
-      'message': 'Tidak dapat terhubung ke server: $e',
-    };
   }
-}
+
+  // ==========================================
+  // CONFIRM PASSWORD CHANGE
+  // ==========================================
+
+  static Future<Map<String, dynamic>> confirmPasswordChange({
+    required String token,
+    required String verificationToken,
+    required String newPassword,
+    required String confirmPassword,
+    String method = 'email',
+  }) async {
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl/profile/password/confirm'),
+            headers: _headers(token: token),
+            body: jsonEncode({
+              'method': method,
+              'verification_token': verificationToken,
+              'password': newPassword,
+              'password_confirmation': confirmPassword,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final decoded = jsonDecode(response.body);
+
+      return {
+        'success': response.statusCode == 200,
+        'message': decoded is Map
+            ? decoded['message'] ?? 'Gagal mengubah password.'
+            : 'Format respons server tidak sesuai.',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Tidak dapat mengubah password: $e'};
+    }
+  }
+
+  // ==========================================
+  // FORGOT PASSWORD - REQUEST OTP
+  // ==========================================
+
+  static Future<Map<String, dynamic>> requestForgotPasswordOtp({
+    required String email,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/forgot-password/request-otp'),
+            headers: _headers(),
+            body: jsonEncode({'email': email.trim()}),
+          )
+          .timeout(timeoutDuration);
+
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return {
+          'success': response.statusCode == 200 && decoded['success'] == true,
+          'message': decoded['message'] ?? 'Gagal mengirim OTP.',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': 'Format respons server tidak sesuai.',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Tidak dapat terhubung ke server: $e',
+      };
+    }
+  }
+
+  // ==========================================
+  // FORGOT PASSWORD - VERIFY OTP
+  // ==========================================
+
+  static Future<Map<String, dynamic>> verifyForgotPasswordOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/forgot-password/verify-otp'),
+            headers: _headers(),
+            body: jsonEncode({'email': email.trim(), 'otp': otp.trim()}),
+          )
+          .timeout(timeoutDuration);
+
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return {
+          'success': response.statusCode == 200 && decoded['success'] == true,
+          'message': decoded['message'] ?? 'Verifikasi OTP gagal.',
+          'verification_token': decoded['verification_token'],
+        };
+      }
+
+      return {
+        'success': false,
+        'message': 'Format respons server tidak sesuai.',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Tidak dapat terhubung ke server: $e',
+      };
+    }
+  }
+
+  // ==========================================
+  // FORGOT PASSWORD - RESET PASSWORD
+  // ==========================================
+
+  static Future<Map<String, dynamic>> resetForgotPassword({
+    required String email,
+    required String verificationToken,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/forgot-password/reset'),
+            headers: _headers(),
+            body: jsonEncode({
+              'email': email.trim(),
+              'verification_token': verificationToken,
+              'password': newPassword,
+              'password_confirmation': confirmPassword,
+            }),
+          )
+          .timeout(timeoutDuration);
+
+      final decoded = jsonDecode(response.body);
+
+      if (decoded is Map<String, dynamic>) {
+        return {
+          'success': response.statusCode == 200 && decoded['success'] == true,
+          'message': decoded['message'] ?? 'Gagal memperbarui password.',
+        };
+      }
+
+      return {
+        'success': false,
+        'message': 'Format respons server tidak sesuai.',
+      };
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Tidak dapat terhubung ke server: $e',
+      };
+    }
+  }
+
   // ==========================================
   // CHANGE PASSWORD
   // ==========================================
@@ -269,19 +498,16 @@ static Future<Map<String, dynamic>> verifyPasswordOtp({
       final dynamic decoded = jsonDecode(response.body);
 
       if (decoded is Map<String, dynamic>) {
-        if (response.statusCode == 200 &&
-            decoded['success'] == true) {
+        if (response.statusCode == 200 && decoded['success'] == true) {
           return {
             'success': true,
-            'message': decoded['message'] ??
-                'Kata sandi berhasil diperbarui.',
+            'message': decoded['message'] ?? 'Kata sandi berhasil diperbarui.',
           };
         }
 
         return {
           'success': false,
-          'message': decoded['message'] ??
-              'Gagal memperbarui kata sandi.',
+          'message': decoded['message'] ?? 'Gagal memperbarui kata sandi.',
         };
       }
 
